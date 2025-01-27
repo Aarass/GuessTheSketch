@@ -2,6 +2,11 @@
   "name": "guessthesketch",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "client": "bun run --filter \"./packages/client\" start",
+    "server": "bun run --filter \"./packages/server\" start",
+    "all": "bun run --filter \"./packages/client\" --filter \"./packages/server\" start"
+  },
   "workspaces": [
     "packages/*"
   ],
@@ -12,3 +17,4 @@
     "typescript": "^5.0.0"
   }
 }
+
