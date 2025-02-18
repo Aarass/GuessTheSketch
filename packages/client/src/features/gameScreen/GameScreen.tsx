@@ -236,7 +236,7 @@ export const SelectSize = () => {
         type="range"
         max={42}
         min={2}
-        step={10}
+        step={5}
         value={size}
         onChange={event => {
           const value = parseInt(event.target.value)
@@ -282,8 +282,8 @@ export abstract class Tool {
       }
       inFly.drawing = null
       inFly.i = null
-      sketch.redraw()
     })
+
     sketch.mouseClicked = () => {}
     sketch.mouseDragged = this.helper(e => {
       if (!this.block) {
@@ -334,7 +334,7 @@ class PenTool extends Tool {
       y: this.sketch.mouseY,
     })
 
-    this.sketch.redraw()
+    //this.sketch.redraw()
   }
 
   onMouseReleased(event: MouseEvent): void {
@@ -345,7 +345,7 @@ class PenTool extends Tool {
     }
 
     drawings.push(drawing)
-    this.sketch.redraw()
+    //this.sketch.redraw()
   }
 
   onDeselect(): void {}
@@ -377,7 +377,7 @@ class RectTool extends Tool {
     }
 
     inFly.drawing = tmpRect
-    this.sketch.redraw()
+    //this.sketch.redraw()
   }
 
   onMouseReleased(_: MouseEvent): void {
@@ -393,7 +393,7 @@ class RectTool extends Tool {
     }
 
     drawings.push(rect)
-    this.sketch.redraw()
+    //this.sketch.redraw()
   }
 
   onDeselect(): void {}
@@ -435,7 +435,7 @@ class CircleTool extends Tool {
     }
 
     inFly.drawing = tmpCircle
-    this.sketch.redraw()
+    //this.sketch.redraw()
   }
 
   onMouseReleased(_: MouseEvent): void {
@@ -450,7 +450,7 @@ class CircleTool extends Tool {
     }
 
     drawings.push(circle)
-    this.sketch.redraw()
+    //this.sketch.redraw()
   }
 
   onDeselect(): void {}
@@ -484,7 +484,7 @@ class LineTool extends Tool {
     }
 
     inFly.drawing = tmpLine
-    this.sketch.redraw()
+    //this.sketch.redraw()
   }
 
   onMouseReleased(_: MouseEvent): void {
@@ -502,7 +502,7 @@ class LineTool extends Tool {
     }
 
     drawings.push(line)
-    this.sketch.redraw()
+    //this.sketch.redraw()
   }
 
   onDeselect(): void {}
@@ -534,7 +534,7 @@ class FloodFillTool extends Tool {
     }
 
     drawings.push(drawing)
-    this.sketch.redraw()
+    //this.sketch.redraw()
   }
 
   onMousePressed(event: MouseEvent): void {}
@@ -574,7 +574,7 @@ class UndoCommand extends Command {
 
   execute(): void {
     drawings.pop()
-    this.sketch.redraw()
+    //this.sketch.redraw()
   }
   getName(): string {
     return "Undo"
@@ -588,7 +588,7 @@ class DeleteAllCommand extends Command {
 
   execute(): void {
     drawings.length = 0
-    this.sketch.redraw()
+    //this.sketch.redraw()
   }
   getName(): string {
     return "Bin"

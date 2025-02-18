@@ -8,12 +8,16 @@ type Framebuffer = p5.Framebuffer & {
   updatePixels(): void
 }
 
+const snapshots: number[][] = []
+const snapshotStep = 5
+
 export const initSketch = (canvas: HTMLCanvasElement) => {
   return (sketch: p5) => {
     const bg = 0
     let nextStart = -1
     let commitBuffer: Framebuffer
 
+    let pg: any
     sketch.setup = () => {
       sketch.createCanvas(700, 500, "webgl", canvas)
 
@@ -22,7 +26,9 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
       sketch.background(bg)
       sketch.fill(0)
       sketch.noStroke()
-      sketch.noLoop()
+      // sketch.noLoop()
+
+      pg = sketch.createGraphics(256, 256)
     }
 
     function applyTransforms() {
@@ -30,28 +36,53 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
     }
 
     sketch.draw = () => {
-      if (nextStart > drawings.length) {
-        nextStart = -1
+      let snapshotI = -1
+      if (/* undo happened */ nextStart > drawings.length) {
+        snapshotI = snapshots.length - 1
+        for (; snapshotI >= 0; snapshotI--) {
+          if (snapshotI * snapshotStep + snapshotStep > drawings.length) {
+            snapshots.pop()
+          } else break
+        }
+
+        if (drawings.length === 0) {
+          nextStart = -1
+        } else {
+          nextStart = (snapshotI + 1) * snapshotStep //- 1
+        }
+
+        if (snapshotI > -1) {
+          const snapshot = snapshots[snapshotI]
+
+          // TODO moze li bolje?
+          commitBuffer.loadPixels()
+          for (let i = 0; i < snapshot.length; i++)
+            commitBuffer.pixels[i] = snapshot[i]
+          commitBuffer.updatePixels()
+        }
       }
+
+      // console.log(
+      //   `ima ukupno ${drawings.length} crteza
+      //   crtam [${snapshotI}] snapshot
+      //   krecem sa crtanjem od [${nextStart}] crteza`,
+      // )
 
       if (nextStart !== drawings.length) {
         commitBuffer.begin()
 
-        applyTransforms()
-
-        if (nextStart == -1) {
+        if (nextStart <= 0) {
           sketch.background(bg)
         }
 
-        commitBuffer.loadPixels()
+        applyTransforms()
 
         let i = Math.max(nextStart, 0)
         for (; i < drawings.length; i++) {
           const drawing = drawings[i]
 
-          if (drawing.type == "flood") {
+          if (drawing.type === "flood") {
             if (ffc.has(drawing.id)) {
-              console.log("koristim kesiran flood fill")
               sketch.image(ffc.get(drawing.id)!, 0, 0)
               continue
             }
@@ -72,6 +103,18 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
         commitBuffer.end()
       }
 
+      const len = drawings.length
+      if (len > 0 && len % snapshotStep === 0) {
+        const j = len / snapshotStep - 1
+
+        if (j == snapshots.length) {
+          commitBuffer.loadPixels()
+          snapshots.push(commitBuffer.pixels.slice())
+
+          // console.log(`guram snapshot na poziciju ${j}, kada ima ${len} crteza`)
+        }
+      }
+
       const drawing = inFly.drawing
 
       applyTransforms()
@@ -80,12 +123,21 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
         !(drawing.type === "freeline" || drawing.type === "dot")
       ) {
         sketch.image(commitBuffer, 0, 0)
-      } else {
-        console.log("preskacem crtanje crteza ispod")
       }
 
       if (drawing) {
         draw(drawing, sketch)
+      }
+
+      if (false) {
+        sketch.noStroke()
+        sketch.noFill()
+        sketch.translate(50, 50)
+        ;(pg as any).background(255)
+        ;(pg as any).textSize(200)
+        ;(pg as any).text(Math.round(sketch.frameRate()), 20, 200)
+        sketch.texture(pg)
+        sketch.plane(50)
       }
     }
   }
