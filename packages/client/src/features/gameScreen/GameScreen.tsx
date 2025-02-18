@@ -7,10 +7,10 @@ import { store } from "../../app/store"
 import {
   selectColor,
   selectSize,
-  selectTool,
+  // selectTool,
   setColor,
   setSize,
-  setTool,
+  // setTool,
 } from "./GameScreenSlice"
 import { HSVtoRGB, RGBtoHexString } from "../../utils/colors"
 import {
@@ -281,6 +281,7 @@ export abstract class Tool {
         this.onMouseReleased(e)
       }
       inFly.drawing = null
+      inFly.i = null
       sketch.redraw()
     })
     sketch.mouseClicked = () => {}
@@ -301,65 +302,49 @@ export abstract class Tool {
   }
 }
 
-interface Point {
+export interface Point {
   x: number
   y: number
 }
 
 class PenTool extends Tool {
-  dragged: boolean = false
-  previousPoint: Point = {
-    x: Infinity,
-    y: Infinity,
-  }
-
-  private savePoint() {
-    this.previousPoint = {
-      x: this.sketch.mouseX,
-      y: this.sketch.mouseY,
-    }
-  }
+  points: Point[] = []
 
   onMousePressed(event: MouseEvent) {
-    this.dragged = false
-    this.savePoint()
+    this.points = [
+      {
+        x: this.sketch.mouseX,
+        y: this.sketch.mouseY,
+      },
+    ]
+
+    const tmp: Drawing = {
+      ...DrawingAutoFillIn(),
+      type: "freeline",
+      points: this.points,
+    }
+
+    inFly.drawing = tmp
+    inFly.i = 0
   }
 
   onMouseDragged(event: MouseEvent) {
-    this.dragged = true
+    this.points.push({
+      x: this.sketch.mouseX,
+      y: this.sketch.mouseY,
+    })
 
-    const line: Drawing = {
-      ...DrawingAutoFillIn(),
-      type: "line",
-      p1: {
-        x: this.previousPoint.x,
-        y: this.previousPoint.y,
-      },
-      p2: {
-        x: this.sketch.mouseX,
-        y: this.sketch.mouseY,
-      },
-    }
-
-    drawings.push(line)
     this.sketch.redraw()
-
-    this.savePoint()
   }
 
   onMouseReleased(event: MouseEvent): void {
-    if (this.dragged) return
-
-    const dot: Drawing = {
+    const drawing: Drawing = {
       ...DrawingAutoFillIn(),
-      type: "dot",
-      p: {
-        x: this.sketch.mouseX,
-        y: this.sketch.mouseY,
-      },
+      type: "freeline",
+      points: [...this.points],
     }
 
-    drawings.push(dot)
+    drawings.push(drawing)
     this.sketch.redraw()
   }
 
@@ -525,13 +510,27 @@ class LineTool extends Tool {
 
 class FloodFillTool extends Tool {
   onMouseReleased(event: MouseEvent): void {
-    const drawing: Drawing = {
-      ...DrawingAutoFillIn(),
-      type: "flood",
-      p: {
-        x: this.sketch.mouseX,
-        y: this.sketch.mouseY,
-      },
+    let drawing: Drawing
+    if (drawings.length == 0) {
+      drawing = {
+        ...DrawingAutoFillIn(),
+        type: "rect",
+        topLeft: {
+          x: 0,
+          y: 0,
+        },
+        w: this.sketch.width,
+        h: this.sketch.height,
+      }
+    } else {
+      drawing = {
+        ...DrawingAutoFillIn(),
+        type: "flood",
+        p: {
+          x: this.sketch.mouseX,
+          y: this.sketch.mouseY,
+        },
+      }
     }
 
     drawings.push(drawing)
@@ -605,13 +604,13 @@ class SelectToolCommand extends Command {
   }
 
   execute(): void {
-    const prev = selectTool(store.getState())
-    if (prev) {
-      prev.onDeselect()
-    }
+    // const prev = selectTool(store.getState())
+    // if (prev) {
+    //   prev.onDeselect()
+    // }
 
     const tool = new this.ToolConstructor(this.sketch)
-    store.dispatch(setTool(tool))
+    // store.dispatch(setTool(tool))
   }
 
   getName() {
@@ -623,6 +622,11 @@ interface DrawingBase {
   id: string
   color: string
   size: number
+}
+
+interface FreeLine extends DrawingBase {
+  type: "freeline"
+  points: Point[]
 }
 
 interface Line extends DrawingBase {
@@ -654,7 +658,7 @@ interface FloodFill extends DrawingBase {
   p: Point
 }
 
-export type Drawing = Line | Rect | Circle | Dot | FloodFill
+export type Drawing = FreeLine | Line | Rect | Circle | Dot | FloodFill
 
 function DrawingAutoFillIn() {
   const color = selectColor(store.getState())

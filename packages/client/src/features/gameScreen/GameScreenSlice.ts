@@ -5,13 +5,13 @@ import { Tool } from "./GameScreen"
 export interface GameScreenState {
   color: string
   size: number
-  tool: Tool | null
+  // tool: Tool | null
 }
 
 const initialState: GameScreenState = {
   color: "#FFFFFF",
   size: 7,
-  tool: null,
+  // tool: null,
 }
 
 export const gameScreenSlice = createAppSlice({
@@ -24,16 +24,17 @@ export const gameScreenSlice = createAppSlice({
     setSize: create.reducer((state, action: PayloadAction<number>) => {
       state.size = action.payload
     }),
-    setTool: create.reducer((state, action: PayloadAction<Tool | null>) => {
-      state.tool = action.payload
-    }),
+    // setTool: create.reducer((state, action: PayloadAction<Tool | null>) => {
+    //   state.tool = action.payload
+    // }),
   }),
   selectors: {
     selectColor: state => state.color,
     selectSize: state => state.size,
-    selectTool: state => state.tool,
+    // selectTool: state => state.tool,
   },
 })
 
-export const { setColor, setSize, setTool } = gameScreenSlice.actions
-export const { selectColor, selectSize, selectTool } = gameScreenSlice.selectors
+export const { setColor, setSize /* setTool */ } = gameScreenSlice.actions
+export const { selectColor, selectSize /* electTool */ } =
+  gameScreenSlice.selectors

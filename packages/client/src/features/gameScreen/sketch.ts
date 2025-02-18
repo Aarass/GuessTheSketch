@@ -1,6 +1,6 @@
 import p5 from "p5"
 import { drawings, inFly } from "./state"
-import { Drawing } from "./GameScreen"
+import { Drawing, Point } from "./GameScreen"
 import { colorsAreEqual, HexStringToRGB } from "../../utils/colors"
 
 type Framebuffer = p5.Framebuffer & {
@@ -25,6 +25,10 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
       sketch.noLoop()
     }
 
+    function applyTransforms() {
+      sketch.translate(-sketch.width / 2, -sketch.height / 2)
+    }
+
     sketch.draw = () => {
       if (nextStart > drawings.length) {
         nextStart = -1
@@ -33,7 +37,7 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
       if (nextStart !== drawings.length) {
         commitBuffer.begin()
 
-        sketch.translate(-sketch.width / 2, -sketch.height / 2)
+        applyTransforms()
 
         if (nextStart == -1) {
           sketch.background(bg)
@@ -46,14 +50,18 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
           const drawing = drawings[i]
 
           if (drawing.type == "flood") {
-            commitBuffer.loadPixels()
-            draw(drawing, sketch, commitBuffer.pixels)
+            if (ffc.has(drawing.id)) {
+              console.log("koristim kesiran flood fill")
+              sketch.image(ffc.get(drawing.id)!, 0, 0)
+              continue
+            }
 
             // TODO
             // ovde moze optimizacija
             // updatePixels prihvata "bounding box promena"
             // znaci moze da mu se zada regija koju treba da updata umesto da updata ceo ekran
-
+            commitBuffer.loadPixels()
+            draw(drawing, sketch, commitBuffer.pixels)
             commitBuffer.updatePixels()
           } else {
             draw(drawing, sketch, [])
@@ -64,13 +72,20 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
         commitBuffer.end()
       }
 
-      sketch.translate(-sketch.width / 2, -sketch.height / 2)
-      sketch.image(commitBuffer, 0, 0)
+      const drawing = inFly.drawing
 
-      commitBuffer.pixels
+      applyTransforms()
+      if (
+        drawing === null ||
+        !(drawing.type === "freeline" || drawing.type === "dot")
+      ) {
+        sketch.image(commitBuffer, 0, 0)
+      } else {
+        console.log("preskacem crtanje crteza ispod")
+      }
 
-      if (inFly.drawing) {
-        draw(inFly.drawing, sketch)
+      if (drawing) {
+        draw(drawing, sketch)
       }
     }
   }
@@ -78,17 +93,33 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
 
 function draw(drawing: Drawing, sketch: p5, pixels?: number[]) {
   switch (drawing.type) {
+    case "freeline":
+      sketch.stroke(drawing.color)
+      sketch.strokeWeight(drawing.size)
+
+      if (drawing.points.length == 1) {
+        sketch.point(drawing.points[0].x, drawing.points[0].y)
+        return
+      }
+
+      let i = 0
+
+      if (drawing == inFly.drawing) {
+        if (inFly.i === null) throw `zaboravio si da postavis i`
+        i = inFly.i
+      }
+
+      for (; i < drawing.points.length - 1; i++) {
+        line(drawing.points[i], drawing.points[i + 1])
+      }
+
+      inFly.i = i
+
+      break
     case "line":
       sketch.stroke(drawing.color)
       sketch.strokeWeight(drawing.size)
-      sketch.line(
-        drawing.p1.x,
-        drawing.p1.y,
-        0.00075,
-        drawing.p2.x,
-        drawing.p2.y,
-        0.00075,
-      )
+      line(drawing.p1, drawing.p2)
       break
     case "dot":
       sketch.stroke(drawing.color)
@@ -110,6 +141,10 @@ function draw(drawing: Drawing, sketch: p5, pixels?: number[]) {
       floodFill(sketch, drawing, pixels)
       break
   }
+
+  function line(p1: Point, p2: Point) {
+    sketch.line(p1.x, p1.y, 0.00075, p2.x, p2.y, 0.00075)
+  }
 }
 
 const dirs = [
@@ -119,8 +154,13 @@ const dirs = [
   [-1, 0],
 ]
 
+const ffc = new Map<string, p5.Image>()
+
 async function floodFill(sketch: p5, drawing: Drawing, pixels: number[]) {
   if (drawing.type !== "flood") throw ``
+
+  const cache = sketch.createImage(sketch.width, sketch.height)
+  cache.loadPixels()
 
   const d = sketch.pixelDensity()
   const w = sketch.width
@@ -157,6 +197,12 @@ async function floodFill(sketch: p5, drawing: Drawing, pixels: number[]) {
       continue
 
     setColor(pixels, currentPos.x, currentPos.y, targetColor, d, w)
+    cache.set(currentPos.x, currentPos.y, [
+      targetColor.r,
+      targetColor.g,
+      targetColor.b,
+      255,
+    ])
 
     for (const dir of dirs) {
       const newPos = {
@@ -168,9 +214,18 @@ async function floodFill(sketch: p5, drawing: Drawing, pixels: number[]) {
         queue.push(newPos)
       } else {
         setColor(pixels, newPos.x, newPos.y, targetColor, d, w)
+        cache.set(newPos.x, newPos.y, [
+          targetColor.r,
+          targetColor.g,
+          targetColor.b,
+          255,
+        ])
       }
     }
   }
+
+  cache.updatePixels()
+  ffc.set(drawing.id, cache)
 }
 
 function pointIsOfColor(
