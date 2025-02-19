@@ -1,18 +1,4 @@
 import p5 from "p5"
-import { PropsWithChildren, useEffect, useRef, useState } from "react"
-import { initSketch } from "./sketch"
-import { drawings, inFly } from "./state"
-import { useAppDispatch, useAppSelector } from "../../app/hooks"
-import { store } from "../../app/store"
-import {
-  selectColor,
-  selectSize,
-  // selectTool,
-  setColor,
-  setSize,
-  // setTool,
-} from "./GameScreenSlice"
-import { HSVtoRGB, RGBtoHexString } from "../../utils/colors"
 import {
   LuTrash2,
   LuUndo2,
@@ -21,12 +7,38 @@ import {
   LuCircle,
   LuPen,
   LuPaintBucket,
+  LuCircleX,
 } from "react-icons/lu"
 import { TbLine } from "react-icons/tb"
+import { PropsWithChildren, useEffect, useRef, useState } from "react"
+import { initSketch } from "./sketch"
+import { GameState } from "./GameState"
+import { useAppDispatch, useAppSelector } from "../../app/hooks"
+import { store } from "../../app/store"
+import { selectColor, selectSize, setColor, setSize } from "./GameScreenSlice"
+import { HSVtoRGB, RGBtoHexString } from "../../utils/colors"
+import { BroadcastMessage, ToolType } from "@guessthesketch/common"
+import { backend, sockets } from "../../global"
+import { io } from "socket.io-client"
+
+sockets.controls?.on("error", e => {
+  console.log("error u controls:", e)
+})
+
+sockets.drawings?.on("drawing", (bm: BroadcastMessage) => {
+  console.log("drawing:", bm.message)
+  GameState.getInstance().drawings.push(bm.drawing)
+})
 
 export const GameScreen = () => {
+  useEffect(() => {
+    sockets.controls = io(`ws://${backend}/controls`)
+    sockets.drawings = io(`ws://${backend}/drawings`)
+    sockets.chat = io(`ws://${backend}/chat`)
+  }, [sockets])
+
   return (
-    <div className="page">
+    <div className="flex h-full w-full items-center justify-center">
       <div className="flex">
         <Leaderboard></Leaderboard>
         <div className="flex flex-col items-center">
@@ -40,11 +52,7 @@ export const GameScreen = () => {
 }
 
 export const Leaderboard = () => {
-  return (
-    <div>
-      <p>leaderboard</p>
-    </div>
-  )
+  return <div>{/* <p>leaderboard</p> */}</div>
 }
 
 let sketch: p5 | null = null
@@ -186,6 +194,7 @@ export const SelectTool = () => {
     if (sketch == null) return
 
     setButtons([
+      [new DeselectTool(), <LuCircleX />],
       [new SelectToolCommand(PenTool, sketch), <LuPen />],
       [new SelectToolCommand(RectTool, sketch), <LuRectangleHorizontal />],
       [new SelectToolCommand(CircleTool, sketch), <LuCircle />],
@@ -200,7 +209,9 @@ export const SelectTool = () => {
   return (
     <div>
       {buttons.map(button => (
-        <SelectToolButton command={button[0]}>{button[1]}</SelectToolButton>
+        <SelectToolButton key={button[0].getName()} command={button[0]}>
+          {button[1]}
+        </SelectToolButton>
       ))}
     </div>
   )
@@ -214,7 +225,6 @@ const SelectToolButton = (props: PropsWithChildren & { command: Command }) => {
         props.command.execute()
         e.stopPropagation()
       }}
-      key={props.command.getName()}
     >
       {props.children}
     </button>
@@ -248,14 +258,12 @@ export const SelectSize = () => {
 }
 
 export const Chat = () => {
-  return (
-    <div>
-      <p>chat</p>
-    </div>
-  )
+  return <div>{/* <p>chat</p> */}</div>
 }
 
 export abstract class Tool {
+  public abstract type: ToolType
+
   protected abstract onMousePressed(event: MouseEvent): void
   protected abstract onMouseReleased(event: MouseEvent): void
   protected abstract onMouseDragged(event: MouseEvent): void
@@ -264,8 +272,25 @@ export abstract class Tool {
 
   block: boolean = false
 
-  constructor(protected sketch: p5) {
-    sketch.mousePressed = this.helper(e => {
+  constructor(
+    protected sketch: p5,
+    protected gameState = GameState.getInstance(),
+  ) {}
+
+  showTmpDrawing(drawing: Drawing) {
+    this.gameState.inFly.drawing = drawing
+  }
+
+  // TODO
+  // crtez odavnde treba da ode u neki niz privremenih crteza
+  // gde ce cekati potvrdu ili zabranu od servera
+  commit(drawing: Drawing) {
+    this.gameState.drawings.push(drawing)
+    sockets.controls?.emit("use tool", JSON.stringify(drawing))
+  }
+
+  activate() {
+    this.sketch.mousePressed = this.helper(e => {
       try {
         if ((e.target as HTMLElement).tagName !== "CANVAS") throw ""
       } catch {
@@ -276,16 +301,16 @@ export abstract class Tool {
       this.block = false
       this.onMousePressed(e)
     })
-    sketch.mouseReleased = this.helper(e => {
+    this.sketch.mouseReleased = this.helper(e => {
       if (!this.block) {
         this.onMouseReleased(e)
       }
-      inFly.drawing = null
-      inFly.i = null
+      this.gameState.inFly.drawing = null
+      this.gameState.inFly.i = null
     })
 
-    sketch.mouseClicked = () => {}
-    sketch.mouseDragged = this.helper(e => {
+    this.sketch.mouseClicked = () => {}
+    this.sketch.mouseDragged = this.helper(e => {
       if (!this.block) {
         this.onMouseDragged(e)
       }
@@ -308,7 +333,14 @@ export interface Point {
 }
 
 class PenTool extends Tool {
+  public type: ToolType = "pen"
+
   points: Point[] = []
+
+  override showTmpDrawing(drawing: Drawing): void {
+    super.showTmpDrawing(drawing)
+    this.gameState.inFly.i = 0
+  }
 
   onMousePressed(event: MouseEvent) {
     this.points = [
@@ -324,8 +356,7 @@ class PenTool extends Tool {
       points: this.points,
     }
 
-    inFly.drawing = tmp
-    inFly.i = 0
+    this.showTmpDrawing(tmp)
   }
 
   onMouseDragged(event: MouseEvent) {
@@ -333,6 +364,9 @@ class PenTool extends Tool {
       x: this.sketch.mouseX,
       y: this.sketch.mouseY,
     })
+
+    // Ovde nije potrebno da explicitno postavimo in fly drawing
+    // zbog prenosa vrednosti po referenci
 
     //this.sketch.redraw()
   }
@@ -344,7 +378,8 @@ class PenTool extends Tool {
       points: [...this.points],
     }
 
-    drawings.push(drawing)
+    this.commit(drawing)
+
     //this.sketch.redraw()
   }
 
@@ -352,6 +387,8 @@ class PenTool extends Tool {
 }
 
 class RectTool extends Tool {
+  public type: ToolType = "pen"
+
   startingPoint: Point = {
     x: Infinity,
     y: Infinity,
@@ -365,7 +402,7 @@ class RectTool extends Tool {
   }
 
   onMouseDragged(_: MouseEvent): void {
-    const tmpRect: Drawing = {
+    const tmp: Drawing = {
       ...DrawingAutoFillIn(),
       type: "rect",
       topLeft: {
@@ -376,12 +413,13 @@ class RectTool extends Tool {
       h: Math.round(this.sketch.mouseY - this.startingPoint.y),
     }
 
-    inFly.drawing = tmpRect
+    this.showTmpDrawing(tmp)
+
     //this.sketch.redraw()
   }
 
   onMouseReleased(_: MouseEvent): void {
-    const rect: Drawing = {
+    const drawing: Drawing = {
       ...DrawingAutoFillIn(),
       type: "rect",
       topLeft: {
@@ -392,7 +430,8 @@ class RectTool extends Tool {
       h: Math.round(this.sketch.mouseY - this.startingPoint.y),
     }
 
-    drawings.push(rect)
+    this.commit(drawing)
+
     //this.sketch.redraw()
   }
 
@@ -400,6 +439,8 @@ class RectTool extends Tool {
 }
 
 class CircleTool extends Tool {
+  public type: ToolType = "pen"
+
   startingPoint: Point = {
     x: Infinity,
     y: Infinity,
@@ -424,7 +465,7 @@ class CircleTool extends Tool {
   }
 
   onMouseDragged(_: MouseEvent): void {
-    const tmpCircle: Drawing = {
+    const tmp: Drawing = {
       ...DrawingAutoFillIn(),
       type: "circle",
       p: {
@@ -434,12 +475,13 @@ class CircleTool extends Tool {
       r: this.getRadius(),
     }
 
-    inFly.drawing = tmpCircle
+    this.showTmpDrawing(tmp)
+
     //this.sketch.redraw()
   }
 
   onMouseReleased(_: MouseEvent): void {
-    const circle: Drawing = {
+    const drawing: Drawing = {
       ...DrawingAutoFillIn(),
       type: "circle",
       p: {
@@ -449,7 +491,8 @@ class CircleTool extends Tool {
       r: this.getRadius(),
     }
 
-    drawings.push(circle)
+    this.commit(drawing)
+
     //this.sketch.redraw()
   }
 
@@ -457,6 +500,8 @@ class CircleTool extends Tool {
 }
 
 class LineTool extends Tool {
+  public type: ToolType = "pen"
+
   startingPoint: Point = {
     x: Infinity,
     y: Infinity,
@@ -470,7 +515,7 @@ class LineTool extends Tool {
   }
 
   onMouseDragged(_: MouseEvent): void {
-    const tmpLine: Drawing = {
+    const tmp: Drawing = {
       ...DrawingAutoFillIn(),
       type: "line",
       p1: {
@@ -483,12 +528,13 @@ class LineTool extends Tool {
       },
     }
 
-    inFly.drawing = tmpLine
+    this.showTmpDrawing(tmp)
+
     //this.sketch.redraw()
   }
 
   onMouseReleased(_: MouseEvent): void {
-    const line: Drawing = {
+    const drawing: Drawing = {
       ...DrawingAutoFillIn(),
       type: "line",
       p1: {
@@ -501,7 +547,8 @@ class LineTool extends Tool {
       },
     }
 
-    drawings.push(line)
+    this.commit(drawing)
+
     //this.sketch.redraw()
   }
 
@@ -509,9 +556,11 @@ class LineTool extends Tool {
 }
 
 class FloodFillTool extends Tool {
+  public type: ToolType = "pen"
+
   onMouseReleased(event: MouseEvent): void {
     let drawing: Drawing
-    if (drawings.length == 0) {
+    if (this.gameState.drawings.length == 0) {
       drawing = {
         ...DrawingAutoFillIn(),
         type: "rect",
@@ -533,7 +582,8 @@ class FloodFillTool extends Tool {
       }
     }
 
-    drawings.push(drawing)
+    this.commit(drawing)
+
     //this.sketch.redraw()
   }
 
@@ -544,6 +594,8 @@ class FloodFillTool extends Tool {
 }
 
 class PipetteTool extends Tool {
+  public type: ToolType = "pen"
+
   onMouseReleased(event: MouseEvent): void {
     const res = this.sketch.get(this.sketch.mouseX, this.sketch.mouseY)
     let p1 = res[0].toString(16)
@@ -573,7 +625,8 @@ class UndoCommand extends Command {
   }
 
   execute(): void {
-    drawings.pop()
+    const gameState = GameState.getInstance()
+    gameState.drawings.pop()
     //this.sketch.redraw()
   }
   getName(): string {
@@ -587,11 +640,29 @@ class DeleteAllCommand extends Command {
   }
 
   execute(): void {
-    drawings.length = 0
+    const gameState = GameState.getInstance()
+    gameState.drawings.length = 0
     //this.sketch.redraw()
   }
   getName(): string {
     return "Bin"
+  }
+}
+
+class DeselectTool extends Command {
+  execute(): void {
+    const gameState = GameState.getInstance()
+    const prev = gameState.currentTool
+    if (prev) {
+      prev.onDeselect()
+      sockets.controls?.emit("deselect tool")
+    }
+
+    gameState.currentTool = null
+  }
+
+  getName(): string {
+    return "Deselect"
   }
 }
 
@@ -604,13 +675,19 @@ class SelectToolCommand extends Command {
   }
 
   execute(): void {
-    // const prev = selectTool(store.getState())
-    // if (prev) {
-    //   prev.onDeselect()
-    // }
+    const gameState = GameState.getInstance()
+    const prev = gameState.currentTool
+    if (prev) {
+      prev.onDeselect()
+      sockets.controls?.emit("deselect tool")
+    }
 
-    const tool = new this.ToolConstructor(this.sketch)
-    // store.dispatch(setTool(tool))
+    const newTool = new this.ToolConstructor(this.sketch)
+    sockets.controls?.emit("select tool", newTool.type)
+
+    // TODO uradi ovo tek kada server potvrdi
+    newTool.activate()
+    gameState.currentTool = newTool
   }
 
   getName() {

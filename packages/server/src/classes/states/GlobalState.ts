@@ -1,10 +1,29 @@
 import { RoomState } from "./RoomState";
-import { RoomId } from "../../types/types";
+import type { PlayerId, RoomId } from "../../types/types";
+import type { Room } from "../Room";
 
-// -----------------
-// --- Singleton ---
-// -----------------
 export class GlobalState {
+  private constructor(private rooms = new Map<RoomId, Room>()) {}
+
+  addRoom(roomState: Room) {
+    this.rooms.set(roomState.id, roomState);
+  }
+
+  removeRoom(roomId: RoomId) {
+    this.rooms.delete(roomId);
+  }
+
+  getRoomById(roomId: RoomId): Room | null {
+    return this.rooms.get(roomId) ?? null;
+  }
+
+  getAllRooms() {
+    return this.rooms.values();
+  }
+
+  // -----------------
+  // --- Singleton ---
+  // -----------------
   private static instance: GlobalState | null = null;
 
   static getInstance() {
@@ -12,29 +31,5 @@ export class GlobalState {
       this.instance = new GlobalState();
     }
     return this.instance;
-  }
-
-  private constructor(private rooms = new Map<RoomId, RoomState>()) {}
-
-  registerRoom(roomState: RoomState) {
-    this.rooms.set(roomState.id, roomState);
-  }
-
-  unregisterRoom(roomId: RoomId) {
-    this.rooms.delete(roomId);
-  }
-
-  /**
-   * This functions should not be in any way exposed to an
-   * end users. You should call it only for room ids that you
-   * manage. It will throw if bad room id is provided.
-   */
-  getRoomById(roomId: RoomId) {
-    const res = this.rooms.get(roomId);
-    if (res === undefined) {
-      throw `Internal error. Can't find room with provided id`;
-    }
-
-    return res;
   }
 }

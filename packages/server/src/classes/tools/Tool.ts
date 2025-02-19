@@ -1,4 +1,4 @@
-import {
+import type {
   ToolType,
   BroadcastMessage,
   RoomId,
@@ -17,10 +17,10 @@ export abstract class DecoratorTool {
   abstract toolType: ToolType;
 
   abstract canBeAssigned(): boolean;
-  abstract init();
-  abstract use(param: any);
-  abstract releaseTool();
-  abstract releaseResources();
+  abstract init(): void;
+  abstract use(param: any): any;
+  abstract releaseTool(): void;
+  abstract releaseResources(): void;
   abstract getBroadcastMessage(param: any): BroadcastMessage;
 
   constructor(
@@ -61,7 +61,7 @@ export abstract class Tool {
   /**
    * Init is called once a tool is attached and ready.
    */
-  abstract init();
+  abstract init(): void;
 
   // -----------------------
   // --- Template method ---
@@ -71,9 +71,7 @@ export abstract class Tool {
     const toolState = roomState.getToolState(this.toolType);
     toolState.timesUsed++;
 
-    const bm = this.getBroadcastMessage(param);
-    console.log(bm);
-    return bm;
+    return this.getBroadcastMessage(param);
   }
 
   deselect() {

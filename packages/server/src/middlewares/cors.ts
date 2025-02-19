@@ -1,8 +1,8 @@
-import cors, { type CorsOptions } from "cors";
+import cors from "cors";
 
-const options: CorsOptions = {
+export const corsOptions = {
   credentials: true,
   origin: ["http://localhost:5173"],
 };
 
-export default cors(options);
+export default cors(corsOptions);

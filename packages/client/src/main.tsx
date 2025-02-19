@@ -1,36 +1,18 @@
-import { io } from "socket.io-client"
 import React from "react"
+import { BrowserRouter, Route, Routes } from "react-router"
 import { createRoot } from "react-dom/client"
 import { Provider } from "react-redux"
-import App from "./App"
 import { store } from "./app/store"
 import "./index.css"
+import { Rooms } from "./features/rooms/Rooms"
+import { Lobby } from "./features/lobby/Lobby"
+import { GameScreen } from "./features/gameScreen/GameScreen"
+import { Login } from "./features/auth/LoginScreen"
+import { refresh } from "./features/auth/AuthSlice"
+
+store.dispatch(refresh())
 
 const container = document.getElementById("root")
-
-// const result = await fetch("http://localhost:8080/login", {
-//   headers: new Headers({ "content-type": "application/json" }),
-//   method: "post",
-//   body: JSON.stringify({
-//     username: "Aaras",
-//   }),
-// })
-
-// console.log(`Login result:`, result)
-
-// const socket = io("ws://localhost:8080")
-// const chat = io("ws://localhost:8080/chat")
-// const drawings = io("ws://localhost:8080/drawings")
-// const controls = io("ws://localhost:8080/controls")
-
-// document.onclick = e => {
-//   const tmp = {
-//     x: e.clientX,
-//     y: e.clientY,
-//   }
-
-//   drawings.emit("draw", JSON.stringify(tmp))
-// }
 
 if (container) {
   const root = createRoot(container)
@@ -38,7 +20,14 @@ if (container) {
   root.render(
     <React.StrictMode>
       <Provider store={store}>
-        <App />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/rooms" element={<Rooms />} />
+            <Route path="/lobby" element={<Lobby />} />
+            <Route path="/game" element={<GameScreen />} />
+          </Routes>
+        </BrowserRouter>
       </Provider>
     </React.StrictMode>,
   )

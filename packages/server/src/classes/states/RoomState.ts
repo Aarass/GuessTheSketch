@@ -1,5 +1,10 @@
-import { RoomConfig, ToolBuilder } from "../../tmp";
-import { PlayerId, RoomId, ToolType, toolTypes } from "../../types/types";
+import { type RoomConfig, ToolBuilder } from "../../tmp";
+import {
+  type PlayerId,
+  type RoomId,
+  type ToolType,
+  toolTypes,
+} from "../../types/types";
 import { Tool } from "../tools/Tool";
 import { GlobalState } from "./GlobalState";
 import { ToolState } from "./ToolState";
@@ -19,7 +24,7 @@ export class RoomState {
 
   constructor(config: RoomConfig) {
     // TODO
-    this.id = `${Math.random() * 1000}`;
+    this.id = `${Math.round(Math.random() * 1000)}`;
 
     // @ts-ignore
     this.toolBuilders = {};
@@ -32,8 +37,6 @@ export class RoomState {
       this.toolBuilders[type] = new ToolBuilder(this.id, type, conf);
       this.toolStates[type] = new ToolState(conf);
     }
-
-    GlobalState.getInstance().registerRoom(this);
   }
 
   getNewTool(toolType: ToolType, playerId: PlayerId): Tool {

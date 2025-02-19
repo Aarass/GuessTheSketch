@@ -2,7 +2,7 @@ import session from "express-session";
 import { RedisStore } from "connect-redis";
 import { getClient } from "../drivers/redis";
 
-let redisStore = new RedisStore({
+const redisStore = new RedisStore({
   client: getClient(),
   prefix: "sess_",
 });

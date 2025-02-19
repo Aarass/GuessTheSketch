@@ -1,60 +1,67 @@
-import express, { type Request } from "express";
+import express from "express";
 import { Server } from "socket.io";
 import { createServer } from "http";
 import sessionMiddleware from "./middlewares/session";
-import corsMiddleware from "./middlewares/cors";
+import corsMiddleware, { corsOptions } from "./middlewares/cors";
+import { authenticate as expressAuth } from "./middlewares/express/authenticate";
+import { authenticate as socketAuth } from "./middlewares/socket.io/authenticate";
 import authController from "./controllers/authController";
-import { authenticate } from "./middlewares/authenticate";
+import roomsController from "./controllers/roomsController";
+import { registerHandlersForControls } from "./namespaces/controls/controls";
+import { registerHandlersForChat } from "./namespaces/chat/chat";
+import { roomMiddleware } from "./middlewares/socket.io/room";
+import { registerHandlersForGlobal } from "./namespaces/global/global";
 
 const app = express();
-const server = createServer(app);
-const io = new Server(server);
-
 app.use(express.json());
 app.use(corsMiddleware);
 app.use(sessionMiddleware);
 
-io.engine.use(corsMiddleware);
+app.use(authController);
+app.use(roomsController);
+app.get("/", expressAuth, (_, res) => {
+  res.sendStatus(200);
+});
+
+const server = createServer(app);
+
+const io = new Server(server, { cors: corsOptions });
 io.engine.use(sessionMiddleware);
 
-io.of("chat").on("connection", (socket) => {
-  const session = (socket.request as Request).session;
-
-  if (!session || !session.data) {
-    console.log("Not authenticated");
-  } else {
-    console.log("Authenticated");
-  }
-
-  console.log("a user connected to chat");
-});
-
-io.of("drawings").on("connection", (socket) => {
-  console.log("a user connected to drawings");
-
-  socket.onAny((...args) => {
-    console.log(args);
+io.use(socketAuth)
+  .use(roomMiddleware)
+  .on("connection", async (socket) => {
+    console.log("User connected to global");
+    registerHandlersForGlobal(io, socket);
   });
 
-  socket.on("draw", (args) => {
-    console.log(args);
+io.of("drawings")
+  .use(socketAuth)
+  .use(roomMiddleware)
+  .on("connection", (socket) => {
+    console.log("User connected to drawings");
+    socket.join(socket.request.session.roomId!);
   });
-});
 
-io.of("controls").on("connection", (socket) => {
-  console.log("a user connected to controls");
-});
+io.of("chat")
+  .use(socketAuth)
+  .use(roomMiddleware)
+  .on("connection", (socket) => {
+    console.log("User connected to chat");
+    socket.join(socket.request.session.roomId!);
+    registerHandlersForChat(io, socket);
+  });
 
-io.on("connection", (socket) => {
-  console.log("a user connected globally");
-});
+io.of("controls")
+  .use(socketAuth)
+  .use(roomMiddleware)
+  .on("connection", (socket) => {
+    console.log("User connected to controls");
+    socket.join(socket.request.session.roomId!);
+    registerHandlersForControls(io, socket);
+  });
 
-app.use(authController);
-
-server.listen(8080, () => {
-  console.log("server running at http://localhost:8080");
-});
-
-app.get("/", authenticate, (req, res) => {
-  res.send("Hello World!");
+// TODO expose
+server.listen(8080, "0.0.0.0", () => {
+  console.log("server started on: ", server.address());
 });

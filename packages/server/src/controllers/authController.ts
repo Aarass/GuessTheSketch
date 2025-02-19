@@ -1,20 +1,24 @@
 import express from "express";
 import createHttpError from "http-errors";
-
-import { LoginDtoSchema, type LoginDto } from "@guessthesketch/common";
+import { LoginDtoSchema, type LoginResult } from "@guessthesketch/common";
 import authService from "../services/authService";
+import type { RoomId } from "../types/types";
+import type { Session, SessionData } from "express-session";
 
-let router = express.Router();
-
-declare module "express-serve-static-core" {
-  interface Request {
-    session: {
-      data: {
-        userId?: string;
-      };
-    };
+declare module "express-session" {
+  interface SessionData {
+    userId: string;
+    roomId: RoomId | null;
   }
 }
+
+declare module "http" {
+  interface IncomingMessage {
+    session: Session & SessionData;
+  }
+}
+
+let router = express.Router();
 
 router.post("/login", async (req, res, next) => {
   const validationResult = await LoginDtoSchema.safeParseAsync(req.body);
@@ -25,18 +29,31 @@ router.post("/login", async (req, res, next) => {
   const data = validationResult.data;
   const user = await authService.login(data);
 
-  console.log(user);
+  req.session.userId = user.id;
+  req.session.roomId = null;
 
-  req.session.data = {
-    userId: user.id,
-  };
+  const result: LoginResult = { id: user.id };
+  res.status(200).send(result);
+});
 
-  res.sendStatus(200);
+router.post("/refresh", async (req, res, next) => {
+  const userId = req.session.userId;
+
+  if (userId) {
+    const result: LoginResult = { id: userId };
+    res.status(200).send(result);
+  } else {
+    res.sendStatus(401);
+  }
 });
 
 router.post("/logout", async (req, res, next) => {
   try {
-    (req.session as any).destroy();
+    req.session.destroy((err) => {
+      if (err) {
+        throw err;
+      }
+    });
     res.sendStatus(200);
   } catch (err) {
     console.error(err);

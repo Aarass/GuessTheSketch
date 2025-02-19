@@ -3,9 +3,9 @@ import { ConsumableTool } from "./classes/tools/Consumable";
 import { concreteToolMap } from "./classes/tools/Map";
 import { TimeoutableTool } from "./classes/tools/Timeoutable";
 import { Tool } from "./classes/tools/Tool";
-import { PlayerId, RoomId, ToolType } from "./types/types";
+import type { PlayerId, RoomId, ToolType } from "./types/types";
 
-function assignTool(tool: Tool) {
+export function assignTool(tool: Tool) {
   if (tool.canBeAssigned()) {
     tool.assign();
     tool.init();
@@ -14,17 +14,17 @@ function assignTool(tool: Tool) {
   }
 }
 
-function useTool(room: RoomState, playerId: PlayerId, param: any) {
+export function useTool(room: RoomState, playerId: PlayerId, param: any) {
   const tool = room.getPlayersTool(playerId);
 
   if (tool === undefined) {
     throw `No tool`;
   }
 
-  tool.use(param);
+  return tool.use(param);
 }
 
-function deselectTool(room: RoomState, playerId: PlayerId) {
+export function deselectTool(room: RoomState, playerId: PlayerId) {
   const tool = room.getPlayersTool(playerId);
 
   if (tool === undefined) {

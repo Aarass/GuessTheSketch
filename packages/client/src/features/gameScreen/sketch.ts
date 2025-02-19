@@ -1,5 +1,5 @@
 import p5 from "p5"
-import { drawings, inFly } from "./state"
+import { GameState } from "./GameState"
 import { Drawing, Point } from "./GameScreen"
 import { colorsAreEqual, HexStringToRGB } from "../../utils/colors"
 
@@ -7,6 +7,8 @@ type Framebuffer = p5.Framebuffer & {
   loadPixels(): void
   updatePixels(): void
 }
+
+const gameState = GameState.getInstance()
 
 const snapshots: number[][] = []
 const snapshotStep = 5
@@ -37,15 +39,18 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
 
     sketch.draw = () => {
       let snapshotI = -1
-      if (/* undo happened */ nextStart > drawings.length) {
+      if (/* undo happened */ nextStart > gameState.drawings.length) {
         snapshotI = snapshots.length - 1
         for (; snapshotI >= 0; snapshotI--) {
-          if (snapshotI * snapshotStep + snapshotStep > drawings.length) {
+          if (
+            snapshotI * snapshotStep + snapshotStep >
+            gameState.drawings.length
+          ) {
             snapshots.pop()
           } else break
         }
 
-        if (drawings.length === 0) {
+        if (gameState.drawings.length === 0) {
           nextStart = -1
         } else {
           nextStart = (snapshotI + 1) * snapshotStep //- 1
@@ -68,7 +73,7 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
       //   krecem sa crtanjem od [${nextStart}] crteza`,
       // )
 
-      if (nextStart !== drawings.length) {
+      if (nextStart !== gameState.drawings.length) {
         commitBuffer.begin()
 
         if (nextStart <= 0) {
@@ -78,22 +83,28 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
         applyTransforms()
 
         let i = Math.max(nextStart, 0)
-        for (; i < drawings.length; i++) {
-          const drawing = drawings[i]
+        for (; i < gameState.drawings.length; i++) {
+          const drawing = gameState.drawings[i]
 
           if (drawing.type === "flood") {
-            if (ffc.has(drawing.id)) {
-              sketch.image(ffc.get(drawing.id)!, 0, 0)
-              continue
+            if (!ffc.has(drawing.id)) {
+              commitBuffer.loadPixels()
+              draw(drawing, sketch, commitBuffer.pixels)
             }
 
-            // TODO
-            // ovde moze optimizacija
-            // updatePixels prihvata "bounding box promena"
-            // znaci moze da mu se zada regija koju treba da updata umesto da updata ceo ekran
-            commitBuffer.loadPixels()
-            draw(drawing, sketch, commitBuffer.pixels)
-            commitBuffer.updatePixels()
+            if (ffc.has(drawing.id)) {
+              sketch.image(ffc.get(drawing.id)!, 0, 0)
+            } else {
+              throw `nemoguce`
+            }
+
+            // // TODO
+            // // ovde moze optimizacija
+            // // updatePixels prihvata "bounding box promena"
+            // // znaci moze da mu se zada regija koju treba da updata umesto da updata ceo ekran
+            // commitBuffer.loadPixels()
+            // draw(drawing, sketch, commitBuffer.pixels)
+            // commitBuffer.updatePixels()
           } else {
             draw(drawing, sketch, [])
           }
@@ -103,7 +114,7 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
         commitBuffer.end()
       }
 
-      const len = drawings.length
+      const len = gameState.drawings.length
       if (len > 0 && len % snapshotStep === 0) {
         const j = len / snapshotStep - 1
 
@@ -115,18 +126,18 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
         }
       }
 
-      const drawing = inFly.drawing
+      const drawingInFly = gameState.inFly.drawing
 
       applyTransforms()
       if (
-        drawing === null ||
-        !(drawing.type === "freeline" || drawing.type === "dot")
+        drawingInFly === null ||
+        !(drawingInFly.type === "freeline" || drawingInFly.type === "dot")
       ) {
         sketch.image(commitBuffer, 0, 0)
       }
 
-      if (drawing) {
-        draw(drawing, sketch)
+      if (drawingInFly) {
+        draw(drawingInFly, sketch)
       }
 
       if (false) {
@@ -156,16 +167,16 @@ function draw(drawing: Drawing, sketch: p5, pixels?: number[]) {
 
       let i = 0
 
-      if (drawing == inFly.drawing) {
-        if (inFly.i === null) throw `zaboravio si da postavis i`
-        i = inFly.i
+      if (drawing == gameState.inFly.drawing) {
+        if (gameState.inFly.i === null) throw `zaboravio si da postavis i`
+        i = gameState.inFly.i
       }
 
       for (; i < drawing.points.length - 1; i++) {
         line(drawing.points[i], drawing.points[i + 1])
       }
 
-      inFly.i = i
+      gameState.inFly.i = i
 
       break
     case "line":
@@ -213,6 +224,7 @@ async function floodFill(sketch: p5, drawing: Drawing, pixels: number[]) {
 
   const cache = sketch.createImage(sketch.width, sketch.height)
   cache.loadPixels()
+  const imgPixels = cache.pixels
 
   const d = sketch.pixelDensity()
   const w = sketch.width

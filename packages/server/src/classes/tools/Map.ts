@@ -1,4 +1,4 @@
-import { ToolType, RoomId, PlayerId } from "../../types/types";
+import type { ToolType, RoomId, PlayerId } from "../../types/types";
 import { Pen } from "./concrete/Pen";
 import { Tool } from "./Tool";
 

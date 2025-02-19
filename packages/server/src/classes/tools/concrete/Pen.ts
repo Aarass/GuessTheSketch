@@ -1,4 +1,4 @@
-import { BroadcastMessage, ToolType } from "../../../types/types";
+import type { BroadcastMessage, ToolType } from "../../../types/types";
 import { Tool } from "../Tool";
 
 export class Pen extends Tool {
@@ -15,7 +15,7 @@ export class Pen extends Tool {
 
     return {
       message: `Player used pen tool`,
-      params: param,
+      drawing: param,
     };
   }
 }
