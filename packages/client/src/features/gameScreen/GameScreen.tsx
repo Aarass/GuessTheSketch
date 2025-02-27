@@ -20,6 +20,9 @@ import { HSVtoRGB, RGBtoHexString } from "../../utils/colors"
 import { BroadcastMessage, ToolType } from "@guessthesketch/common"
 import { backend, sockets } from "../../global"
 import { io } from "socket.io-client"
+import { selectRoomInfo } from "../rooms/RoomSlice"
+import { selectMyId } from "../auth/AuthSlice"
+import { LogoutButton } from "../global/Logout"
 
 sockets.controls?.on("error", e => {
   console.log("error u controls:", e)
@@ -31,11 +34,20 @@ sockets.drawings?.on("drawing", (bm: BroadcastMessage) => {
 })
 
 export const GameScreen = () => {
+  const roomInfo = useAppSelector(selectRoomInfo)
+  const myId = useAppSelector(selectMyId)
+
   useEffect(() => {
-    sockets.controls = io(`ws://${backend}/controls`)
-    sockets.drawings = io(`ws://${backend}/drawings`)
-    sockets.chat = io(`ws://${backend}/chat`)
-  }, [sockets])
+    if (myId === null) return
+
+    if (sockets.controls === null) {
+      sockets.controls = io(`ws://${backend}/controls`)
+    }
+
+    if (sockets.drawings === null) {
+      sockets.drawings = io(`ws://${backend}/drawings`)
+    }
+  }, [sockets.controls, sockets.drawings, myId])
 
   return (
     <div className="flex h-full w-full items-center justify-center">
@@ -47,6 +59,8 @@ export const GameScreen = () => {
         </div>
         <Chat></Chat>
       </div>
+
+      <LogoutButton />
     </div>
   )
 }
@@ -258,6 +272,15 @@ export const SelectSize = () => {
 }
 
 export const Chat = () => {
+  const myId = useAppSelector(selectMyId)
+
+  useEffect(() => {
+    if (myId === null) return
+
+    if (sockets.chat === null) {
+      sockets.chat = io(`ws://${backend}/chat`)
+    }
+  }, [sockets.chat, myId])
   return <div>{/* <p>chat</p> */}</div>
 }
 

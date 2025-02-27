@@ -1,9 +1,18 @@
-import type { Server, Socket } from "socket.io";
+import type {
+  GameConfig,
+  GlobalNamespace,
+  GlobalSocket,
+  Player,
+} from "@guessthesketch/common";
 import userService from "../../services/userService";
-import type { GameConfig, Player } from "@guessthesketch/common";
 import { GlobalState } from "../../classes/states/GlobalState";
+import type { GuardedSocket } from "../../utility/guarding";
+import type { MyNamespaces } from "../..";
 
-export function registerHandlersForGlobal(io: Server, socket: Socket) {
+export function registerHandlersForGlobal(
+  namespaces: MyNamespaces,
+  socket: GuardedSocket<GlobalSocket>
+) {
   const state = GlobalState.getInstance();
   const userId = socket.request.session.userId;
   const roomId = socket.request.session.roomId!;
@@ -32,7 +41,7 @@ export function registerHandlersForGlobal(io: Server, socket: Socket) {
       name: user.username,
     };
 
-    socket.emit("all players", allPlayers);
+    socket.emit("sync players", allPlayers);
     socket.join(roomId);
     socket.to(roomId).emit("player joined room", player);
   });
@@ -59,7 +68,7 @@ export function registerHandlersForGlobal(io: Server, socket: Socket) {
 
     // TODO validate config
     room.startGame(config);
-    io.to(roomId).emit("start game");
+    namespaces.globalNamespace.to(roomId).emit("start game");
   });
 }
 

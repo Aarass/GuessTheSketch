@@ -4,6 +4,7 @@ import { selectMyId } from "../auth/AuthSlice"
 import { NotLoggedIn } from "../auth/RedirectToLoginScreen"
 import { useNavigate } from "react-router"
 import { joinRoom, createRoom, selectRoomInfo } from "./RoomSlice"
+import { LogoutButton } from "../global/Logout"
 
 export function Rooms() {
   const navigate = useNavigate()
@@ -13,12 +14,15 @@ export function Rooms() {
 
   const roomInfo = useAppSelector(selectRoomInfo)
   useEffect(() => {
+    if (myId === null) return
+
     if (roomInfo.id !== null && roomInfo.ownerId !== null) {
       navigate("/lobby")
     }
-  }, [roomInfo])
+  }, [roomInfo, myId])
 
-  return myId ? (
+  // return myId ? (
+  return true ? (
     <div className="flex h-full w-full items-center justify-center">
       <form
         onSubmit={e => {
@@ -48,6 +52,7 @@ export function Rooms() {
           <button type="submit">Join room</button>
         </div>
       </form>
+      <LogoutButton />
     </div>
   ) : (
     NotLoggedIn()

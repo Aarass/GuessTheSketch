@@ -2,6 +2,11 @@ export { LoginDtoSchema } from "./schemas/authSchemas";
 export type { LoginDto } from "./types/authTypes";
 export type { User } from "./types/userTypes";
 
+export * from "./namespaces/global";
+export * from "./namespaces/controls";
+export * from "./namespaces/drawings";
+export * from "./namespaces/chat";
+
 export const toolTypes = ["pen"] as const;
 export type ToolType = (typeof toolTypes)[number];
 

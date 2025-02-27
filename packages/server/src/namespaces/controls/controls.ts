@@ -1,17 +1,23 @@
+import type { ControlsSocket, ToolType } from "@guessthesketch/common";
 import { deselectTool } from "./events/deselectTool";
 import { useTool } from "./events/useTool";
 import { toolTypes } from "../../types/types";
 import { selectTool } from "./events/selectTool";
-import type { ToolType } from "@guessthesketch/common";
-import type { Server, Socket } from "socket.io";
+import type { GuardedSocket } from "../../utility/guarding";
+import type { MyNamespaces } from "../..";
 
-export function registerHandlersForControls(io: Server, socket: Socket) {
-  socket.on("select tool", (param: string) => {
+export function registerHandlersForControls(
+  namespaces: MyNamespaces,
+  socket: GuardedSocket<ControlsSocket>
+) {
+  socket.join(socket.request.session.roomId);
+
+  socket.on("select tool", (param: ToolType) => {
     if (!isToolType(param)) {
       return console.log("Parameter is not a tool type");
     }
 
-    selectTool(io, socket, param);
+    selectTool(namespaces, socket, param);
   });
 
   socket.on("use tool", (param: string) => {
@@ -22,12 +28,12 @@ export function registerHandlersForControls(io: Server, socket: Socket) {
       return console.log("Bad parameter");
     }
 
-    useTool(io, socket, obj);
+    useTool(namespaces, socket, obj);
   });
 
-  ["disconnect", "deselect tool"].forEach((event) =>
+  (["disconnect", "deselect tool"] as const).forEach((event) =>
     socket.on(event, () => {
-      deselectTool(io, socket);
+      deselectTool(namespaces, socket);
     })
   );
 }

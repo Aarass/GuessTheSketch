@@ -13,6 +13,7 @@ import {
   selectRoomInfo,
   syncPlayers,
 } from "../rooms/RoomSlice"
+import { LogoutButton } from "../global/Logout"
 
 const initialConfig = `{
     "rounds": {
@@ -38,13 +39,13 @@ export function Lobby() {
   const myId = useAppSelector(selectMyId)
   const [config, setConfig] = useState(initialConfig)
 
-  const iamOwner = roomInfo.ownerId === myId
-
   useEffect(() => {
+    if (myId === null) return
+
     if (sockets.global === null) {
       sockets.global = io(`ws://${backend}`, { withCredentials: true })
 
-      sockets.global.on("all players", (players: Player[]) => {
+      sockets.global.on("sync players", (players: Player[]) => {
         dispatch(syncPlayers(players))
       })
 
@@ -62,15 +63,16 @@ export function Lobby() {
 
       sockets.global.emit("ready")
     }
-  }, [sockets])
+  }, [sockets.global, myId])
 
-  return myId ? (
+  // return myId ? (
+  return true ? (
     <div className="flex h-full w-full flex-col items-center justify-center">
       <p>{roomInfo.id}</p>
       <div className="flex">
         <Players />
         <div className="flex flex-col">
-          {iamOwner ? (
+          {roomInfo.ownerId === myId ? (
             <form
               onSubmit={e => {
                 e.preventDefault()
@@ -94,6 +96,8 @@ export function Lobby() {
           )}
         </div>
       </div>
+
+      <LogoutButton />
     </div>
   ) : (
     NotLoggedIn()
