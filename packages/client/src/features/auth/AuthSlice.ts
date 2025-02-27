@@ -1,4 +1,5 @@
 import { createAppSlice } from "../../app/createAppSlice"
+import { sockets } from "../../global"
 import {
   login as loginRequest,
   logout as logoutRequest,
@@ -46,7 +47,16 @@ export const authSlice = createAppSlice({
       },
       {
         fulfilled: state => {
-          state.myId = null
+          state.myId = initialState.myId
+
+          sockets.global?.disconnect()
+          sockets.global = null
+          sockets.controls?.disconnect()
+          sockets.controls = null
+          sockets.drawings?.disconnect()
+          sockets.drawings = null
+          sockets.chat?.disconnect()
+          sockets.chat = null
         },
       },
     ),

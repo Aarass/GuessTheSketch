@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "bun run src/index.ts",
+    "check": "bun tsc --noEmit --skipLibCheck",
     "dev": "bun --watch src/index.ts"
   },
   "devDependencies": {

@@ -7,6 +7,8 @@ export * from "./namespaces/controls";
 export * from "./namespaces/drawings";
 export * from "./namespaces/chat";
 
+export * from "./types/drawings";
+
 export const toolTypes = ["pen"] as const;
 export type ToolType = (typeof toolTypes)[number];
 
@@ -62,4 +64,9 @@ export interface JoinRoomResult {
 export interface Player {
   id: PlayerId;
   name: string;
+}
+
+export interface Point {
+  x: number;
+  y: number;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { backend, sockets } from "../../global"
 import { io } from "socket.io-client"
 import { GameConfig, Player, PlayerId } from "@guessthesketch/common"
@@ -33,40 +33,56 @@ const initialConfig = `{
   }`
 
 export function Lobby() {
+  const isFirstTime = useRef(true)
+
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const roomInfo = useAppSelector(selectRoomInfo)
   const myId = useAppSelector(selectMyId)
   const [config, setConfig] = useState(initialConfig)
 
+  const onSyncPlayers = (players: Player[]) => {
+    dispatch(syncPlayers(players))
+  }
+
+  const onPlayerJoined = (player: Player) => {
+    dispatch(playerJoined(player))
+  }
+
+  const onPlayerLeft = (playerId: PlayerId) => {
+    dispatch(playerLeft(playerId))
+  }
+
+  const onGameStart = () => {
+    navigate("/game")
+  }
+
   useEffect(() => {
     if (myId === null) return
 
     if (sockets.global === null) {
       sockets.global = io(`ws://${backend}`, { withCredentials: true })
-
-      sockets.global.on("sync players", (players: Player[]) => {
-        dispatch(syncPlayers(players))
-      })
-
-      sockets.global.on("player joined room", (player: Player) => {
-        dispatch(playerJoined(player))
-      })
-
-      sockets.global.on("player left room", (playerId: PlayerId) => {
-        dispatch(playerLeft(playerId))
-      })
-
-      sockets.global.on("start game", () => {
-        navigate("/game")
-      })
-
-      sockets.global.emit("ready")
     }
-  }, [sockets.global, myId])
 
-  // return myId ? (
-  return true ? (
+    sockets.global.on("sync players", onSyncPlayers)
+    sockets.global.on("player joined room", onPlayerJoined)
+    sockets.global.on("player left room", onPlayerLeft)
+    sockets.global.on("start game", onGameStart)
+
+    if (isFirstTime.current) {
+      sockets.global.emit("ready")
+      isFirstTime.current = false
+    }
+
+    return () => {
+      sockets.global?.off("sync players")
+      sockets.global?.off("player joined room")
+      sockets.global?.off("player left room")
+      sockets.global?.off("start game")
+    }
+  }, [])
+
+  return myId ? (
     <div className="flex h-full w-full flex-col items-center justify-center">
       <p>{roomInfo.id}</p>
       <div className="flex">

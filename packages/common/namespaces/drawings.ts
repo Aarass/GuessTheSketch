@@ -1,11 +1,9 @@
 import { Namespace, Socket } from "socket.io";
 
-interface ClientToServerEvents {
-  foo: (arg: string) => void;
-}
+interface ClientToServerEvents {}
 
 interface ServerToClientEvents {
-  bar: (arg: string) => void;
+  drawing: (bm: BroadcastMessage) => void;
 }
 
 export type DrawingsSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
@@ -15,6 +13,7 @@ export type DrawingsNamespace = Namespace<
 >;
 
 import { Socket as CSocket } from "socket.io-client";
+import type { BroadcastMessage } from "..";
 
 export type DrawingsClientSocket = CSocket<
   ServerToClientEvents,

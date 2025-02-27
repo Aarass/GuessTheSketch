@@ -21,8 +21,7 @@ export function Rooms() {
     }
   }, [roomInfo, myId])
 
-  // return myId ? (
-  return true ? (
+  return myId ? (
     <div className="flex h-full w-full items-center justify-center">
       <form
         onSubmit={e => {

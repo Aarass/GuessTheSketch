@@ -17,21 +17,14 @@ import { useAppDispatch, useAppSelector } from "../../app/hooks"
 import { store } from "../../app/store"
 import { selectColor, selectSize, setColor, setSize } from "./GameScreenSlice"
 import { HSVtoRGB, RGBtoHexString } from "../../utils/colors"
-import { BroadcastMessage, ToolType } from "@guessthesketch/common"
+import { Drawing, Point, ToolType } from "@guessthesketch/common"
 import { backend, sockets } from "../../global"
 import { io } from "socket.io-client"
 import { selectRoomInfo } from "../rooms/RoomSlice"
 import { selectMyId } from "../auth/AuthSlice"
 import { LogoutButton } from "../global/Logout"
-
-sockets.controls?.on("error", e => {
-  console.log("error u controls:", e)
-})
-
-sockets.drawings?.on("drawing", (bm: BroadcastMessage) => {
-  console.log("drawing:", bm.message)
-  GameState.getInstance().drawings.push(bm.drawing)
-})
+import { Chat } from "../chat/Chat"
+import { Leaderboard } from "../leaderboard/Leaderboard"
 
 export const GameScreen = () => {
   const roomInfo = useAppSelector(selectRoomInfo)
@@ -47,7 +40,12 @@ export const GameScreen = () => {
     if (sockets.drawings === null) {
       sockets.drawings = io(`ws://${backend}/drawings`)
     }
-  }, [sockets.controls, sockets.drawings, myId])
+
+    sockets.drawings.on("drawing", bm => {
+      console.log("drawing:", bm.message)
+      GameState.getInstance().drawings.push(bm.drawing)
+    })
+  }, [])
 
   return (
     <div className="flex h-full w-full items-center justify-center">
@@ -63,10 +61,6 @@ export const GameScreen = () => {
       <LogoutButton />
     </div>
   )
-}
-
-export const Leaderboard = () => {
-  return <div>{/* <p>leaderboard</p> */}</div>
 }
 
 let sketch: p5 | null = null
@@ -270,20 +264,6 @@ export const SelectSize = () => {
     </div>
   )
 }
-
-export const Chat = () => {
-  const myId = useAppSelector(selectMyId)
-
-  useEffect(() => {
-    if (myId === null) return
-
-    if (sockets.chat === null) {
-      sockets.chat = io(`ws://${backend}/chat`)
-    }
-  }, [sockets.chat, myId])
-  return <div>{/* <p>chat</p> */}</div>
-}
-
 export abstract class Tool {
   public abstract type: ToolType
 
@@ -309,7 +289,7 @@ export abstract class Tool {
   // gde ce cekati potvrdu ili zabranu od servera
   commit(drawing: Drawing) {
     this.gameState.drawings.push(drawing)
-    sockets.controls?.emit("use tool", JSON.stringify(drawing))
+    sockets.controls?.emit("use tool", drawing)
   }
 
   activate() {
@@ -348,11 +328,6 @@ export abstract class Tool {
       }
     }
   }
-}
-
-export interface Point {
-  x: number
-  y: number
 }
 
 class PenTool extends Tool {
@@ -717,48 +692,6 @@ class SelectToolCommand extends Command {
     return this.ToolConstructor.name
   }
 }
-
-interface DrawingBase {
-  id: string
-  color: string
-  size: number
-}
-
-interface FreeLine extends DrawingBase {
-  type: "freeline"
-  points: Point[]
-}
-
-interface Line extends DrawingBase {
-  type: "line"
-  p1: Point
-  p2: Point
-}
-
-interface Rect extends DrawingBase {
-  type: "rect"
-  topLeft: Point
-  w: number
-  h: number
-}
-
-interface Circle extends DrawingBase {
-  type: "circle"
-  p: Point
-  r: number
-}
-
-interface Dot extends DrawingBase {
-  type: "dot"
-  p: Point
-}
-
-interface FloodFill extends DrawingBase {
-  type: "flood"
-  p: Point
-}
-
-export type Drawing = FreeLine | Line | Rect | Circle | Dot | FloodFill
 
 function DrawingAutoFillIn() {
   const color = selectColor(store.getState())

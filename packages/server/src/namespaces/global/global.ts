@@ -1,9 +1,4 @@
-import type {
-  GameConfig,
-  GlobalNamespace,
-  GlobalSocket,
-  Player,
-} from "@guessthesketch/common";
+import type { GameConfig, GlobalSocket, Player } from "@guessthesketch/common";
 import userService from "../../services/userService";
 import { GlobalState } from "../../classes/states/GlobalState";
 import type { GuardedSocket } from "../../utility/guarding";
@@ -15,7 +10,7 @@ export function registerHandlersForGlobal(
 ) {
   const state = GlobalState.getInstance();
   const userId = socket.request.session.userId;
-  const roomId = socket.request.session.roomId!;
+  const roomId = socket.request.session.roomId;
 
   socket.on("ready", async () => {
     const user = await userService.getUserById(userId);
@@ -23,13 +18,13 @@ export function registerHandlersForGlobal(
 
     if (user === null) {
       socket.disconnect();
-      console.log("User doesn't exist");
+      console.error("User doesn't exist");
       return;
     }
 
     if (room === null) {
       socket.disconnect();
-      console.log("Room doesn't exist");
+      console.error("Room doesn't exist");
       return;
     }
 
@@ -52,7 +47,8 @@ export function registerHandlersForGlobal(
 
     socket.to(roomId).emit("player left room", userId);
 
-    // TODO session
+    (socket.request.session.roomId as any) = null;
+    socket.request.session.save();
   });
 
   socket.on("start game", (config: GameConfig) => {

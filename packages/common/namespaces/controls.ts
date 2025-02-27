@@ -1,10 +1,10 @@
 import { Namespace, Socket } from "socket.io";
-import type { ToolType } from "..";
+import type { Drawing, ToolType } from "..";
 
 interface ClientToServerEvents {
   foo: (arg: string) => void;
   "select tool": (toolType: ToolType) => void;
-  "use tool": () => void;
+  "use tool": (drawing: Drawing) => void;
   "deselect tool": () => void;
 }
 

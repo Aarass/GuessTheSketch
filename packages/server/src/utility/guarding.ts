@@ -9,8 +9,12 @@ export function guarded<T extends Namespace>(namespace: T) {
     .use(roomMiddleware)
     .on("connection", (socket) => {
       console.log(`User connected to ${namespace.name}`);
+
       socket.use((_, next) => {
         socketAuth(socket, next);
+      });
+
+      socket.use((_, next) => {
         roomMiddleware(socket, next);
       });
     });

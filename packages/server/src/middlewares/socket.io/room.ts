@@ -10,7 +10,7 @@ export function roomMiddleware(socket: Socket, next: () => void) {
     socket.join(roomId);
     next();
   } else {
-    console.log("User trying to connect but no room in session data");
+    console.error("User trying to connect but no room in session data");
     socket.disconnect();
     return;
   }

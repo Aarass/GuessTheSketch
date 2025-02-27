@@ -1,5 +1,6 @@
 import type { PayloadAction } from "@reduxjs/toolkit"
 import { createAppSlice } from "../../app/createAppSlice"
+import { logout } from "../auth/AuthSlice"
 
 export interface GameScreenState {
   color: string
@@ -22,6 +23,12 @@ export const gameScreenSlice = createAppSlice({
       state.size = action.payload
     }),
   }),
+  extraReducers: builder => {
+    builder.addCase(logout.fulfilled, state => {
+      state.color = initialState.color
+      state.size = initialState.size
+    })
+  },
   selectors: {
     selectColor: state => state.color,
     selectSize: state => state.size,

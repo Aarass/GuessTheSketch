@@ -1,8 +1,7 @@
 import type { ControlsSocket, ToolType } from "@guessthesketch/common";
-import { deselectTool } from "./events/deselectTool";
-import { useTool } from "./events/useTool";
-import { toolTypes } from "../../types/types";
-import { selectTool } from "./events/selectTool";
+import { deselectTool } from "./actions/deselectTool";
+import { useTool } from "./actions/useTool";
+import { selectTool } from "./actions/selectTool";
 import type { GuardedSocket } from "../../utility/guarding";
 import type { MyNamespaces } from "../..";
 
@@ -12,23 +11,12 @@ export function registerHandlersForControls(
 ) {
   socket.join(socket.request.session.roomId);
 
-  socket.on("select tool", (param: ToolType) => {
-    if (!isToolType(param)) {
-      return console.log("Parameter is not a tool type");
-    }
-
-    selectTool(namespaces, socket, param);
+  socket.on("select tool", (toolType: ToolType) => {
+    selectTool(namespaces, socket, toolType);
   });
 
-  socket.on("use tool", (param: string) => {
-    let obj;
-    try {
-      obj = JSON.parse(param);
-    } catch {
-      return console.log("Bad parameter");
-    }
-
-    useTool(namespaces, socket, obj);
+  socket.on("use tool", (drawing) => {
+    useTool(namespaces, socket, drawing);
   });
 
   (["disconnect", "deselect tool"] as const).forEach((event) =>
@@ -38,9 +26,11 @@ export function registerHandlersForControls(
   );
 }
 
-function isToolType(param: string): param is ToolType {
-  for (const type in toolTypes) {
-    if (param === type) return true;
-  }
-  return false;
-}
+// import { toolTypes } from "../../types/types";
+
+// function isToolType(param: string): param is ToolType {
+//   for (const type in toolTypes) {
+//     if (param === type) return true;
+//   }
+//   return false;
+// }

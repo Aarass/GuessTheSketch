@@ -3,7 +3,7 @@ import type { GuardedSocket } from "../../utility/guarding";
 import type { MyNamespaces } from "../..";
 
 export function registerHandlersForDrawings(
-  io: MyNamespaces,
+  namespaces: MyNamespaces,
   socket: GuardedSocket<DrawingsSocket>
 ) {
   socket.join(socket.request.session.roomId);

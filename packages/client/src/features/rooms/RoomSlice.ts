@@ -5,6 +5,7 @@ import {
   joinRoom as joinRoomRequest,
 } from "./roomsApi"
 import { PayloadAction } from "@reduxjs/toolkit"
+import { logout } from "../auth/AuthSlice"
 
 const initialState = {
   roomId: null as RoomId | null,
@@ -55,6 +56,13 @@ export const roomSlice = createAppSlice({
       }
     }),
   }),
+  extraReducers: builder => {
+    builder.addCase(logout.fulfilled, state => {
+      state.ownerId = initialState.ownerId
+      state.roomId = initialState.roomId
+      state.players = []
+    })
+  },
   selectors: {
     selectRoomId: state => state.roomId,
     selectRoomOwnerId: state => state.ownerId,
