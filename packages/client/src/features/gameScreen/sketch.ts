@@ -1,6 +1,6 @@
 import p5 from "p5"
 import { GameState } from "./GameState"
-import { Drawing, Point } from "./GameScreen"
+import { Drawing, Point } from "@guessthesketch/common"
 import { colorsAreEqual, HexStringToRGB } from "../../utils/colors"
 
 type Framebuffer = p5.Framebuffer & {

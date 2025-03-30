@@ -1,5 +1,4 @@
-import { RoomState } from "./RoomState";
-import type { PlayerId, RoomId } from "../../types/types";
+import type { RoomId } from "../../types/types";
 import type { Room } from "../Room";
 
 export class GlobalState {

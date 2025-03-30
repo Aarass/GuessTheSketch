@@ -1,16 +1,17 @@
 import type { GameConfig } from "@guessthesketch/common";
 import type { PlayerId, TeamId } from "../types/types";
-import { v4 as uuid } from "uuid";
 import type { Room } from "./Room";
+import { v4 as uuid } from "uuid";
 import { Round } from "./Round";
 import { Evaluator, MockEvaluator } from "./evaluators/Evaluator";
 
 export class Game {
   public active: boolean = false;
+
   private teams: Team[];
   private currentTeamIndex: number = -1;
 
-  private round: Round | null = null;
+  public round: Round | null = null;
   private startedRounds = 0;
   private endRoundTimer: Timer | null = null;
 
@@ -20,7 +21,7 @@ export class Game {
 
   constructor(
     private config: GameConfig,
-    private room: Room,
+    public room: Room,
     private evaluator: Evaluator = new MockEvaluator()
   ) {
     this.teams = config.teams.map((teamConfig) => {
@@ -36,6 +37,13 @@ export class Game {
         return [team.id, 0];
       })
     );
+  }
+
+  isPlayerOnMove(player: PlayerId): boolean {
+    const currentTeam = this.teams[this.currentTeamIndex];
+    const team = this.findPlayersTeam(player);
+
+    return team === currentTeam;
   }
 
   guess(guess: string, playerId: PlayerId) {
@@ -71,7 +79,7 @@ export class Game {
 
   private startNewRound() {
     this.currentTeamIndex = (this.currentTeamIndex + 1) % this.teams.length;
-    this.round = new Round(this.evaluator);
+    this.round = new Round(this, this.config.tools, this.evaluator);
     this.round.start();
 
     this.endRoundTimer = setTimeout(() => {

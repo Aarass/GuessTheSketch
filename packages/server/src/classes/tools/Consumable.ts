@@ -1,6 +1,5 @@
-import { ToolType, BroadcastMessage } from "../../types/types";
-import { GlobalState } from "../states/GlobalState";
-import { DecoratorTool, Tool } from "./Tool";
+import type { ToolType, BroadcastMessage } from "@guessthesketch/common";
+import { Tool } from "./Tool";
 
 // -----------------
 // --- Decorator ---
@@ -12,7 +11,8 @@ export class ConsumableTool extends Tool {
     private wrappee: Tool,
     private maxUses: number
   ) {
-    super(wrappee.roomId, wrappee.playerId);
+    super(wrappee.manager);
+
     this.toolType = this.wrappee.toolType;
   }
 
@@ -21,8 +21,7 @@ export class ConsumableTool extends Tool {
   }
 
   override use(param: any) {
-    const roomState = GlobalState.getInstance().getRoomById(this.roomId);
-    const toolState = roomState.getToolState(this.toolType);
+    const toolState = this.manager.getToolState(this.toolType);
 
     if (toolState.timesUsed >= this.maxUses) {
       throw `Tool consumed`;

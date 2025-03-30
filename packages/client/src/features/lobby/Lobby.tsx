@@ -18,7 +18,7 @@ import { LogoutButton } from "../global/Logout"
 const initialConfig = `{
     "rounds": {
       "cycles": 1,
-      "duration": 5000
+      "duration": 50000
     },
     "teams": [
       {
@@ -29,7 +29,12 @@ const initialConfig = `{
         "name": "Tim B",
         "players": ["id3", "id4"]
       }
-    ]
+    ],
+    "tools": {
+      "pen": {
+        "count": 2
+      }
+    }
   }`
 
 export function Lobby() {
@@ -53,7 +58,8 @@ export function Lobby() {
     dispatch(playerLeft(playerId))
   }
 
-  const onGameStart = () => {
+  const onGameStart = (config: GameConfig) => {
+    console.log(config)
     navigate("/game")
   }
 
@@ -67,7 +73,7 @@ export function Lobby() {
     sockets.global.on("sync players", onSyncPlayers)
     sockets.global.on("player joined room", onPlayerJoined)
     sockets.global.on("player left room", onPlayerLeft)
-    sockets.global.on("start game", onGameStart)
+    sockets.global.on("game started", onGameStart)
 
     if (isFirstTime.current) {
       sockets.global.emit("ready")
@@ -78,7 +84,7 @@ export function Lobby() {
       sockets.global?.off("sync players")
       sockets.global?.off("player joined room")
       sockets.global?.off("player left room")
-      sockets.global?.off("start game")
+      sockets.global?.off("game started")
     }
   }, [])
 

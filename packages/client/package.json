@@ -4,8 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bunx --bun vite",
-    "start": "bunx --bun vite",
+    "dev": "bunx --bun vite --host",
     "build": "tsc && bunx --bun vite build",
     "preview": "vite preview",
     "test": "vitest run",

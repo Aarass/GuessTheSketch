@@ -1,4 +1,4 @@
-import { ToolConfig } from "../../tmp";
+import type { ToolConfig } from "@guessthesketch/common";
 
 export class ToolState {
   public timesUsed: number = 0;

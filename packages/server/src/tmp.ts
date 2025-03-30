@@ -1,9 +1,10 @@
+import type { ToolConfig } from "@guessthesketch/common";
 import { RoomState } from "./classes/states/RoomState";
 import { ConsumableTool } from "./classes/tools/Consumable";
-import { concreteToolMap } from "./classes/tools/Map";
 import { TimeoutableTool } from "./classes/tools/Timeoutable";
 import { Tool } from "./classes/tools/Tool";
 import type { PlayerId, RoomId, ToolType } from "./types/types";
+import { Pen } from "./classes/tools/concrete/Pen";
 
 export function assignTool(tool: Tool) {
   if (tool.canBeAssigned()) {
@@ -135,49 +136,41 @@ async function testTimeoutableTool() {
 }
 // await testTimeoutableTool();
 
-export {};
-
-export type ToolConfig = {
-  count: number;
-  consumable?: {
-    maxUses: number;
-  };
-  timeoutable?: {
-    useTime: number;
-    cooldownTime: number;
-  };
-};
-
-type GameConfig = {};
-
-export type RoomConfig = {
-  [key in ToolType]: ToolConfig;
-} & {
-  global: GameConfig;
-};
-
 export class ToolBuilder {
-  constructor(
-    private roomId: RoomId,
-    private type: ToolType,
-    private config: ToolConfig
-  ) {}
+  static build(
+    playerId: PlayerId,
+    roomId: RoomId,
+    type: ToolType,
+    config: ToolConfig
+  ): Tool {
+    let tool = this.getBaseTool(type, playerId, roomId);
 
-  build(playerId: PlayerId): Tool {
-    let tool = new concreteToolMap[this.type](this.roomId, playerId);
-
-    if (this.config.consumable !== undefined) {
-      tool = new ConsumableTool(tool, this.config.consumable.maxUses);
+    if (config.consumable !== undefined) {
+      tool = new ConsumableTool(tool, config.consumable.maxUses);
     }
 
-    if (this.config.timeoutable !== undefined) {
+    if (config.timeoutable !== undefined) {
       tool = new TimeoutableTool(
         tool,
-        this.config.timeoutable.useTime,
-        this.config.timeoutable.cooldownTime
+        config.timeoutable.useTime,
+        config.timeoutable.cooldownTime
       );
     }
 
     return tool;
   }
+
+  private static getBaseTool(
+    type: ToolType,
+    playerId: PlayerId,
+    roomId: RoomId
+  ) {
+    return new this.map[type](roomId, playerId);
+  }
+
+  private static map: {
+    [key in ToolType]: new (roomId: RoomId, playerId: PlayerId) => Tool;
+  } = {
+    pen: Pen,
+  };
 }

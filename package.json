@@ -3,9 +3,9 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "client": "bun run --filter \"./packages/client\" start",
-    "server": "bun run --filter \"./packages/server\" start",
-    "all": "bun run --filter \"./packages/client\" --filter \"./packages/server\" start"
+    "client": "bun run --filter \"./packages/client\" dev",
+    "server": "bun run --filter \"./packages/server\" dev",
+    "all": "bun run --filter \"./packages/client\" --filter \"./packages/server\" dev"
   },
   "workspaces": [
     "packages/*"

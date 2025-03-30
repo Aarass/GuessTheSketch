@@ -1,5 +1,4 @@
-import type { TeamId, Timestamp } from "@guessthesketch/common";
-import type { RoundReport } from "../../types/types";
+import type { TeamId, Timestamp, RoundReport } from "@guessthesketch/common";
 
 // ----------------
 // --- Strategy ---

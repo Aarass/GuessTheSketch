@@ -1,62 +1,13 @@
-import type {
-  ToolType,
-  BroadcastMessage,
-  RoomId,
-  PlayerId,
-} from "../../types/types";
-import { GlobalState } from "../states/GlobalState";
-
-/**
- * This class is made because of the Decorator pattern, so that it
- * forces the Decorator class to implement all of the methods required,
- * and hopefully reduce the chance of introducing bugs.
- */
-export abstract class DecoratorTool {
-  id: symbol = Symbol();
-
-  abstract toolType: ToolType;
-
-  abstract canBeAssigned(): boolean;
-  abstract init(): void;
-  abstract use(param: any): any;
-  abstract releaseTool(): void;
-  abstract releaseResources(): void;
-  abstract getBroadcastMessage(param: any): BroadcastMessage;
-
-  constructor(
-    public roomId: RoomId,
-    public playerId: PlayerId
-  ) {}
-}
+import type { ToolType, BroadcastMessage } from "../../types/types";
+import type { Round } from "../Round";
+import type { ToolState } from "../states/ToolState";
 
 export abstract class Tool {
-  id: symbol = Symbol();
-
   abstract toolType: ToolType;
 
-  constructor(
-    public roomId: RoomId,
-    public playerId: PlayerId
-  ) {}
+  id: symbol = Symbol();
 
-  canBeAssigned(): boolean {
-    const room = GlobalState.getInstance().getRoomById(this.roomId);
-
-    if (room.playerHoldsTool(this.playerId)) {
-      return false;
-    }
-
-    if (!room.hasAvailableToolsOfType(this.toolType)) {
-      return false;
-    }
-
-    return true;
-  }
-
-  assign() {
-    const room = GlobalState.getInstance().getRoomById(this.roomId);
-    room.assignTool(this);
-  }
+  constructor(public manager: Round) {}
 
   /**
    * Init is called once a tool is attached and ready.
@@ -67,27 +18,46 @@ export abstract class Tool {
   // --- Template method ---
   // -----------------------
   use(param: any) {
-    const roomState = GlobalState.getInstance().getRoomById(this.roomId);
-    const toolState = roomState.getToolState(this.toolType);
+    const toolState = this.manager.getToolState(this.toolType);
     toolState.timesUsed++;
 
     return this.getBroadcastMessage(param);
   }
 
-  deselect() {
-    this.releaseTool();
-    this.releaseResources();
+  canBeAssigned(): boolean {
+    const toolState = this.manager.getToolState(this.toolType);
+    return toolState.toolsLeft > 0;
   }
 
-  releaseTool() {
-    const room = GlobalState.getInstance().getRoomById(this.roomId);
-    room.detachToolFromPlayer(this.playerId);
+  takeResources() {
+    const toolState = this.manager.getToolState(this.toolType);
+    toolState.toolsLeft--;
   }
 
   releaseResources() {
-    const room = GlobalState.getInstance().getRoomById(this.roomId);
-    room.restoreToolAvailability(this.toolType);
+    const toolState = this.manager.getToolState(this.toolType);
+    toolState.toolsLeft++;
   }
 
   abstract getBroadcastMessage(param: any): BroadcastMessage;
 }
+
+// /**
+//  * This class is made because of the Decorator pattern, so that it
+//  * forces the Decorator class to implement all of the methods required,
+//  * and hopefully reduce the chance of introducing bugs.
+//  */
+// export abstract class DecoratorTool {
+//   id: symbol = Symbol();
+
+//   abstract toolType: ToolType;
+
+//   abstract canBeAssigned(): boolean;
+//   abstract init(): void;
+//   abstract use(param: any): any;
+//   abstract releaseTool(): void;
+//   abstract releaseResources(): void;
+//   abstract getBroadcastMessage(param: any): BroadcastMessage;
+
+//   constructor(public manager: ToolManager) {}
+// }

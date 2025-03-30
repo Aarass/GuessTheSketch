@@ -1,4 +1,4 @@
-import type { DrawingsNamespace, DrawingsSocket } from "@guessthesketch/common";
+import type { DrawingsSocket } from "@guessthesketch/common";
 import type { GuardedSocket } from "../../utility/guarding";
 import type { MyNamespaces } from "../..";
 

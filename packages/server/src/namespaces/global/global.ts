@@ -64,7 +64,7 @@ export function registerHandlersForGlobal(
 
     // TODO validate config
     room.startGame(config);
-    namespaces.globalNamespace.to(roomId).emit("start game");
+    namespaces.globalNamespace.to(roomId).emit("game started", config);
   });
 }
 

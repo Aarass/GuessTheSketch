@@ -1,9 +1,9 @@
-import { ToolType, BroadcastMessage } from "../../types/types";
-import { GlobalState } from "../states/GlobalState";
-import { Tool } from "./Tool";
-
 // -----------------
 // --- Decorator ---
+
+import type { BroadcastMessage, ToolType } from "@guessthesketch/common";
+import { Tool } from "./Tool";
+
 // -----------------
 export class TimeoutableTool extends Tool {
   toolType: ToolType;
@@ -13,14 +13,17 @@ export class TimeoutableTool extends Tool {
     private useTime: number,
     private cooldownTime: number
   ) {
-    super(wrappee.roomId, wrappee.playerId);
+    super(wrappee.manager);
+
     this.toolType = this.wrappee.toolType;
   }
 
   init() {
     this.wrappee.init();
     setTimeout(() => {
-      this.releaseTool();
+      const manager = this.manager;
+      manager.detachTool(this);
+
       console.log("Released timeoutable tool");
 
       setTimeout(() => {
@@ -40,9 +43,5 @@ export class TimeoutableTool extends Tool {
   releaseResources() {
     this.wrappee.releaseResources();
     console.log("Released resources of timeoutable tool");
-  }
-
-  deselect(): void {
-    this.releaseTool();
   }
 }

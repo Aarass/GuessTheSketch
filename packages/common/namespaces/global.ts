@@ -10,7 +10,7 @@ interface ServerToClientEvents {
   "sync players": (players: Player[]) => void;
   "player joined room": (player: Player) => void;
   "player left room": (playerId: PlayerId) => void;
-  "start game": () => void;
+  "game started": (config: GameConfig) => void;
 }
 
 export type GlobalSocket = Socket<ClientToServerEvents, ServerToClientEvents>;

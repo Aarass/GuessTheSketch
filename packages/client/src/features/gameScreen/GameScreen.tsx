@@ -20,14 +20,12 @@ import { HSVtoRGB, RGBtoHexString } from "../../utils/colors"
 import { Drawing, Point, ToolType } from "@guessthesketch/common"
 import { backend, sockets } from "../../global"
 import { io } from "socket.io-client"
-import { selectRoomInfo } from "../rooms/RoomSlice"
 import { selectMyId } from "../auth/AuthSlice"
 import { LogoutButton } from "../global/Logout"
 import { Chat } from "../chat/Chat"
 import { Leaderboard } from "../leaderboard/Leaderboard"
 
 export const GameScreen = () => {
-  const roomInfo = useAppSelector(selectRoomInfo)
   const myId = useAppSelector(selectMyId)
 
   useEffect(() => {
@@ -36,15 +34,6 @@ export const GameScreen = () => {
     if (sockets.controls === null) {
       sockets.controls = io(`ws://${backend}/controls`)
     }
-
-    if (sockets.drawings === null) {
-      sockets.drawings = io(`ws://${backend}/drawings`)
-    }
-
-    sockets.drawings.on("drawing", bm => {
-      console.log("drawing:", bm.message)
-      GameState.getInstance().drawings.push(bm.drawing)
-    })
   }, [])
 
   return (
@@ -67,19 +56,32 @@ let sketch: p5 | null = null
 
 export const Canvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const state = GameState.getInstance()
 
   useEffect(() => {
-    if (sketch !== null) return
+    if (sketch === null && canvasRef.current !== null) {
+      sketch = new p5(initSketch(canvasRef.current))
+    }
 
-    const myCanvas = canvasRef.current
-    if (myCanvas === null) return
+    if (sockets.drawings === null) {
+      sockets.drawings = io(`ws://${backend}/drawings`)
+    }
 
-    sketch = new p5(initSketch(myCanvas))
-  })
+    const onDrawing = (bm: any) => {
+      console.log("drawing", bm)
+      state.drawings.push(bm.drawing)
+    }
+
+    sockets.drawings.on("drawing", onDrawing)
+
+    return () => {
+      sockets.drawings?.off("drawing")
+    }
+  }, [])
 
   return (
     <div>
-      <canvas ref={canvasRef} id="canvas"></canvas>
+      <canvas ref={canvasRef}></canvas>
     </div>
   )
 }

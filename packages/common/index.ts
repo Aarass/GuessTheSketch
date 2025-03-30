@@ -29,16 +29,30 @@ export type TeamName = string;
 export type GameConfig = {
   teams: TeamConfig[];
   rounds: RoundsConfig;
+  tools: ToolConfigs;
 };
 
-type TeamConfig = {
+export type ToolConfigs = Record<ToolType, ToolConfig>;
+
+export type TeamConfig = {
   name: string;
   players: PlayerId[];
 };
 
-type RoundsConfig = {
+export type RoundsConfig = {
   cycles: number;
   duration: number;
+};
+
+export type ToolConfig = {
+  count: number;
+  consumable?: {
+    maxUses: number;
+  };
+  timeoutable?: {
+    useTime: number;
+    cooldownTime: number;
+  };
 };
 
 export interface LoginResult {
@@ -70,3 +84,5 @@ export interface Point {
   x: number;
   y: number;
 }
+
+export type RoundReport = [TeamId, DeltaScore][];
