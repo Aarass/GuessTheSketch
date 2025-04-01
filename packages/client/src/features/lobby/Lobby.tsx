@@ -18,7 +18,7 @@ import { LogoutButton } from "../global/Logout"
 const initialConfig = `{
     "rounds": {
       "cycles": 1,
-      "duration": 50000
+      "duration": 15000
     },
     "teams": [
       {
@@ -63,6 +63,10 @@ export function Lobby() {
     navigate("/game")
   }
 
+  const onGameEnded = () => {
+    alert("Game Ended!")
+  }
+
   useEffect(() => {
     if (myId === null) return
 
@@ -74,6 +78,7 @@ export function Lobby() {
     sockets.global.on("player joined room", onPlayerJoined)
     sockets.global.on("player left room", onPlayerLeft)
     sockets.global.on("game started", onGameStart)
+    sockets.global.on("game ended", onGameEnded)
 
     if (isFirstTime.current) {
       sockets.global.emit("ready")

@@ -17,22 +17,46 @@ import { useAppDispatch, useAppSelector } from "../../app/hooks"
 import { store } from "../../app/store"
 import { selectColor, selectSize, setColor, setSize } from "./GameScreenSlice"
 import { HSVtoRGB, RGBtoHexString } from "../../utils/colors"
-import { Drawing, Point, ToolType } from "@guessthesketch/common"
+import {
+  Drawing,
+  Point,
+  RoundReport,
+  TeamId,
+  ToolType,
+} from "@guessthesketch/common"
 import { backend, sockets } from "../../global"
 import { io } from "socket.io-client"
 import { selectMyId } from "../auth/AuthSlice"
 import { LogoutButton } from "../global/Logout"
 import { Chat } from "../chat/Chat"
 import { Leaderboard } from "../leaderboard/Leaderboard"
+import { useNavigate } from "react-router"
 
 export const GameScreen = () => {
+  const navigate = useNavigate()
   const myId = useAppSelector(selectMyId)
+
+  const onRoundStarted = (teamOnMove: TeamId) => {
+    console.log(`Round started. Team on move: ${teamOnMove}`)
+  }
+
+  const onRoundEnded = (roundReport: RoundReport) => {
+    console.log("Round ended. Heres round report", roundReport)
+  }
 
   useEffect(() => {
     if (myId === null) return
 
     if (sockets.controls === null) {
       sockets.controls = io(`ws://${backend}/controls`)
+    }
+
+    sockets.controls.on("round started", onRoundStarted)
+    sockets.controls.on("round ended", onRoundEnded)
+
+    return () => {
+      sockets.controls?.off("round started", onRoundStarted)
+      sockets.controls?.off("round ended", onRoundEnded)
     }
   }, [])
 
@@ -46,6 +70,14 @@ export const GameScreen = () => {
         </div>
         <Chat></Chat>
       </div>
+
+      <button
+        onClick={() => {
+          navigate("/rooms")
+        }}
+      >
+        Rooms
+      </button>
 
       <LogoutButton />
     </div>

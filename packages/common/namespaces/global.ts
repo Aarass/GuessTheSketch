@@ -11,6 +11,7 @@ interface ServerToClientEvents {
   "player joined room": (player: Player) => void;
   "player left room": (playerId: PlayerId) => void;
   "game started": (config: GameConfig) => void;
+  "game ended": () => void;
 }
 
 export type GlobalSocket = Socket<ClientToServerEvents, ServerToClientEvents>;

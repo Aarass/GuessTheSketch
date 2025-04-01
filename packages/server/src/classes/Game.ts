@@ -17,11 +17,10 @@ export class Game {
 
   private leaderboard: Record<TeamId, number>;
 
-  public onEnd: Function | null = null;
-
   constructor(
     private config: GameConfig,
     public room: Room,
+    private onEnd: Function,
     private evaluator: Evaluator = new MockEvaluator()
   ) {
     this.teams = config.teams.map((teamConfig) => {
@@ -74,7 +73,9 @@ export class Game {
     this.active = true;
     console.log("Game started");
 
-    this.startNewRound();
+    setTimeout(() => {
+      this.startNewRound();
+    }, 2000);
   }
 
   private startNewRound() {
@@ -88,6 +89,10 @@ export class Game {
 
     this.startedRounds++;
     console.log("Round started");
+
+    const teamOnMove = this.teams[this.currentTeamIndex];
+
+    this.room.emitToControls("round started", teamOnMove.id);
   }
 
   private roundEnded() {
@@ -95,7 +100,8 @@ export class Game {
     if (this.round === null) throw `Round is null in roundEnded handler`;
 
     const report = this.round.getReport();
-    // TODO broadcast
+
+    this.room.emitToControls("round ended", report);
 
     const maxRounds = this.teams.length * this.config.rounds.cycles;
     if (this.startedRounds !== maxRounds) {
@@ -109,10 +115,7 @@ export class Game {
   private gameEnded() {
     console.log("Game end");
     this.active = false;
-    // TODO broadcast
-    if (this.onEnd) {
-      this.onEnd();
-    }
+    this.onEnd();
   }
 
   private findPlayersTeam(playerId: PlayerId): Team | null {

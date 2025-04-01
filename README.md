@@ -1,4 +1,6 @@
 # GuessTheSketch
+Kako startovati partiju: https://youtu.be/UeR6uw_E4c8
+
 U glavnom package.json fajlu u root folderu postoje skripte za pokretanje fronta i beka.
 Za pokretanje baze, postoji docker compose fajl u folderu /packages/server/database/ 
 
