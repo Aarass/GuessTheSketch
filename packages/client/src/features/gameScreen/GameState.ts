@@ -1,4 +1,5 @@
-import { Drawing, Tool } from "./GameScreen"
+import { Tool } from "./GameScreen"
+import { Drawing } from "@guessthesketch/common"
 
 export class GameState {
   currentTool: Tool | null

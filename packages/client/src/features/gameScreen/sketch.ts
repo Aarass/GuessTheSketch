@@ -3,14 +3,35 @@ import { GameState } from "./GameState"
 import { Drawing, Point } from "@guessthesketch/common"
 import { colorsAreEqual, HexStringToRGB } from "../../utils/colors"
 
+/*
+ * Note, da sledeci put ne gubis vreme.
+
+ * Index u Snapshot-u je index crteza koji je poslednji iscrtan. Dakle,
+ * to je crtez koji je obuhvacen snapshotom. Snapshot sadrzi taj index.
+ *  
+ * NextStart predstavljla indeks crteza koji treba biti prvi iscrtan u novoj
+ * iteraciji. Dakle, taj crtez ne pripada ni jednom snapshotu.
+ * 
+ * Jos jedna stvar NextStart moze da ima vrenost -1. Ne mogu da se setim zasto,
+ * ali mislim da je zbog brisanje pozadine.
+ */
+
 type Framebuffer = p5.Framebuffer & {
   loadPixels(): void
   updatePixels(): void
 }
 
+type Index = number & { __brand: "Index" }
+type Pixels = number[] & { __brand: "Pixels" }
+
+type Snapshot = {
+  index: Index
+  pixels: Pixels
+}
+
 const gameState = GameState.getInstance()
 
-const snapshots: number[][] = []
+const snapshots: Snapshot[] = []
 const snapshotStep = 5
 
 export const initSketch = (canvas: HTMLCanvasElement) => {
@@ -38,42 +59,40 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
     }
 
     sketch.draw = () => {
-      let snapshotI = -1
-      if (/* undo happened */ nextStart > gameState.drawings.length) {
-        snapshotI = snapshots.length - 1
-        for (; snapshotI >= 0; snapshotI--) {
-          if (
-            snapshotI * snapshotStep + snapshotStep >
-            gameState.drawings.length
-          ) {
+      const drawings = gameState.drawings
+      const drawingsLength = gameState.drawings.length
+
+      const undoHappened = nextStart > drawingsLength
+
+      if (undoHappened) {
+        let currentSnapshot: Snapshot | null = null
+
+        for (let i = snapshots.length - 1; i >= 0; i--) {
+          if (snapshots[i].index >= drawingsLength) {
             snapshots.pop()
-          } else break
+          } else {
+            currentSnapshot = snapshots[i]
+            break
+          }
         }
 
-        if (gameState.drawings.length === 0) {
-          nextStart = -1
-        } else {
-          nextStart = (snapshotI + 1) * snapshotStep //- 1
-        }
+        // console.log("Novi aktuelni snapshot je: ", currentSnapshot)
 
-        if (snapshotI > -1) {
-          const snapshot = snapshots[snapshotI]
-
-          // TODO moze li bolje?
+        if (currentSnapshot) {
           commitBuffer.loadPixels()
-          for (let i = 0; i < snapshot.length; i++)
-            commitBuffer.pixels[i] = snapshot[i]
+          for (let i = 0; i < currentSnapshot.pixels.length; i++)
+            commitBuffer.pixels[i] = currentSnapshot.pixels[i]
           commitBuffer.updatePixels()
+
+          nextStart = currentSnapshot.index + 1
+        } else {
+          nextStart = -1
         }
+
+        // console.log("NextStart je sada: ", nextStart)
       }
 
-      // console.log(
-      //   `ima ukupno ${drawings.length} crteza
-      //   crtam [${snapshotI}] snapshot
-      //   krecem sa crtanjem od [${nextStart}] crteza`,
-      // )
-
-      if (nextStart !== gameState.drawings.length) {
+      if (nextStart !== drawingsLength) {
         commitBuffer.begin()
 
         if (nextStart <= 0) {
@@ -82,61 +101,63 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
 
         applyTransforms()
 
-        let i = Math.max(nextStart, 0)
-        for (; i < gameState.drawings.length; i++) {
-          const drawing = gameState.drawings[i]
+        for (let i = Math.max(nextStart, 0); i < drawingsLength; i++) {
+          const drawing = drawings[i]
 
           if (drawing.type === "flood") {
-            if (!ffc.has(drawing.id)) {
+            const cachedDrawing = ffc.get(drawing.id)
+
+            if (cachedDrawing) {
+              sketch.image(cachedDrawing, 0, 0)
+            } else {
               commitBuffer.loadPixels()
               draw(drawing, sketch, commitBuffer.pixels)
+              commitBuffer.updatePixels()
             }
-
-            if (ffc.has(drawing.id)) {
-              sketch.image(ffc.get(drawing.id)!, 0, 0)
-            } else {
-              throw `nemoguce`
-            }
-
-            // // TODO
-            // // ovde moze optimizacija
-            // // updatePixels prihvata "bounding box promena"
-            // // znaci moze da mu se zada regija koju treba da updata umesto da updata ceo ekran
-            // commitBuffer.loadPixels()
-            // draw(drawing, sketch, commitBuffer.pixels)
-            // commitBuffer.updatePixels()
           } else {
             draw(drawing, sketch, [])
           }
         }
-        nextStart = i
 
         commitBuffer.end()
-      }
+        nextStart = drawingsLength
 
-      const len = gameState.drawings.length
-      if (len > 0 && len % snapshotStep === 0) {
-        const j = len / snapshotStep - 1
+        if (drawingsLength > 0 && drawingsLength % snapshotStep === 0) {
+          const currentIndex = drawingsLength - 1
+          const currentSnapshot = snapshots.at(-1)
 
-        if (j == snapshots.length) {
-          commitBuffer.loadPixels()
-          snapshots.push(commitBuffer.pixels.slice())
+          // console.log(
+          //   `currentIndex: ${currentIndex}, currentSnapshot:`,
+          //   currentSnapshot,
+          // )
 
-          // console.log(`guram snapshot na poziciju ${j}, kada ima ${len} crteza`)
+          if (
+            currentSnapshot === undefined ||
+            currentSnapshot.index !== currentIndex
+          ) {
+            commitBuffer.loadPixels()
+            snapshots.push({
+              index: currentIndex as Index,
+              pixels: commitBuffer.pixels.slice() as Pixels,
+            })
+
+            // console.log("Ubacio sam novi snapshot:", snapshots.at(-1))
+          }
         }
       }
 
       const drawingInFly = gameState.inFly.drawing
 
-      applyTransforms()
-      if (
-        drawingInFly === null ||
-        !(drawingInFly.type === "freeline" || drawingInFly.type === "dot")
-      ) {
-        sketch.image(commitBuffer, 0, 0)
-      }
+      const problematicTypes: Drawing["type"][] = ["circle", "rect", "line"]
 
-      if (drawingInFly) {
+      applyTransforms()
+
+      if (drawingInFly === null) {
+        sketch.image(commitBuffer, 0, 0)
+      } else {
+        if (problematicTypes.includes(drawingInFly.type)) {
+          sketch.image(commitBuffer, 0, 0)
+        }
         draw(drawingInFly, sketch)
       }
 
