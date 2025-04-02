@@ -27,6 +27,7 @@ import { HSVtoRGB, RGBtoHexString } from "../../utils/colors"
 import {
   BroadcastMessage,
   Drawing,
+  DrawingId,
   Point,
   RoundReport,
   TeamId,
@@ -53,6 +54,8 @@ export const GameScreen = () => {
 
   const onRoundEnded = (roundReport: RoundReport) => {
     dispatch(setTeamOnMove(undefined))
+    GameState.getInstance().reset()
+
     console.log("Round ended. Heres round report", roundReport)
   }
 
@@ -112,7 +115,21 @@ export const Canvas = () => {
     }
 
     const onDrawing = (bm: BroadcastMessage) => {
-      state.drawings.push(bm.drawing)
+      const drawing = bm.drawing as Drawing
+      if (drawing.type == "eraser") {
+        const index = state.drawings.findLastIndex(el => {
+          return el.id === drawing.toDelete
+        })
+
+        if (index === -1) {
+          console.log("Can't find drawing to delete with id: ", drawing.id)
+          return
+        }
+
+        state.drawings.splice(index, 1)
+      } else {
+        state.drawings.push(drawing)
+      }
     }
 
     sockets.drawings.on("drawing", onDrawing)
@@ -374,6 +391,14 @@ export abstract class Tool {
         this.onMouseDragged(e)
       }
     })
+  }
+
+  deactivate() {
+    const empty = () => {}
+    this.sketch.mouseReleased = empty
+    this.sketch.mousePressed = empty
+    this.sketch.mouseClicked = empty
+    this.sketch.mouseDragged = empty
   }
 
   private helper(fn: (event: MouseEvent) => void) {
@@ -680,8 +705,15 @@ class UndoCommand extends Command {
 
   execute(): void {
     const gameState = GameState.getInstance()
-    gameState.drawings.pop()
+
+    const last = gameState.drawings.at(-1)
+    if (last === undefined) {
+      return
+    }
+
     //this.sketch.redraw()
+
+    sockets.controls?.emit("delete drawing", last.id)
   }
   getName(): string {
     return "Undo"
@@ -752,9 +784,10 @@ class SelectToolCommand extends Command {
 function DrawingAutoFillIn() {
   const color = selectColor(store.getState())
   const size = selectSize(store.getState())
+
   return {
     // TODO zameniti za nesto sto ce teze kreirati konflikte - neki uuid ili tako nesto
-    id: Date.now().toString(),
+    id: Date.now().toString() as DrawingId,
     color,
     size,
   }

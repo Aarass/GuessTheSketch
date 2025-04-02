@@ -1,7 +1,9 @@
 import type { Point } from "..";
 
+export type DrawingId = string & { __brand: "DrawingId" };
+
 export interface DrawingBase {
-  id: string;
+  id: DrawingId;
   color: string;
   size: number;
 }
@@ -40,4 +42,17 @@ export interface FloodFill extends DrawingBase {
   p: Point;
 }
 
-export type Drawing = FreeLine | Line | Rect | Circle | Dot | FloodFill;
+export interface Eraser {
+  id: DrawingId;
+  type: "eraser";
+  toDelete: DrawingId;
+}
+
+export type Drawing =
+  | FreeLine
+  | Line
+  | Rect
+  | Circle
+  | Dot
+  | FloodFill
+  | Eraser;

@@ -1,4 +1,8 @@
-import type { ControlsSocket, ToolType } from "@guessthesketch/common";
+import type {
+  ControlsSocket,
+  DrawingId,
+  ToolType,
+} from "@guessthesketch/common";
 import type { GuardedSocket } from "../../utility/guarding";
 import type { MyNamespaces } from "../..";
 import { checkUpToRound, getSocketContext } from "../../utility/extractor";
@@ -63,6 +67,26 @@ export function registerHandlersForControls(
     }
   });
 
+  socket.on("delete drawing", (id: DrawingId) => {
+    console.log("Tu sam");
+    const context = getSocketContext(socket);
+
+    if (!checkUpToRound(context)) {
+      console.error(`Context is not okay when trying to deselect tool`);
+      return;
+    }
+
+    const [userId, room, game, round] = context;
+
+    const useResult = round.useCommand(userId, {
+      id: "" as DrawingId,
+      type: "eraser",
+      toDelete: id,
+    });
+
+    namespaces.drawingsNamespace.emit("drawing", useResult);
+  });
+
   (["disconnect", "deselect tool"] as const).forEach((event) =>
     socket.on(event, () => {
       const context = getSocketContext(socket);
@@ -78,7 +102,7 @@ export function registerHandlersForControls(
 
       const toolType = round.getPlayersTool(userId)?.toolType;
       const res = round.deselectTool(userId);
-      if (checkUpToRound(context)) {
+      if (res) {
         namespaces.controlsNamespace.emit(
           "player deselected tool",
           userId,

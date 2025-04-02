@@ -7,6 +7,7 @@ import {
   type ToolType,
   type RoundReport,
   type TeamId,
+  type Eraser,
 } from "@guessthesketch/common";
 import type { Evaluator } from "./evaluators/Evaluator";
 import { ToolBuilder } from "./tools/ToolBuilder";
@@ -97,6 +98,14 @@ export class Round {
     }
 
     return tool.use(drawing);
+  }
+
+  useCommand(playerId: PlayerId, command: Eraser) {
+    const toolType = command.type;
+    const config = this.toolConfigs[toolType];
+    const tool = ToolBuilder.build(toolType, this, config);
+
+    return tool.use(command);
   }
 
   deselectTool(playerId: PlayerId): boolean {

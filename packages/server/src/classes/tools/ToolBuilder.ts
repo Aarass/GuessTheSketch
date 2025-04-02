@@ -9,8 +9,16 @@ import { ConsumableTool } from "./Consumable";
 import { TimeoutableTool } from "./Timeoutable";
 import type { Tool } from "./Tool";
 import type { Round } from "../Round";
+import { Eraser } from "./concrete/Eraser";
 
 export class ToolBuilder {
+  private static map: {
+    [key in ToolType]: new (round: Round) => Tool;
+  } = {
+    pen: Pen,
+    eraser: Eraser,
+  };
+
   static build(type: ToolType, round: Round, config: ToolConfig): Tool {
     let tool = this.getBaseTool(type, round);
 
@@ -32,10 +40,4 @@ export class ToolBuilder {
   private static getBaseTool(type: ToolType, round: Round) {
     return new this.map[type](round);
   }
-
-  private static map: {
-    [key in ToolType]: new (round: Round) => Tool;
-  } = {
-    pen: Pen,
-  };
 }

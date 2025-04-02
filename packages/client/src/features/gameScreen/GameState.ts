@@ -18,6 +18,17 @@ export class GameState {
     }
   }
 
+  reset() {
+    this.currentTool?.deactivate()
+    this.currentTool = null
+
+    this.drawings = []
+    this.inFly = {
+      drawing: null,
+      i: null,
+    }
+  }
+
   private static instance: GameState | null = null
   static getInstance() {
     if (this.instance == null) {

@@ -40,6 +40,9 @@ const initialConfig = `{
     "tools": {
       "pen": {
         "count": 2
+      },
+      "eraser": {
+        "count": 1
       }
     }
   }`

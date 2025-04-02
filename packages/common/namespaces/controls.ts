@@ -1,10 +1,18 @@
 import { Namespace, Socket } from "socket.io";
-import type { Drawing, PlayerId, RoundReport, TeamId, ToolType } from "..";
+import type {
+  Drawing,
+  DrawingId,
+  PlayerId,
+  RoundReport,
+  TeamId,
+  ToolType,
+} from "..";
 
 interface ClientToServerEvents {
   "select tool": (toolType: ToolType) => void;
   "use tool": (drawing: Drawing) => void;
   "deselect tool": () => void;
+  "delete drawing": (id: DrawingId) => void;
 }
 
 interface ServerToClientEvents {
