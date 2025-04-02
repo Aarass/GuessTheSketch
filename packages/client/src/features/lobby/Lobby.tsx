@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from "react"
 import { backend, sockets } from "../../global"
 import { io } from "socket.io-client"
-import { GameConfig, Player, PlayerId } from "@guessthesketch/common"
+import {
+  GameConfig,
+  Player,
+  PlayerId,
+  ProcessedGameConfig,
+} from "@guessthesketch/common"
 import { useNavigate } from "react-router"
 import { NotLoggedIn } from "../auth/RedirectToLoginScreen"
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
@@ -13,6 +18,8 @@ import {
   selectRoomInfo,
   syncPlayers,
 } from "../rooms/RoomSlice"
+
+import { setConfig as setConfigAction } from "../gameScreen/GameScreenSlice"
 import { LogoutButton } from "../global/Logout"
 
 const initialConfig = `{
@@ -58,13 +65,13 @@ export function Lobby() {
     dispatch(playerLeft(playerId))
   }
 
-  const onGameStart = (config: GameConfig) => {
-    console.log(config)
+  const onGameStart = (config: ProcessedGameConfig) => {
+    dispatch(setConfigAction(config))
     navigate("/game")
   }
 
   const onGameEnded = () => {
-    alert("Game Ended!")
+    console.log("Game Ended!")
   }
 
   useEffect(() => {

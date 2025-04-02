@@ -5,10 +5,10 @@ import {
   logout as logoutRequest,
   refresh as refreshRequest,
 } from "./authApi"
-import { LoginResult, RefreshResult } from "@guessthesketch/common"
+import { LoginResult, PlayerId, RefreshResult } from "@guessthesketch/common"
 
 interface AuthState {
-  myId: string | null
+  myId: PlayerId | null
 }
 
 const initialState: AuthState = { myId: null }

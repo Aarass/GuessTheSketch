@@ -1,4 +1,4 @@
-import type { RoomId } from "../../types/types";
+import type { RoomId } from "@guessthesketch/common";
 import type { Room } from "../Room";
 
 export class GlobalState {

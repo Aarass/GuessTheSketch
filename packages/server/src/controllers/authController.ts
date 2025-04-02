@@ -1,13 +1,17 @@
 import express from "express";
 import createHttpError from "http-errors";
-import { LoginDtoSchema, type LoginResult } from "@guessthesketch/common";
+import {
+  LoginDtoSchema,
+  type LoginResult,
+  type PlayerId,
+  type RoomId,
+} from "@guessthesketch/common";
 import authService from "../services/authService";
-import type { RoomId } from "../types/types";
 import type { Session, SessionData } from "express-session";
 
 declare module "express-session" {
   interface SessionData {
-    userId: string;
+    userId: PlayerId;
     roomId: RoomId | null;
   }
 }

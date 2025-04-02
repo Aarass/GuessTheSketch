@@ -1,4 +1,6 @@
+import type { PlayerId } from "..";
+
 export interface User {
-  id: string;
+  id: PlayerId;
   username: string;
 }

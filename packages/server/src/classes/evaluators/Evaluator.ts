@@ -15,6 +15,6 @@ export class MockEvaluator extends Evaluator {
     start: Timestamp,
     hitTimestamps: Map<TeamId, Timestamp>
   ): RoundReport {
-    return [["asd", 0]];
+    return [["asd" as TeamId, 0]];
   }
 }

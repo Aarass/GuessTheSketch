@@ -1,4 +1,4 @@
-import type { ToolType, BroadcastMessage } from "../../types/types";
+import type { BroadcastMessage, ToolType } from "@guessthesketch/common";
 import type { Round } from "../Round";
 import type { ToolState } from "../states/ToolState";
 

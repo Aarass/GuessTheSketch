@@ -1,5 +1,5 @@
-import { EntityId, type Entity } from "redis-om";
-import type { LoginDto, User } from "@guessthesketch/common";
+import { EntityId } from "redis-om";
+import type { LoginDto, PlayerId, User } from "@guessthesketch/common";
 import { userRepository } from "../repositories/userRepository";
 
 async function login(dto: LoginDto) {
@@ -9,7 +9,7 @@ async function login(dto: LoginDto) {
     const result = await userRepository.save({ username });
 
     const user: User = {
-      id: result[EntityId]!,
+      id: result[EntityId]! as PlayerId,
       username: result.username,
     };
 

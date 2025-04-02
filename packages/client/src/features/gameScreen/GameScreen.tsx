@@ -15,7 +15,14 @@ import { initSketch } from "./sketch"
 import { GameState } from "./GameState"
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
 import { store } from "../../app/store"
-import { selectColor, selectSize, setColor, setSize } from "./GameScreenSlice"
+import {
+  selectColor,
+  selectIsMyTeamOnMove,
+  selectSize,
+  setColor,
+  setSize,
+  setTeamOnMove,
+} from "./GameScreenSlice"
 import { HSVtoRGB, RGBtoHexString } from "../../utils/colors"
 import {
   Drawing,
@@ -34,13 +41,17 @@ import { useNavigate } from "react-router"
 
 export const GameScreen = () => {
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
   const myId = useAppSelector(selectMyId)
+  const isMyTeamOnMove = useAppSelector(selectIsMyTeamOnMove)
 
   const onRoundStarted = (teamOnMove: TeamId) => {
+    dispatch(setTeamOnMove(teamOnMove))
     console.log(`Round started. Team on move: ${teamOnMove}`)
   }
 
   const onRoundEnded = (roundReport: RoundReport) => {
+    dispatch(setTeamOnMove(undefined))
     console.log("Round ended. Heres round report", roundReport)
   }
 
@@ -66,7 +77,7 @@ export const GameScreen = () => {
         <Leaderboard></Leaderboard>
         <div className="flex flex-col items-center">
           <Canvas></Canvas>
-          <Tools></Tools>
+          {isMyTeamOnMove ? <Tools></Tools> : null}
         </div>
         <Chat></Chat>
       </div>

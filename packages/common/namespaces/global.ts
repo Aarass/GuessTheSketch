@@ -1,5 +1,5 @@
 import { Namespace, Socket } from "socket.io";
-import type { GameConfig, Player, PlayerId } from "..";
+import type { GameConfig, Player, PlayerId, ProcessedGameConfig } from "..";
 
 interface ClientToServerEvents {
   ready: () => void;
@@ -10,7 +10,7 @@ interface ServerToClientEvents {
   "sync players": (players: Player[]) => void;
   "player joined room": (player: Player) => void;
   "player left room": (playerId: PlayerId) => void;
-  "game started": (config: GameConfig) => void;
+  "game started": (config: ProcessedGameConfig) => void;
   "game ended": () => void;
 }
 

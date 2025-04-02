@@ -1,5 +1,4 @@
-import type { GameConfig } from "@guessthesketch/common";
-import type { PlayerId, TeamId } from "../types/types";
+import type { GameConfig, TeamId, PlayerId } from "@guessthesketch/common";
 import type { Room } from "./Room";
 import { v4 as uuid } from "uuid";
 import { Round } from "./Round";
@@ -20,12 +19,11 @@ export class Game {
   constructor(
     private config: GameConfig,
     public room: Room,
-    private onEnd: Function,
     private evaluator: Evaluator = new MockEvaluator()
   ) {
     this.teams = config.teams.map((teamConfig) => {
       return {
-        id: uuid(),
+        id: uuid() as TeamId,
         name: teamConfig.name,
         players: new Set(teamConfig.players),
       };
@@ -36,6 +34,29 @@ export class Game {
         return [team.id, 0];
       })
     );
+  }
+
+  start() {
+    if (this.startedRounds !== 0)
+      throw `Calling game.start() when startedRounds is not 0`;
+
+    this.active = true;
+    console.log("Game started");
+
+    this.room.emitToGlobal("game started", {
+      ...this.config,
+      teams: this.teams.map((team) => {
+        return {
+          id: team.id,
+          name: team.name,
+          players: Array.from(team.players.values()),
+        };
+      }),
+    });
+
+    setTimeout(() => {
+      this.startNewRound();
+    }, 2000);
   }
 
   isPlayerOnMove(player: PlayerId): boolean {
@@ -66,18 +87,6 @@ export class Game {
     }
   }
 
-  start() {
-    if (this.startedRounds !== 0)
-      throw `Calling game.start() when startedRounds is not 0`;
-
-    this.active = true;
-    console.log("Game started");
-
-    setTimeout(() => {
-      this.startNewRound();
-    }, 2000);
-  }
-
   private startNewRound() {
     this.currentTeamIndex = (this.currentTeamIndex + 1) % this.teams.length;
     this.round = new Round(this, this.config.tools, this.evaluator);
@@ -91,6 +100,7 @@ export class Game {
     console.log("Round started");
 
     const teamOnMove = this.teams[this.currentTeamIndex];
+    const tmp = teamOnMove.id;
 
     this.room.emitToControls("round started", teamOnMove.id);
   }
@@ -114,8 +124,9 @@ export class Game {
 
   private gameEnded() {
     console.log("Game end");
+
     this.active = false;
-    this.onEnd();
+    this.room.emitToGlobal("game ended");
   }
 
   private findPlayersTeam(playerId: PlayerId): Team | null {
@@ -128,7 +139,7 @@ export class Game {
   }
 }
 
-interface Team {
+export interface Team {
   id: TeamId;
   name: string;
   players: Set<PlayerId>;

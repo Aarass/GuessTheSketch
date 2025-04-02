@@ -20,14 +20,23 @@ export interface BroadcastMessage {
 export type Timestamp = number;
 export type DeltaScore = number;
 
-export type PlayerId = string;
-export type TeamId = string;
+// export type PlayerId = string;
+// export type TeamId = string;
 export type RoomId = string;
 
-export type TeamName = string;
+type Brand<T, B> = T & { __brand: B };
+
+export type TeamId = Brand<string, "TeamId">;
+export type PlayerId = Brand<string, "PlayerId">;
 
 export type GameConfig = {
   teams: TeamConfig[];
+  rounds: RoundsConfig;
+  tools: ToolConfigs;
+};
+
+export type ProcessedGameConfig = {
+  teams: (TeamConfig & { id: TeamId })[];
   rounds: RoundsConfig;
   tools: ToolConfigs;
 };
@@ -56,7 +65,7 @@ export type ToolConfig = {
 };
 
 export interface LoginResult {
-  id: string;
+  id: PlayerId;
 }
 
 export type RefreshResult = LoginResult;

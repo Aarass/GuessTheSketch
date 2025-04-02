@@ -1,10 +1,6 @@
-import type { PlayerId } from "../types/types";
-
-type Namespace = string;
-type SocketId = string;
+import type { PlayerId } from "@guessthesketch/common";
 
 export interface Player {
   id: PlayerId;
   name: string;
-  // socketIds: Map<Namespace, SocketId>;
 }

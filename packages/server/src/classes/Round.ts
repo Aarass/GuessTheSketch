@@ -6,8 +6,8 @@ import {
   type ToolConfigs,
   type ToolType,
   type RoundReport,
+  type TeamId,
 } from "@guessthesketch/common";
-import type { TeamId } from "../types/types";
 import type { Evaluator } from "./evaluators/Evaluator";
 import { ToolBuilder } from "./tools/ToolBuilder";
 import type { Game } from "./Game";

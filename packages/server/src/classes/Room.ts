@@ -22,13 +22,8 @@ export class Room {
 
     this.namespaces = namespaces;
 
-    this.currentGame = new Game(config, this, () => {
-      console.log("Game end from room");
-      this.emitToGlobal("game ended");
-    });
-
+    this.currentGame = new Game(config, this);
     this.currentGame.start();
-    this.emitToGlobal("game started", config);
   }
 
   addPlayer(playerId: PlayerId, playerName: string) {
