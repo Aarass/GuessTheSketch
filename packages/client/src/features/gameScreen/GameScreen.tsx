@@ -25,6 +25,7 @@ import {
 } from "./GameScreenSlice"
 import { HSVtoRGB, RGBtoHexString } from "../../utils/colors"
 import {
+  BroadcastMessage,
   Drawing,
   Point,
   RoundReport,
@@ -110,8 +111,7 @@ export const Canvas = () => {
       sockets.drawings = io(`ws://${backend}/drawings`)
     }
 
-    const onDrawing = (bm: any) => {
-      console.log("drawing", bm)
+    const onDrawing = (bm: BroadcastMessage) => {
       state.drawings.push(bm.drawing)
     }
 
@@ -309,6 +309,9 @@ export const SelectSize = () => {
     </div>
   )
 }
+
+let inFlyTimeout: NodeJS.Timeout | null = null
+
 export abstract class Tool {
   public abstract type: ToolType
 
@@ -333,7 +336,7 @@ export abstract class Tool {
   // crtez odavnde treba da ode u neki niz privremenih crteza
   // gde ce cekati potvrdu ili zabranu od servera
   commit(drawing: Drawing) {
-    this.gameState.drawings.push(drawing)
+    // this.gameState.drawings.push(drawing)
     sockets.controls?.emit("use tool", drawing)
   }
 
@@ -346,15 +349,23 @@ export abstract class Tool {
         return
       }
 
+      if (inFlyTimeout) {
+        clearTimeout(inFlyTimeout)
+      }
+
       this.block = false
       this.onMousePressed(e)
     })
+
     this.sketch.mouseReleased = this.helper(e => {
       if (!this.block) {
         this.onMouseReleased(e)
       }
-      this.gameState.inFly.drawing = null
-      this.gameState.inFly.i = null
+
+      inFlyTimeout = setTimeout(() => {
+        this.gameState.inFly.drawing = null
+        this.gameState.inFly.i = null
+      }, 300)
     })
 
     this.sketch.mouseClicked = () => {}
