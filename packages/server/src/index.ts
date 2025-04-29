@@ -60,7 +60,7 @@ guarded(ios.chatNamespace).on("connection", (_socket: ChatSocket) => {
   registerHandlersForChat(ios, _socket as GuardedSocket<typeof _socket>);
 });
 
-// TODO expose
+// TODO: expose
 server.listen(8080, "0.0.0.0", () => {
   console.log("server started on: ", server.address());
 });

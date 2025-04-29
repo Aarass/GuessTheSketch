@@ -5,6 +5,7 @@
   "scripts": {
     "client": "bun run --filter \"./packages/client\" dev",
     "server": "bun run --filter \"./packages/server\" dev",
+    "persistor": "bun run --filter \"./packages/persistor\" dev",
     "all": "bun run --filter \"./packages/client\" --filter \"./packages/server\" dev"
   },
   "workspaces": [

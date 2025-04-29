@@ -1,0 +1,21 @@
+{
+  "name": "persistor",
+  "module": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "check": "bun tsc --noEmit --skipLibCheck",
+    "dev": "bun --watch src/index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@types/amqplib": "^0.10.7",
+    "amqplib": "^0.10.7",
+    "uuid": "^11.1.0"
+  }
+}

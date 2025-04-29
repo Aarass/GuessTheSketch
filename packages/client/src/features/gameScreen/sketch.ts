@@ -165,9 +165,9 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
         sketch.noStroke()
         sketch.noFill()
         sketch.translate(50, 50)
-        ;(pg as any).background(255)
-        ;(pg as any).textSize(200)
-        ;(pg as any).text(Math.round(sketch.frameRate()), 20, 200)
+          ; (pg as any).background(255)
+          ; (pg as any).textSize(200)
+          ; (pg as any).text(Math.round(sketch.frameRate()), 20, 200)
         sketch.texture(pg)
         sketch.plane(50)
       }

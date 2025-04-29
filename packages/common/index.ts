@@ -9,6 +9,8 @@ export * from "./namespaces/chat";
 
 export * from "./types/drawings";
 
+export * from "./ipc/queueNames.ts";
+
 export const toolTypes = ["pen", "eraser"] as const;
 export type ToolType = (typeof toolTypes)[number];
 
