@@ -36,11 +36,13 @@ export function registerHandlersForControls(
 
     const selectResult = round.selectTool(toolType, userId);
     if (selectResult === true) {
-      namespaces.controlsNamespace.emit(
-        "player selected tool",
-        userId,
-        round.getPlayersTool(userId)!.toolType
-      );
+      namespaces.controlsNamespace
+        .to(room.id)
+        .emit(
+          "player selected tool",
+          userId,
+          round.getPlayersTool(userId)!.toolType,
+        );
     }
   });
 
@@ -58,12 +60,14 @@ export function registerHandlersForControls(
 
     const useResult = round.useTool(userId, drawing);
     if (useResult !== null) {
-      namespaces.controlsNamespace.emit(
-        "player used tool",
-        userId,
-        round.getPlayersTool(userId)!.toolType
-      );
-      namespaces.drawingsNamespace.emit("drawing", useResult);
+      namespaces.controlsNamespace
+        .to(room.id)
+        .emit(
+          "player used tool",
+          userId,
+          round.getPlayersTool(userId)!.toolType,
+        );
+      namespaces.drawingsNamespace.to(room.id).emit("drawing", useResult);
     }
   });
 
@@ -84,7 +88,7 @@ export function registerHandlersForControls(
       toDelete: id,
     });
 
-    namespaces.drawingsNamespace.emit("drawing", useResult);
+    namespaces.drawingsNamespace.to(room.id).emit("drawing", useResult);
   });
 
   (["disconnect", "deselect tool"] as const).forEach((event) =>
@@ -103,11 +107,9 @@ export function registerHandlersForControls(
       const toolType = round.getPlayersTool(userId)?.toolType;
       const res = round.deselectTool(userId);
       if (res) {
-        namespaces.controlsNamespace.emit(
-          "player deselected tool",
-          userId,
-          toolType!
-        );
+        namespaces.controlsNamespace
+          .to(room.id)
+          .emit("player deselected tool", userId, toolType!);
       }
     })
   );
