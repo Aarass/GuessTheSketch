@@ -6,6 +6,7 @@ export class Room {
   public currentGame: Game | null = null;
   private players: Map<PlayerId, Player> = new Map();
   private namespaces: MyNamespaces | undefined;
+  private drawingRoom: Set<PlayerId> = new Set();
 
   constructor(
     public id: string,
@@ -81,4 +82,33 @@ export class Room {
     // TODO
     return true;
   }
+
+  
+  movePlayerToDrawingRoom(playerId: PlayerId) {
+    this.drawingRoom.add(playerId);
+  }
+
+  setupRoundRooms(drawingTeam: { players: Set<PlayerId> }) {
+    this.drawingRoom.clear();
+
+    for (const playerId of drawingTeam.players) {      
+        this.drawingRoom.add(playerId);     
+    }
+  }
+
+  public getPlayersInDrawingRoom(): Set<PlayerId>{
+    return this.drawingRoom;
+  }
+
+  public addPlayerToDrawingRoom(player: PlayerId){
+    if(!this.drawingRoom.has(player)){
+      this.drawingRoom.add(player);
+    }
+  }
+
+  getCurentGame():Game | null{
+    return this.currentGame;
+  }
+
+
 }
