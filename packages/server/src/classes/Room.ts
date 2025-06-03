@@ -1,18 +1,18 @@
 import type { GameConfig, PlayerId } from "@guessthesketch/common";
-import type { Player } from "./Player";
-import { Game } from "./Game";
+import { v4 as uuid } from "uuid";
 import type { MyNamespaces } from "..";
+import { Game } from "./Game";
+import type { Player } from "./Player";
+
 export class Room {
   public currentGame: Game | null = null;
   private players: Map<PlayerId, Player> = new Map();
   private namespaces: MyNamespaces | undefined;
 
   constructor(
-    public id: string,
-    public ownerId: PlayerId
-  ) {
-    console.log("Room created");
-  }
+    public ownerId: PlayerId,
+    public id: string = uuid(),
+  ) {}
 
   startGame(config: GameConfig, namespaces: MyNamespaces) {
     if (this.currentGame) throw `Game already started`;

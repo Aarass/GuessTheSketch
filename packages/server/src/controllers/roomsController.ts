@@ -2,13 +2,13 @@ import express from "express";
 import { GlobalState } from "../classes/states/GlobalState";
 import { authenticate } from "../middlewares/express/authenticate";
 import { Room } from "../classes/Room";
-import { v4 as uuid } from "uuid";
 import type { JoinRoomResult } from "@guessthesketch/common";
 
 let router = express.Router();
 
 router.post("/rooms", authenticate, async (req, res) => {
-  const room = new Room(uuid(), req.session.userId);
+  const ownerId = req.session.userId;
+  const room = new Room(ownerId);
   GlobalState.getInstance().addRoom(room);
 
   res.send({ roomId: room.id });

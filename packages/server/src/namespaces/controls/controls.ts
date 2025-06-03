@@ -1,15 +1,19 @@
-import type {
-  ControlsSocket,
-  DrawingId,
-  ToolType,
+import amqp, { connect } from "amqplib";
+import {
+  drawingsQueueName,
+  type ControlsSocket,
+  type DrawingId,
+  type ToolType,
 } from "@guessthesketch/common";
 import type { GuardedSocket } from "../../utility/guarding";
 import type { MyNamespaces } from "../..";
 import { checkUpToRound, getSocketContext } from "../../utility/extractor";
 
-export function registerHandlersForControls(
+const url = process.env.AMQPURL ?? "amqp://localhost";
+
+export async function registerHandlersForControls(
   namespaces: MyNamespaces,
-  socket: GuardedSocket<ControlsSocket>
+  socket: GuardedSocket<ControlsSocket>,
 ) {
   socket.join(socket.request.session.roomId);
 
@@ -46,6 +50,10 @@ export function registerHandlersForControls(
     }
   });
 
+  const connection = await amqp.connect(url);
+  const channel = await connection.createChannel();
+  const { queue: drawingsQueue } = await channel.assertQueue(drawingsQueueName);
+
   socket.on("use tool", (drawing) => {
     const context = getSocketContext(socket);
 
@@ -68,6 +76,8 @@ export function registerHandlersForControls(
           round.getPlayersTool(userId)!.toolType,
         );
       namespaces.drawingsNamespace.to(room.id).emit("drawing", useResult);
+
+      channel.sendToQueue(drawingsQueue, Buffer.from("asd"));
     }
   });
 
@@ -111,7 +121,7 @@ export function registerHandlersForControls(
           .to(room.id)
           .emit("player deselected tool", userId, toolType!);
       }
-    })
+    }),
   );
 }
 

@@ -8,14 +8,16 @@
     "dev": "bun --watch src/index.ts"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/amqplib": "^0.10.7"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@types/amqplib": "^0.10.7",
     "amqplib": "^0.10.7",
+    "redis": "^5.0.0",
+    "redis-om": "^0.4.7",
     "uuid": "^11.1.0"
   }
 }
