@@ -3,6 +3,7 @@ import type { Room } from "./Room";
 import { v4 as uuid } from "uuid";
 import { Round } from "./Round";
 import { Evaluator, MockEvaluator } from "./evaluators/Evaluator";
+import type { MessagingCenter } from "./MessagingCenter";
 
 export class Game {
   public active: boolean = false;
@@ -19,7 +20,8 @@ export class Game {
   constructor(
     private config: GameConfig,
     public room: Room,
-    private evaluator: Evaluator = new MockEvaluator()
+    private messagingCenter: MessagingCenter,
+    private evaluator: Evaluator = new MockEvaluator(),
   ) {
     this.teams = config.teams.map((teamConfig) => {
       return {
@@ -32,7 +34,7 @@ export class Game {
     this.leaderboard = Object.fromEntries(
       this.teams.map((team) => {
         return [team.id, 0];
-      })
+      }),
     );
   }
 
@@ -41,9 +43,10 @@ export class Game {
       throw `Calling game.start() when startedRounds is not 0`;
 
     this.active = true;
+
     console.log("Game started");
 
-    this.room.emitToGlobal("game started", {
+    const config = {
       ...this.config,
       teams: this.teams.map((team) => {
         return {
@@ -52,7 +55,9 @@ export class Game {
           players: Array.from(team.players.values()),
         };
       }),
-    });
+    };
+
+    this.messagingCenter.notifyGameStarted(this.room.id, config);
 
     setTimeout(() => {
       this.startNewRound();
@@ -100,9 +105,8 @@ export class Game {
     console.log("Round started");
 
     const teamOnMove = this.teams[this.currentTeamIndex];
-    const tmp = teamOnMove.id;
 
-    this.room.emitToControls("round started", teamOnMove.id);
+    this.messagingCenter.notifyRoundStarted(this.room.id, teamOnMove.id);
   }
 
   private roundEnded() {
@@ -111,7 +115,7 @@ export class Game {
 
     const report = this.round.getReport();
 
-    this.room.emitToControls("round ended", report);
+    this.messagingCenter.notifyRoundEnded(this.room.id, report);
 
     const maxRounds = this.teams.length * this.config.rounds.cycles;
     if (this.startedRounds !== maxRounds) {
@@ -126,7 +130,7 @@ export class Game {
     console.log("Game end");
 
     this.active = false;
-    this.room.emitToGlobal("game ended");
+    this.messagingCenter.notifyGameEnded(this.room.id);
   }
 
   private findPlayersTeam(playerId: PlayerId): Team | null {

@@ -1,0 +1,148 @@
+import {
+  type ControlsNamespace as ControlsNamespaceType,
+  type Drawing,
+  type DrawingId,
+  type PlayerId,
+  type RoundReport,
+  type TeamId,
+  type ToolType,
+} from "@guessthesketch/common";
+import { runWithContextUpToRound } from "../../utility/extractor";
+import type { GuardedSocket } from "../../utility/guarding";
+import type { ExtractSocketType } from "../../utility/socketioTyping";
+import type { Room } from "../Room";
+import type { Round } from "../Round";
+import { NamespaceClass } from "./Base";
+
+export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
+  async registerHandlers(
+    socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
+  ) {
+    socket.join(socket.request.session.roomId);
+
+    this.blockOutOfTurnUsers(socket);
+
+    socket.on("select tool", this.getOnSelectToolHandler(socket));
+    socket.on("use tool", this.getOnUseToolHandler(socket));
+    socket.on("delete drawing", this.getOnDeleteDrawingHandler(socket));
+    socket.on("deselect tool", this.getOnDeselectToolHandler(socket));
+    socket.on("disconnect", this.getOnDeselectToolHandler(socket));
+  }
+
+  public notifyRoundStarted(room: string, teamOnMoveId: TeamId) {
+    this.namespace.to(room).emit("round started", teamOnMoveId);
+  }
+
+  public notifyRoundEnded(room: string, report: RoundReport) {
+    this.namespace.to(room).emit("round ended", report);
+  }
+
+  // TODO proveri getPlayersTool u narednim metodama.
+  // Dokumentuj zasto je okej da se koristi assertion, ili fixaj kako valja
+  public notifyPlayerSelectedTool(room: Room, userId: PlayerId, round: Round) {
+    this.namespace
+      .to(room.id)
+      .emit(
+        "player selected tool",
+        userId,
+        round.getPlayersTool(userId)!.toolType,
+      );
+  }
+
+  public notifyPlayerUsedTool(room: Room, userId: PlayerId, round: Round) {
+    this.namespace
+      .to(room.id)
+      .emit("player used tool", userId, round.getPlayersTool(userId)!.toolType);
+  }
+
+  public notifyPlayerDeselectedTool(
+    room: Room,
+    userId: PlayerId,
+    round: Round,
+  ) {
+    this.namespace
+      .to(room.id)
+      .emit(
+        "player deselected tool",
+        userId,
+        round.getPlayersTool(userId)!.toolType,
+      );
+  }
+
+  private blockOutOfTurnUsers(
+    socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
+  ) {
+    socket.use((_event, next) => {
+      runWithContextUpToRound(socket, (userId, _room, game) => {
+        if (game.isPlayerOnMove(userId)) {
+          next();
+        }
+      });
+    });
+  }
+
+  private getOnSelectToolHandler(
+    socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
+  ) {
+    return (toolType: ToolType) => {
+      runWithContextUpToRound(socket, (userId, room, _game, round) => {
+        console.log(`User ${userId} about to select tool`);
+
+        const selectResult = round.selectTool(toolType, userId);
+        if (selectResult === true) {
+          this.notifyPlayerSelectedTool(room, userId, round);
+        }
+      });
+    };
+  }
+
+  private getOnUseToolHandler(
+    socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
+  ) {
+    return (drawing: Drawing) => {
+      runWithContextUpToRound(socket, (userId, room, _game, round) => {
+        console.log(`User ${userId} about to use tool`);
+
+        const useResult = round.useTool(userId, drawing);
+        if (useResult !== null) {
+          this.notifyPlayerUsedTool(room, userId, round);
+          this.messagingCenter.notifyNewDrawing(room.id, useResult);
+
+          // TODO
+          // channel.sendToQueue(drawingsQueue, Buffer.from("asd"));
+        }
+      });
+    };
+  }
+
+  private getOnDeleteDrawingHandler(
+    socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
+  ) {
+    return (id: DrawingId) => {
+      runWithContextUpToRound(socket, (userId, room, _game, round) => {
+        const useResult = round.useCommand(userId, {
+          id: "" as DrawingId,
+          type: "eraser",
+          toDelete: id,
+        });
+
+        this.messagingCenter.notifyNewDrawing(room.id, useResult);
+      });
+    };
+  }
+
+  private getOnDeselectToolHandler(
+    socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
+  ) {
+    return () => {
+      runWithContextUpToRound(socket, (userId, room, _game, round) => {
+        console.log(`User ${userId} about to deselect tool`);
+
+        const res = round.deselectTool(userId);
+        if (res) {
+          this.notifyPlayerDeselectedTool(room, userId, round);
+        }
+      });
+    };
+  }
+}

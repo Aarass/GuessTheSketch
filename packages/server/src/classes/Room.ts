@@ -1,29 +1,32 @@
 import type { GameConfig, PlayerId } from "@guessthesketch/common";
 import { v4 as uuid } from "uuid";
-import type { MyNamespaces } from "..";
 import { Game } from "./Game";
+import type { MessagingCenter } from "./MessagingCenter";
 import type { Player } from "./Player";
 
 export class Room {
-  public currentGame: Game | null = null;
+  private _currentGame: Game | null = null;
+  public get currentGame() {
+    return this._currentGame;
+  }
+
   private players: Map<PlayerId, Player> = new Map();
-  private namespaces: MyNamespaces | undefined;
+  // TODO
 
   constructor(
     public ownerId: PlayerId,
     public id: string = uuid(),
   ) {}
 
-  startGame(config: GameConfig, namespaces: MyNamespaces) {
-    if (this.currentGame) throw `Game already started`;
+  startGame(config: GameConfig, messagingCenter: MessagingCenter) {
+    // TODO should these throw?
+    if (this._currentGame) throw `Game already started`;
     if (!this.isValidGameConfig(config)) throw `Bad config`;
 
     console.log("About to start the game");
 
-    this.namespaces = namespaces;
-
-    this.currentGame = new Game(config, this);
-    this.currentGame.start();
+    this._currentGame = new Game(config, this, messagingCenter);
+    this._currentGame.start();
   }
 
   addPlayer(playerId: PlayerId, playerName: string) {
@@ -41,44 +44,8 @@ export class Room {
     return this.players.values().toArray();
   }
 
-  emitToGlobal: MyNamespaces["globalNamespace"]["emit"] = (...args) => {
-    if (this.namespaces) {
-      return this.namespaces.globalNamespace.to(this.id).emit(...args);
-    } else {
-      console.error(`namespaces is ${this.namespaces}`);
-      return false;
-    }
-  };
-
-  emitToControls: MyNamespaces["controlsNamespace"]["emit"] = (...args) => {
-    if (this.namespaces) {
-      return this.namespaces.controlsNamespace.to(this.id).emit(...args);
-    } else {
-      console.error(`namespaces is ${this.namespaces}`);
-      return false;
-    }
-  };
-
-  emitToDrawings: MyNamespaces["drawingsNamespace"]["emit"] = (...args) => {
-    if (this.namespaces) {
-      return this.namespaces.drawingsNamespace.to(this.id).emit(...args);
-    } else {
-      console.error(`namespaces is ${this.namespaces}`);
-      return false;
-    }
-  };
-
-  emitToChat: MyNamespaces["chatNamespace"]["emit"] = (...args) => {
-    if (this.namespaces) {
-      return this.namespaces.chatNamespace.to(this.id).emit(...args);
-    } else {
-      console.error(`namespaces is ${this.namespaces}`);
-      return false;
-    }
-  };
-
+  // TODO
   private isValidGameConfig(config: GameConfig): boolean {
-    // TODO
     return true;
   }
 }
