@@ -9,4 +9,8 @@ const userSchema = new Schema<User>("User", {
   username: { type: "string" },
 });
 
-export const userRepository = new Repository(userSchema, getClient());
+export type UserRepository = Repository<User>;
+
+export function createUserRepository(): UserRepository {
+  return new Repository(userSchema, getClient());
+}

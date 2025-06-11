@@ -37,36 +37,28 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
     this.namespace.to(room).emit("round ended", report);
   }
 
-  // TODO proveri getPlayersTool u narednim metodama.
-  // Dokumentuj zasto je okej da se koristi assertion, ili fixaj kako valja
-  public notifyPlayerSelectedTool(room: Room, userId: PlayerId, round: Round) {
-    this.namespace
-      .to(room.id)
-      .emit(
-        "player selected tool",
-        userId,
-        round.getPlayersTool(userId)!.toolType,
-      );
+  public notifyPlayerSelectedTool(
+    room: Room,
+    userId: PlayerId,
+    toolType: ToolType,
+  ) {
+    this.namespace.to(room.id).emit("player selected tool", userId, toolType);
   }
 
-  public notifyPlayerUsedTool(room: Room, userId: PlayerId, round: Round) {
-    this.namespace
-      .to(room.id)
-      .emit("player used tool", userId, round.getPlayersTool(userId)!.toolType);
+  public notifyPlayerUsedTool(
+    room: Room,
+    userId: PlayerId,
+    toolType: ToolType,
+  ) {
+    this.namespace.to(room.id).emit("player used tool", userId, toolType);
   }
 
   public notifyPlayerDeselectedTool(
     room: Room,
     userId: PlayerId,
-    round: Round,
+    toolType: ToolType,
   ) {
-    this.namespace
-      .to(room.id)
-      .emit(
-        "player deselected tool",
-        userId,
-        round.getPlayersTool(userId)!.toolType,
-      );
+    this.namespace.to(room.id).emit("player deselected tool", userId, toolType);
   }
 
   private blockOutOfTurnUsers(
@@ -90,7 +82,7 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
 
         const selectResult = round.selectTool(toolType, userId);
         if (selectResult === true) {
-          this.notifyPlayerSelectedTool(room, userId, round);
+          this.notifyPlayerSelectedTool(room, userId, toolType);
         }
       });
     };
@@ -103,9 +95,11 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
       runWithContextUpToRound(socket, (userId, room, _game, round) => {
         console.log(`User ${userId} about to use tool`);
 
+        const tool = round.getPlayersTool(userId);
         const useResult = round.useTool(userId, drawing);
-        if (useResult !== null) {
-          this.notifyPlayerUsedTool(room, userId, round);
+        if (useResult && tool) {
+          this.notifyPlayerUsedTool(room, userId, tool.toolType);
+
           this.messagingCenter.notifyNewDrawing(room.id, useResult);
 
           // TODO
@@ -138,9 +132,10 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
       runWithContextUpToRound(socket, (userId, room, _game, round) => {
         console.log(`User ${userId} about to deselect tool`);
 
+        const tool = round.getPlayersTool(userId);
         const res = round.deselectTool(userId);
-        if (res) {
-          this.notifyPlayerDeselectedTool(room, userId, round);
+        if (res && tool) {
+          this.notifyPlayerDeselectedTool(room, userId, tool.toolType);
         }
       });
     };

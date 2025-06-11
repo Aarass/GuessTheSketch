@@ -5,7 +5,6 @@ import type {
   ProcessedGameConfig,
   RoomId,
 } from "@guessthesketch/common";
-import userService from "../../services/userService";
 import { runWithContextUpToRoom } from "../../utility/extractor";
 import type { GuardedSocket } from "../../utility/guarding";
 import type { ExtractSocketType } from "../../utility/socketioTyping";
@@ -33,7 +32,7 @@ export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
   ) {
     return async () => {
       await runWithContextUpToRoom(socket, async (userId, room) => {
-        const user = await userService.getUserById(userId);
+        const user = await this.ctx.userService.getUserById(userId);
 
         if (user === null) {
           socket.disconnect();
@@ -76,10 +75,6 @@ export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
   ): (config: GameConfig) => void {
     return (config: GameConfig) => {
       runWithContextUpToRoom(socket, (userId, room) => {
-        if (room === null) {
-          return console.log(`Can't find room`);
-        }
-
         if (room.ownerId !== userId) {
           return console.log(`You are not the owner of the room`);
         }

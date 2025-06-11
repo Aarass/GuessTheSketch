@@ -3,7 +3,6 @@ import { ChatNamespace } from "./namespaces/ChatNamespace";
 import { ControlsNamespace } from "./namespaces/ControlsNamespace";
 import { DrawingsNamespace } from "./namespaces/DrawingNamespace";
 import { GlobalNamespace } from "./namespaces/GlobalNamespace";
-import type { Room } from "./Room";
 import type {
   BroadcastMessage,
   ProcessedGameConfig,
@@ -11,6 +10,18 @@ import type {
   RoundReport,
   TeamId,
 } from "@guessthesketch/common";
+import type { AppContext } from "./AppContext";
+
+// TODO
+
+// import amqp from "amqplib";
+// import { drawingsQueueName } from "@guessthesketch/common";
+
+// const url = process.env.AMQPURL ?? "amqp://localhost";
+//
+// const connection = await amqp.connect(url);
+// const channel = await connection.createChannel();
+// const { queue: drawingsQueue } = await channel.assertQueue(drawingsQueueName);
 
 // ----------------
 // --- Mediator ---
@@ -18,22 +29,13 @@ import type {
 export class MessagingCenter {
   private namespaces;
 
-  constructor(server: SocketIOServer) {
+  constructor(server: SocketIOServer, ctx: AppContext) {
     this.namespaces = {
-      global: new GlobalNamespace("", server, this),
-      drawings: new DrawingsNamespace("drawings", server, this),
-      controls: new ControlsNamespace("controls", server, this),
-      chat: new ChatNamespace("chat", server, this),
+      global: new GlobalNamespace("", server, this, ctx),
+      drawings: new DrawingsNamespace("drawings", server, this, ctx),
+      controls: new ControlsNamespace("controls", server, this, ctx),
+      chat: new ChatNamespace("chat", server, this, ctx),
     };
-
-    // import amqp from "amqplib";
-    // import { drawingsQueueName } from "@guessthesketch/common";
-
-    // const url = process.env.AMQPURL ?? "amqp://localhost";
-    //
-    // const connection = await amqp.connect(url);
-    // const channel = await connection.createChannel();
-    // const { queue: drawingsQueue } = await channel.assertQueue(drawingsQueueName);
   }
 
   public notifyGameStarted(room: RoomId, config: ProcessedGameConfig) {
