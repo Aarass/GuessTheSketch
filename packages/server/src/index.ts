@@ -18,16 +18,12 @@ import { registerHandlersForGlobal } from "./namespaces/global/global";
 import type { ChatNamespace } from "@guessthesketch/common";
 import { guarded, type GuardedSocket } from "./utility/guarding";
 import { registerHandlersForDrawings } from "./namespaces/drawings/drawings";
-import wordController from "./controllers/wordController"; 
-import { connectDB } from "./repositories/wordRepository";
-
 
 const app = express();
 app.use(express.json());
 app.use(corsMiddleware);
 app.use(sessionMiddleware);
 
-app.use(wordController);
 app.use(authController);
 app.use(roomsController);
 app.get("/", expressAuth, (_, res) => {
@@ -63,9 +59,6 @@ guarded(ios.controlsNamespace).on("connection", (_socket) => {
 guarded(ios.chatNamespace).on("connection", (_socket: ChatSocket) => {
   registerHandlersForChat(ios, _socket as GuardedSocket<typeof _socket>);
 });
-
-
-connectDB();
 
 // TODO: expose
 server.listen(8080, "0.0.0.0", () => {

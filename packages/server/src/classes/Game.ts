@@ -103,8 +103,6 @@ export class Game {
     const tmp = teamOnMove.id;
 
     this.room.emitToControls("round started", teamOnMove.id);
-    this.room.setupRoundRooms(this.teams[this.currentTeamIndex]);
-    this.room.emitToChat("round-started", this.teams[this.currentTeamIndex].name);
   }
 
   private roundEnded() {
@@ -114,7 +112,6 @@ export class Game {
     const report = this.round.getReport();
 
     this.room.emitToControls("round ended", report);
-    this.room.emitToChat("round-ended");
 
     const maxRounds = this.teams.length * this.config.rounds.cycles;
     if (this.startedRounds !== maxRounds) {
@@ -132,7 +129,7 @@ export class Game {
     this.room.emitToGlobal("game ended");
   }
 
-  findPlayersTeam(playerId: PlayerId): Team | null {
+  private findPlayersTeam(playerId: PlayerId): Team | null {
     for (const team of this.teams) {
       if (team.players.has(playerId)) {
         return team;
@@ -140,19 +137,6 @@ export class Game {
     }
     return null;
   }
-
-  public getCurrentRound(): Round | null{
-    return this.round;
-  }
-
-  getdrawingTeamName(): string | null{
-    return this.teams[this.currentTeamIndex].name
-  }
-
-  getGameConfig(): GameConfig | null {
-    return this.config;
-  }
-
 }
 
 export interface Team {

@@ -12,15 +12,12 @@
     "packages/*"
   ],
   "devDependencies": {
-    "@types/bun": "latest",
-    "@types/mongoose": "^5.11.97"
+    "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "dotenv": "^16.5.0",
-    "mongoose": "^8.14.2",
     "react-router": "^7.2.0"
   }
 }
