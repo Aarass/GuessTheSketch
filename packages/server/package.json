@@ -11,13 +11,15 @@
     "@types/bun": "latest",
     "@types/express": "^5.0.0",
     "@types/express-session": "^1.18.1",
-    "@types/http-errors": "^2.0.4"
+    "@types/http-errors": "^2.0.4",
+    "@types/amqplib": "^0.10.7"
   },
   "peerDependencies": {
     "typescript": "^5.7.3"
   },
   "dependencies": {
     "@guessthesketch/common": "workspace:*",
+    "amqplib": "^0.10.7",
     "connect-redis": "^8.0.1",
     "express": "^4.21.2",
     "express-session": "^1.18.1",

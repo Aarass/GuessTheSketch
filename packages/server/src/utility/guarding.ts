@@ -1,7 +1,7 @@
 import type { Namespace, Socket } from "socket.io";
 import { authenticate as socketAuth } from "../middlewares/socket.io/authenticate";
 import { roomMiddleware } from "../middlewares/socket.io/room";
-import type { RoomId } from "@guessthesketch/common";
+import type { GlobalNamespace, RoomId } from "@guessthesketch/common";
 
 export function guarded<T extends Namespace>(namespace: T) {
   return namespace
@@ -20,6 +20,6 @@ export function guarded<T extends Namespace>(namespace: T) {
     });
 }
 
-export type GuardedSocket<U extends Socket> = U & {
+export type GuardedSocket<U> = U & {
   request: { session: { roomId: RoomId } };
 };
