@@ -1,6 +1,6 @@
 import { EntityId } from "redis-om";
 import type { LoginDto, PlayerId, User } from "@guessthesketch/common";
-import type { UserRepository } from "../../repositories/userRepository";
+import type { UserRepository } from "../../repositories/UserRepository";
 
 export class AuthService {
   constructor(private userRepository: UserRepository) {}
@@ -18,7 +18,7 @@ export class AuthService {
 
       return user;
     } catch (err) {
-      console.log(err);
+      console.error(err);
       return Promise.reject("Couldn't create user");
     }
   }

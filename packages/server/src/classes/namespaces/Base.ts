@@ -26,7 +26,6 @@ export abstract class NamespaceClass<T extends Namespace> {
   ) {
     const namespace = guarded(io.of(`/${name}`) as T);
     namespace.on("connection", (socket) => {
-      console.log(socket);
       this.registerHandlers(socket as GuardedSocket<typeof socket>);
     });
 

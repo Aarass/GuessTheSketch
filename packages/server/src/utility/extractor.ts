@@ -102,8 +102,12 @@ function logContextNotOkay(context: SocketContext) {
     const lines = stack.split("\n");
     const callerLine = lines[2 + 1]?.trim() ?? "unknown";
 
-    console.error(`Context is not okay [${callerLine}]:\n${context}\n ----`);
+    console.error(
+      `Context is not okay \n[${callerLine}]\nContext: ${context}\n ----`,
+    );
   } else {
-    console.error(`Context is not okay. Can't read stack`);
+    console.error(
+      `Context is not okay. Can't read stack.Context: ${context}\n ----`,
+    );
   }
 }

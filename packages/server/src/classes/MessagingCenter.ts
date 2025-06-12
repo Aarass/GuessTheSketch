@@ -8,7 +8,7 @@ import type {
   ProcessedGameConfig,
   RoomId,
   RoundReport,
-  TeamId,
+  Team,
 } from "@guessthesketch/common";
 import type { AppContext } from "./AppContext";
 
@@ -40,18 +40,21 @@ export class MessagingCenter {
 
   public notifyGameStarted(room: RoomId, config: ProcessedGameConfig) {
     this.namespaces.global.notifyGameStarted(room, config);
+    this.namespaces.chat.notifyGameStarted(room, config);
   }
 
   public notifyGameEnded(room: RoomId) {
     this.namespaces.global.notifyGameEnded(room);
   }
 
-  public notifyRoundStarted(room: RoomId, teamOnMoveId: TeamId) {
-    this.namespaces.controls.notifyRoundStarted(room, teamOnMoveId);
+  public notifyRoundStarted(room: RoomId, teamOnMove: Team) {
+    this.namespaces.controls.notifyRoundStarted(room, teamOnMove.id);
+    this.namespaces.chat.notifyRoundStarted(room, teamOnMove);
   }
 
   public notifyRoundEnded(room: RoomId, report: RoundReport) {
     this.namespaces.controls.notifyRoundEnded(room, report);
+    this.namespaces.chat.notifyRoundEnded(room);
   }
 
   public notifyNewDrawing(room: RoomId, bm: BroadcastMessage) {

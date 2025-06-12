@@ -8,7 +8,7 @@ import { AppContext } from "./AppContext";
 import { MessagingCenter } from "./MessagingCenter";
 import { AuthController } from "./controllers/AuthController";
 import { RoomsController } from "./controllers/RoomsController";
-import type { Controller } from "./controllers/Controller";
+import { WordsController } from "./controllers/WordsController";
 
 export class App {
   private rawServer = createServer();
@@ -31,12 +31,13 @@ export class App {
     server.use(corsMiddleware);
     server.use(sessionMiddleware);
 
-    const controllers: Controller[] = [
+    [
       new AuthController(this.ctx),
       new RoomsController(this.ctx),
-    ];
-
-    controllers.forEach((c) => server.use(c.getHandlers()));
+      new WordsController(this.ctx),
+    ].forEach((controller) => {
+      server.use(controller.getHandlers());
+    });
 
     server.get("/", expressAuth, (_, res) => {
       res.sendStatus(200);

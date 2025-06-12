@@ -1,5 +1,6 @@
 import { Schema, Repository, type Entity } from "redis-om";
-import { getClient } from "../drivers/redis";
+import { client } from "../drivers/redis";
+import { InfrastructureManager } from "../classes/InfrastructureManager";
 
 interface User extends Entity {
   username: string;
@@ -12,5 +13,7 @@ const userSchema = new Schema<User>("User", {
 export type UserRepository = Repository<User>;
 
 export function createUserRepository(): UserRepository {
-  return new Repository(userSchema, getClient());
+  InfrastructureManager.getInstance().connectRedis();
+
+  return new Repository(userSchema, client);
 }

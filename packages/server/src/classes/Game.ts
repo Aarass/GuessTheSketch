@@ -106,7 +106,9 @@ export class Game {
 
     const teamOnMove = this.teams[this.currentTeamIndex];
 
-    this.messagingCenter.notifyRoundStarted(this.room.id, teamOnMove.id);
+    this.room.setupRoundRooms(this.teams[this.currentTeamIndex]);
+
+    this.messagingCenter.notifyRoundStarted(this.room.id, teamOnMove);
   }
 
   private roundEnded() {
@@ -133,13 +135,25 @@ export class Game {
     this.messagingCenter.notifyGameEnded(this.room.id);
   }
 
-  private findPlayersTeam(playerId: PlayerId): Team | null {
+  public findPlayersTeam(playerId: PlayerId): Team | null {
     for (const team of this.teams) {
       if (team.players.has(playerId)) {
         return team;
       }
     }
     return null;
+  }
+
+  public getCurrentRound(): Round | null {
+    return this.round;
+  }
+
+  public getDrawingTeamName(): string | null {
+    return this.teams[this.currentTeamIndex].name;
+  }
+
+  public getGameConfig(): GameConfig | null {
+    return this.config;
   }
 }
 
