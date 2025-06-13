@@ -9,14 +9,15 @@ type ReplaceReturnType<T extends (...a: any) => any, TNewReturn> = (
 ) => TNewReturn;
 
 export abstract class NamespaceClass<T extends Namespace> {
-  protected namespace: {
-    to: ReplaceReturnType<
-      T["to"],
-      {
-        emit: T["emit"];
-      }
-    >;
-  };
+  protected namespace;
+  // : {
+  //   to: ReplaceReturnType<
+  //     T["to"],
+  //     {
+  //       emit: T["emit"];
+  //     }
+  //   >;
+  // };
 
   constructor(
     name: string,
@@ -34,5 +35,5 @@ export abstract class NamespaceClass<T extends Namespace> {
 
   protected abstract registerHandlers(
     socket: GuardedSocket<ExtractSocketType<T>>,
-  ): Promise<void>;
+  ): void;
 }

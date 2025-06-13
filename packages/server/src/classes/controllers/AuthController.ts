@@ -7,7 +7,6 @@ import {
 import type { RequestHandler } from "express";
 import type { Session, SessionData } from "express-session";
 import createHttpError from "http-errors";
-import type { AppContext } from "../AppContext";
 import { Controller } from "./Controller";
 
 declare module "express-session" {
@@ -24,8 +23,8 @@ declare module "http" {
 }
 
 export class AuthController extends Controller {
-  constructor(ctx: AppContext) {
-    super(ctx);
+  constructor() {
+    super();
 
     this.router.post("/login", this.loginHandler);
     this.router.post("/refresh", this.refreshHandler);
@@ -34,6 +33,7 @@ export class AuthController extends Controller {
 
   private loginHandler: RequestHandler = async (req, res, next) => {
     const validationResult = await LoginDtoSchema.safeParseAsync(req.body);
+
     if (!validationResult.success) {
       return next(createHttpError(404, validationResult.error));
     }

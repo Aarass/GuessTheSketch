@@ -5,10 +5,12 @@ import { DrawingsNamespace } from "./namespaces/DrawingNamespace";
 import { GlobalNamespace } from "./namespaces/GlobalNamespace";
 import type {
   BroadcastMessage,
+  PlayerId,
   ProcessedGameConfig,
   RoomId,
   RoundReport,
   Team,
+  TeamId,
 } from "@guessthesketch/common";
 import type { AppContext } from "./AppContext";
 
@@ -38,13 +40,19 @@ export class MessagingCenter {
     };
   }
 
+  notifyPlayerGuessedCorrectly() {
+    //TODO
+    console.log("Method not implemented.");
+  }
+
   public notifyGameStarted(room: RoomId, config: ProcessedGameConfig) {
     this.namespaces.global.notifyGameStarted(room, config);
     this.namespaces.chat.notifyGameStarted(room, config);
   }
 
-  public notifyGameEnded(room: RoomId) {
+  public notifyGameEnded(room: RoomId, teamIds: TeamId[]) {
     this.namespaces.global.notifyGameEnded(room);
+    this.namespaces.chat.notifyGameEnded(room, teamIds);
   }
 
   public notifyRoundStarted(room: RoomId, teamOnMove: Team) {

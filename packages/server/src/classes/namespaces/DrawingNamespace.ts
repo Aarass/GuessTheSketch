@@ -8,7 +8,7 @@ import type { ExtractSocketType } from "../../utility/socketioTyping";
 import { NamespaceClass } from "./Base";
 
 export class DrawingsNamespace extends NamespaceClass<DrawingsNamespaceType> {
-  async registerHandlers(
+  registerHandlers(
     socket: GuardedSocket<ExtractSocketType<DrawingsNamespaceType>>,
   ) {
     socket.join(socket.request.session.roomId);

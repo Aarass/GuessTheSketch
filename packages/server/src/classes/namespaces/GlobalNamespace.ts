@@ -11,7 +11,7 @@ import type { ExtractSocketType } from "../../utility/socketioTyping";
 import { NamespaceClass } from "./Base";
 
 export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
-  async registerHandlers(
+  registerHandlers(
     socket: GuardedSocket<ExtractSocketType<GlobalNamespaceType>>,
   ) {
     socket.on("ready", this.getOnReadyHandler(socket));

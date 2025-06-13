@@ -1,8 +1,8 @@
-import type { GameConfig, PlayerId } from "@guessthesketch/common";
+import type { GameConfig, Player, PlayerId } from "@guessthesketch/common";
 import { v4 as uuid } from "uuid";
 import { Game } from "./Game";
 import type { MessagingCenter } from "./MessagingCenter";
-import type { Player } from "./Player";
+import type { AppContext } from "./AppContext";
 
 export class Room {
   private _currentGame: Game | null = null;
@@ -10,37 +10,14 @@ export class Room {
     return this._currentGame;
   }
 
-  private drawingRoom: Set<PlayerId> = new Set();
-
   private players: Map<PlayerId, Player> = new Map();
   // TODO
 
   constructor(
+    private ctx: AppContext,
     public ownerId: PlayerId,
     public id: string = uuid(),
   ) {}
-
-  public movePlayerToDrawingRoom(playerId: PlayerId) {
-    this.drawingRoom.add(playerId);
-  }
-
-  public setupRoundRooms(drawingTeam: { players: Set<PlayerId> }) {
-    this.drawingRoom.clear();
-
-    for (const playerId of drawingTeam.players) {
-      this.drawingRoom.add(playerId);
-    }
-  }
-
-  public getPlayersInDrawingRoom(): Set<PlayerId> {
-    return this.drawingRoom;
-  }
-
-  public addPlayerToDrawingRoom(player: PlayerId) {
-    if (!this.drawingRoom.has(player)) {
-      this.drawingRoom.add(player);
-    }
-  }
 
   startGame(config: GameConfig, messagingCenter: MessagingCenter) {
     // TODO should these throw?
@@ -49,7 +26,7 @@ export class Room {
 
     console.log("About to start the game");
 
-    this._currentGame = new Game(config, this, messagingCenter);
+    this._currentGame = new Game(this.ctx, config, this, messagingCenter);
     this._currentGame.start();
   }
 

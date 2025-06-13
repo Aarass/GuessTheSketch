@@ -1,12 +1,14 @@
 import type {
   ChatMessage,
   ChatNamespace as ChatNamespaceType,
+  PlayerId,
   ProcessedGameConfig,
   RoomId,
   Team,
+  TeamId,
 } from "@guessthesketch/common";
 import {
-  runWithContextUpToRoom,
+  runWithContextUpToGame,
   runWithContextUpToRound,
 } from "../../utility/extractor";
 import type { GuardedSocket } from "../../utility/guarding";
@@ -14,115 +16,168 @@ import type { ExtractSocketType } from "../../utility/socketioTyping";
 import { NamespaceClass } from "./Base";
 
 export class ChatNamespace extends NamespaceClass<ChatNamespaceType> {
-  async registerHandlers(
+  registerHandlers(
     socket: GuardedSocket<ExtractSocketType<ChatNamespaceType>>,
   ) {
     socket.join(socket.request.session.roomId);
+    this.setupAuxiliaryRooms(socket);
 
-    // socket.on("ready", this.getOnReadyHandler(socket));
-    socket.on("join-team", this.getOnJoinTeamHandler(socket));
-    socket.on("join-drawing-room", this.getOnJoinDrawingRoomHandler(socket));
-    socket.on("leave-drawing-room", this.getOnLeaveDrawingRoomHandler(socket));
-    socket.on("chat message", this.getOnChatMessageHandler(socket));
+    socket.on("message", this.getOnChatMessageHandler(socket));
   }
 
-  private getOnJoinTeamHandler(
+  private setupAuxiliaryRooms(
     socket: GuardedSocket<ExtractSocketType<ChatNamespaceType>>,
   ) {
-    return (team: string) => {
-      runWithContextUpToRoom(socket, (_userId, room) => {
-        console.log(`CHAT: JOIN-TEAM`);
-        socket.join(`${team}-${room.id}`);
-      });
-    };
+    this.addPlayerToPlayerRoom(socket);
+
+    runWithContextUpToGame(socket, (userId, room, game) => {
+      const team = game.findPlayersTeam(userId);
+
+      if (team) {
+        this.addPlayerToTeamRoom(room.id, userId, team.id);
+      }
+    });
   }
 
-  private getOnJoinDrawingRoomHandler(
-    socket: GuardedSocket<ExtractSocketType<ChatNamespaceType>>,
-  ) {
-    return () => {
-      runWithContextUpToRoom(socket, (userId, room) => {
-        socket.join(`drawing-${room.id}`);
-        console.log(`Igrac-${userId} je uso u sobu za crtanje`);
-      });
-    };
+  public notifyGameStarted(room: RoomId, config: ProcessedGameConfig) {
+    // TODO treba da se proveri da li je ovo obavezno.
+    // Trenutno, game se stratuje pre nego sto bilo ko stigne da se poveze,
+    // pa ovo onda nema kog da ubaci u timske sobe.
+    // Zato ovo radim posebno za svakog igraca na onConnect tj. u registerHandlers.
+    // Ipak, mislim da postoji minimalna sansa da ovo bude korisno:
+    // Ako se pokrene novi game u istoj sobi, a konekcije onstanu zive, onConnect se nece desiti,
+    // pa ce onda ovo ovde imati posla. Dakle, sve zavisi od implementacije na frontendu. Ipak,
+    // najbolje je da pokrijemo sve slucajeve i ne oslanjamo se na frontend.
+    //// ----------------------------------
+    /**/ this.setupTeamRooms(room, config);
+    //// ----------------------------------
+
+    // this.namespace.to(room).emit("start game", config);
   }
 
-  private getOnLeaveDrawingRoomHandler(
-    socket: GuardedSocket<ExtractSocketType<ChatNamespaceType>>,
-  ) {
-    return () => {
-      runWithContextUpToRoom(socket, (_userId, room) => {
-        socket.leave(`drawing-${room.id}`);
-        console.log(`CHAT: NAPUSTIO SOBU ZA CRTANJE`);
-      });
-    };
+  public notifyGameEnded(room: string, teamIds: TeamId[]) {
+    this.clearTeamRooms(room, teamIds);
   }
+
+  public notifyRoundStarted(room: RoomId, teamOnMove: Team) {
+    this.clearUnrestrictedRoom(room);
+    this.addTeamToUnrestrictedRoom(room, teamOnMove.id);
+
+    // this.namespace.to(room).emit("round-started", teamOnMove.name);
+  }
+
+  public notifyRoundEnded(room: RoomId) {
+    // this.namespace.to(room).emit("round-ended");
+  }
+
+  // public notifyMessage(room: RoomId, message: ChatMessage) {
+  //   this.namespace.to(`drawing-${room}`).emit("chat message", message);
+  // }
 
   private getOnChatMessageHandler(
     socket: GuardedSocket<ExtractSocketType<ChatNamespaceType>>,
   ) {
     return (message: string) => {
+      console.log("primio msg", message);
       runWithContextUpToRound(socket, (userId, room, game, round) => {
-        console.log(`CHAT: STIGLA PORUKA`);
-
-        const playerTeam = game.findPlayersTeam(userId);
-        if (!playerTeam) return;
-
-        const isCorrectGuess = round.isCorrectGuess(message);
-
-        const isPlayerInDrawingRoom = room
-          // TODO sakri detalje implementacije.
-          .getPlayersInDrawingRoom()
-          .has(userId);
-
-        if (isCorrectGuess && !isPlayerInDrawingRoom) {
-          playerTeam.players.forEach((player) => {
-            room.addPlayerToDrawingRoom(player);
-            console.log(`${player}`);
-          });
-
-          game.guess(message, userId);
-          socket.join(`drawing-${room.id}`);
-          socket.to(`${playerTeam.name}-${room.id}`).emit("join-drawing-room");
-          console.log(`Igrac-${userId} je uso u sobu za crtanje`);
-          return;
-        }
-
-        // TODO prebaci u common
         const newMessage: ChatMessage = {
           user: userId,
           message: message,
         };
 
-        if (isPlayerInDrawingRoom) {
-          this.notifyMessage(`drawing-${room.id}`, newMessage);
+        const playersTeam = game.findPlayersTeam(userId);
+        if (!playersTeam) return;
 
-          room.getPlayersInDrawingRoom().forEach((element) => {
-            console.log(`${element}`);
-          });
+        const isOnMove = game.isTeamOnMove(playersTeam.id);
+        const alreadyGuessed = round.hasTeamGuessedWord(playersTeam.id);
+
+        if (isOnMove || alreadyGuessed) {
+          this.sendUnrestrictedMessage(room.id, newMessage);
+          console.log("sending to unrestricted");
         } else {
-          this.notifyMessage(room.id, newMessage);
+          const isCorrectGuess = game.guess(message, userId);
+
+          if (isCorrectGuess) {
+            console.log("correct");
+            this.addTeamToUnrestrictedRoom(room.id, playersTeam.id);
+
+            this.messagingCenter.notifyPlayerGuessedCorrectly();
+          } else {
+            console.log("sending safe");
+            this.sendSafeMessage(room.id, newMessage);
+          }
         }
       });
     };
   }
 
-  public notifyGameStarted(room: RoomId, config: ProcessedGameConfig) {
-    this.namespace.to(room).emit("start game", config);
+  private sendUnrestrictedMessage(roomId: RoomId, message: ChatMessage) {
+    this.namespace
+      .to(this.getUnrestrictedRoomName(roomId))
+      .emit("message", message);
   }
 
-  public notifyRoundStarted(room: RoomId, teamOnMove: Team) {
-    this.namespace.to(room).emit("round-started", teamOnMove.name);
+  private sendSafeMessage(roomId: RoomId, message: ChatMessage) {
+    this.namespace.to(roomId).emit("message", message);
   }
 
-  public notifyRoundEnded(room: RoomId) {
-    this.namespace.to(room).emit("round-ended");
+  private addTeamToUnrestrictedRoom(roomId: RoomId, teamId: TeamId) {
+    this.namespace
+      .in(this.getTeamRoomName(roomId, teamId))
+      .socketsJoin(this.getUnrestrictedRoomName(roomId));
   }
 
-  public notifyMessage(room: RoomId, message: ChatMessage) {
-    this.namespace.to(`drawing-${room}`).emit("chat message", message);
+  private clearUnrestrictedRoom(roomId: RoomId) {
+    const room = this.getUnrestrictedRoomName(roomId);
+    this.namespace.in(room).socketsLeave(room);
   }
+
+  // TODO obraditi reconnect. Jedna ideja je da u registerHandlers proveris da li je game active,
+  // pa rucno ubacis igraca u teamRoom. To je pod pretpostavkom da ovu metodu zove Game (preko MessagingCenter)
+  private setupTeamRooms(roomId: RoomId, config: ProcessedGameConfig) {
+    for (const teamConfig of config.teams) {
+      for (const playerId of teamConfig.players) {
+        this.addPlayerToTeamRoom(roomId, playerId, teamConfig.id);
+      }
+    }
+  }
+
+  private clearTeamRooms(roomId: RoomId, teamIds: TeamId[]) {
+    for (const teamId of teamIds) {
+      const room = this.getTeamRoomName(roomId, teamId);
+      this.namespace.in(room).socketsLeave(room);
+    }
+  }
+
+  private addPlayerToPlayerRoom(
+    socket: GuardedSocket<ExtractSocketType<ChatNamespaceType>>,
+  ) {
+    socket.join(this.getPlayerRoomName(socket.request.session.userId));
+  }
+
+  private addPlayerToTeamRoom(
+    roomId: RoomId,
+    playerId: PlayerId,
+    teamId: TeamId,
+  ) {
+    this.namespace
+      .in(this.getPlayerRoomName(playerId))
+      .socketsJoin(this.getTeamRoomName(roomId, teamId));
+  }
+
+  private getPlayerRoomName(playerId: PlayerId) {
+    return `user:${playerId}`;
+  }
+
+  private getTeamRoomName(roomId: RoomId, teamId: TeamId) {
+    return `${roomId}-team:${teamId}`;
+  }
+
+  private getUnrestrictedRoomName(roomId: RoomId) {
+    return `${roomId}-unrestricted`;
+  }
+
+  // socket.on("ready", this.getOnReadyHandler(socket));
 
   // private getOnReadyHandler(
   //   socket: GuardedSocket<ExtractSocketType<ChatNamespaceType>>,

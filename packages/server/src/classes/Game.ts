@@ -1,9 +1,15 @@
-import type { GameConfig, TeamId, PlayerId } from "@guessthesketch/common";
-import type { Room } from "./Room";
+import type {
+  GameConfig,
+  PlayerId,
+  Team,
+  TeamId,
+} from "@guessthesketch/common";
 import { v4 as uuid } from "uuid";
-import { Round } from "./Round";
 import { Evaluator, MockEvaluator } from "./evaluators/Evaluator";
 import type { MessagingCenter } from "./MessagingCenter";
+import type { Room } from "./Room";
+import { Round } from "./Round";
+import type { AppContext } from "./AppContext";
 
 export class Game {
   public active: boolean = false;
@@ -11,15 +17,19 @@ export class Game {
   private teams: Team[];
   private currentTeamIndex: number = -1;
 
-  public round: Round | null = null;
+  private _currentRound: Round | null = null;
+  public get currentRound() {
+    return this._currentRound;
+  }
   private startedRounds = 0;
   private endRoundTimer: Timer | null = null;
 
   private leaderboard: Record<TeamId, number>;
 
   constructor(
+    private ctx: AppContext,
     private config: GameConfig,
-    public room: Room,
+    private room: Room,
     private messagingCenter: MessagingCenter,
     private evaluator: Evaluator = new MockEvaluator(),
   ) {
@@ -38,7 +48,7 @@ export class Game {
     );
   }
 
-  start() {
+  public start() {
     if (this.startedRounds !== 0)
       throw `Calling game.start() when startedRounds is not 0`;
 
@@ -64,25 +74,33 @@ export class Game {
     }, 2000);
   }
 
-  isPlayerOnMove(player: PlayerId): boolean {
+  public isPlayerOnMove(player: PlayerId): boolean {
     const currentTeam = this.teams[this.currentTeamIndex];
     const team = this.findPlayersTeam(player);
 
     return team === currentTeam;
   }
 
-  guess(guess: string, playerId: PlayerId) {
-    if (this.round === null) throw `Trying to guess word while round is null`;
+  public isTeamOnMove(team: TeamId): boolean {
+    return team === this.teams[this.currentTeamIndex].id;
+  }
+
+  public guess(guess: string, playerId: PlayerId) {
+    if (this._currentRound === null)
+      throw `Trying to guess word while round is null`;
 
     if (!this.active) throw `Trying to guess when game is not active`;
 
-    if (this.round.isCorrectGuess(guess)) {
+    const isCorrectGuess = this._currentRound.isCorrectGuess(guess);
+
+    if (isCorrectGuess) {
       const team = this.findPlayersTeam(playerId);
       if (team === null) throw `Can't find players team`;
 
-      this.round.recordHit(team.id);
+      this._currentRound.recordHit(team.id);
 
-      if (this.round.hitsCount() === this.teams.length) {
+      const maxHits = this.teams.length - 1;
+      if (this._currentRound.hitsCount() === maxHits) {
         if (this.endRoundTimer === null)
           throw `endRoundTimer has never been set`;
 
@@ -90,12 +108,21 @@ export class Game {
         this.roundEnded();
       }
     }
+
+    return isCorrectGuess;
   }
 
-  private startNewRound() {
+  private async startNewRound() {
     this.currentTeamIndex = (this.currentTeamIndex + 1) % this.teams.length;
-    this.round = new Round(this, this.config.tools, this.evaluator);
-    this.round.start();
+
+    this._currentRound = new Round(
+      this,
+      this.ctx,
+      this.config.tools,
+      this.messagingCenter,
+    );
+
+    this._currentRound.start();
 
     this.endRoundTimer = setTimeout(() => {
       this.roundEnded();
@@ -106,16 +133,15 @@ export class Game {
 
     const teamOnMove = this.teams[this.currentTeamIndex];
 
-    this.room.setupRoundRooms(this.teams[this.currentTeamIndex]);
-
     this.messagingCenter.notifyRoundStarted(this.room.id, teamOnMove);
   }
 
   private roundEnded() {
     console.log("Round ended");
-    if (this.round === null) throw `Round is null in roundEnded handler`;
+    if (this._currentRound === null)
+      throw `Round is null in roundEnded handler`;
 
-    const report = this.round.getReport();
+    const report = this._currentRound.getReport(this.evaluator);
 
     this.messagingCenter.notifyRoundEnded(this.room.id, report);
 
@@ -123,7 +149,7 @@ export class Game {
     if (this.startedRounds !== maxRounds) {
       this.startNewRound();
     } else {
-      this.round = null;
+      this._currentRound = null;
       this.gameEnded();
     }
   }
@@ -132,7 +158,11 @@ export class Game {
     console.log("Game end");
 
     this.active = false;
-    this.messagingCenter.notifyGameEnded(this.room.id);
+
+    this.messagingCenter.notifyGameEnded(
+      this.room.id,
+      this.teams.map((t) => t.id),
+    );
   }
 
   public findPlayersTeam(playerId: PlayerId): Team | null {
@@ -143,22 +173,4 @@ export class Game {
     }
     return null;
   }
-
-  public getCurrentRound(): Round | null {
-    return this.round;
-  }
-
-  public getDrawingTeamName(): string | null {
-    return this.teams[this.currentTeamIndex].name;
-  }
-
-  public getGameConfig(): GameConfig | null {
-    return this.config;
-  }
-}
-
-export interface Team {
-  id: TeamId;
-  name: string;
-  players: Set<PlayerId>;
 }

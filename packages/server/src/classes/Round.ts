@@ -14,6 +14,8 @@ import { ToolBuilder } from "./tools/ToolBuilder";
 import type { Game } from "./Game";
 import type { Tool } from "./tools/Tool";
 import { ToolState } from "./states/ToolState";
+import type { MessagingCenter } from "./MessagingCenter";
+import type { AppContext } from "./AppContext";
 
 export class Round {
   private word: string | null = null;
@@ -29,8 +31,9 @@ export class Round {
    */
   constructor(
     public game: Game,
+    private ctx: AppContext,
     private toolConfigs: ToolConfigs,
-    private evaluator: Evaluator
+    private messagingCenter: MessagingCenter,
   ) {
     this.toolStates = {} as any;
     for (const type of toolTypes) {
@@ -100,7 +103,7 @@ export class Round {
     return tool.use(drawing);
   }
 
-  useCommand(playerId: PlayerId, command: Eraser) {
+  useCommand(_playerId: PlayerId, command: Eraser) {
     const toolType = command.type;
     const config = this.toolConfigs[toolType];
     const tool = ToolBuilder.build(toolType, this, config);
@@ -120,39 +123,49 @@ export class Round {
     return true;
   }
 
-  start() {
+  async start() {
     if (this.startTimestamp !== null || this.word !== null)
       throw `Trying to call start multiple times`;
 
     this.startTimestamp = Date.now();
-    this.word = this.getWordToGuess();
+    this.word = await this.getRandomWordToGuess();
   }
 
   hitsCount() {
     return this.hitTimestamps.size;
   }
 
-  isCorrectGuess(guess: string) {
+  public isCorrectGuess(guess: string) {
     if (this.word === null) throw `You forgot to call start`;
 
     return this.word === guess;
   }
 
-  recordHit(teamId: TeamId) {
+  public hasTeamGuessedWord(teamId: TeamId) {
+    return this.hitTimestamps.has(teamId);
+  }
+
+  public recordHit(teamId: TeamId) {
     if (this.hitTimestamps.get(teamId) !== undefined)
       throw `Internal error. User should not be able to guess after its team has guessed the word`;
 
     this.hitTimestamps.set(teamId, Date.now());
   }
 
-  getReport(): RoundReport {
+  public getReport(evaluator: Evaluator): RoundReport {
     if (this.startTimestamp === null) throw `You forgot to call start`;
 
-    return this.evaluator.evaluate(this.startTimestamp, this.hitTimestamps);
+    return evaluator.evaluate(this.startTimestamp, this.hitTimestamps);
   }
 
-  private getWordToGuess(): string {
-    // TODO
-    return "house";
+  private async getRandomWordToGuess() {
+    const res = await this.ctx.wordService.getRandomWord();
+
+    if (res) {
+      return res.word;
+    } else {
+      // Mozda da ne ubijem server?
+      throw "Couldn't fetch a word";
+    }
   }
 }

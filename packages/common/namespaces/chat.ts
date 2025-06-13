@@ -1,14 +1,8 @@
 import { Namespace, Socket } from "socket.io";
+import type { PlayerId, TeamId } from "..";
 
 interface ClientToServerEvents {
-  foo: (arg: string) => void;
-  CAO: () => void;
-  ready: () => void;
-  "start game": (config: GameConfig) => void;
-  "chat message": (message: string) => void;
-  "join-team": (team: string) => void;
-  "join-drawing-room": () => void;
-  "leave-drawing-room": () => void;
+  message: (message: string) => void;
 }
 
 export type ChatMessage = {
@@ -17,13 +11,12 @@ export type ChatMessage = {
 };
 
 interface ServerToClientEvents {
-  bar: (arg: string) => void;
-  "start game": (config: GameConfig) => void;
-  "chat message": (message: ChatMessage) => void;
-  "join-drawing-room": () => void;
-  "round-started": (drawingTeam: string) => void;
-  "round-ended": () => void;
-  "game-config-not-set": () => void;
+  message: (message: ChatMessage) => void;
+  // "start game": (config: GameConfig) => void;
+  // "join-drawing-room": () => void;
+  // "round-started": (drawingTeam: string) => void;
+  // "round-ended": () => void;
+  // "game-config-not-set": () => void;
 }
 
 export type ChatSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
@@ -33,7 +26,6 @@ export type ChatNamespace = Namespace<
 >;
 
 import { Socket as CSocket } from "socket.io-client";
-import type { GameConfig, PlayerId, TeamId } from "..";
 
 export type ChatClientSocket = CSocket<
   ServerToClientEvents,

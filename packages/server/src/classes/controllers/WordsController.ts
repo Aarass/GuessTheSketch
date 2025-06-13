@@ -1,11 +1,10 @@
 import type { RequestHandler } from "express";
 import createHttpError from "http-errors";
-import type { AppContext } from "../AppContext";
 import { Controller } from "./Controller";
 
 export class WordsController extends Controller {
-  constructor(ctx: AppContext) {
-    super(ctx);
+  constructor() {
+    super();
 
     this.router.post("/words", this.addWordHandler);
     this.router.get("/words", this.getAllWordsHandler);

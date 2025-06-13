@@ -15,7 +15,7 @@ import type { Round } from "../Round";
 import { NamespaceClass } from "./Base";
 
 export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
-  async registerHandlers(
+  registerHandlers(
     socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
   ) {
     socket.join(socket.request.session.roomId);

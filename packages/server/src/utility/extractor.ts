@@ -68,7 +68,7 @@ function getSocketContext(socket: GuardedSocket<Socket>): SocketContext {
   const room = state.getRoomById(roomId);
 
   const game = room?.currentGame;
-  const round = game?.round;
+  const round = game?.currentRound;
 
   return [userId, room, game, round] as const;
 }
