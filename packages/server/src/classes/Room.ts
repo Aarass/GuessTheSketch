@@ -57,7 +57,7 @@ export class Room {
   }
 
   // TODO
-  private isValidGameConfig(config: GameConfig): boolean {
+  private isValidGameConfig(_config: GameConfig): boolean {
     return true;
   }
 }

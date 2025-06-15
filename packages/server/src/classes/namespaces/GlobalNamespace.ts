@@ -49,7 +49,6 @@ export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
         };
 
         socket.emit("sync players", allPlayers);
-        socket.join(room.id);
         socket.to(room.id).emit("player joined room", player);
       });
     };
@@ -76,7 +75,8 @@ export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
     return (config: GameConfig) => {
       runWithContextUpToRoom(socket, (userId, room) => {
         if (room.ownerId !== userId) {
-          return console.log(`You are not the owner of the room`);
+          console.log(`You are not the owner of the room`);
+          return;
         }
 
         // TODO validate config

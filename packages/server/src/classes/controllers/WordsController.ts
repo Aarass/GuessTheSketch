@@ -17,12 +17,13 @@ export class WordsController extends Controller {
       const { word } = req.body;
 
       if (!word || typeof word !== "string") {
-        return next(createHttpError(400, "Invalid word input."));
+        next(createHttpError(400, "Invalid word input."));
+        return;
       }
 
       const newWord = await this.ctx.wordService.addWord(word);
       res.status(201).json(newWord);
-    } catch (err) {
+    } catch {
       next(createHttpError(500, "Failed to add word."));
     }
   };
@@ -32,7 +33,7 @@ export class WordsController extends Controller {
     try {
       const words = await this.ctx.wordService.getAllWords();
       res.status(200).json(words);
-    } catch (err) {
+    } catch {
       next(createHttpError(500, "Failed to fetch words."));
     }
   };
@@ -42,10 +43,11 @@ export class WordsController extends Controller {
     try {
       const word = await this.ctx.wordService.getRandomWord();
       if (!word) {
-        return next(createHttpError(404, "No words found."));
+        next(createHttpError(404, "No words found."));
+        return;
       }
       res.status(200).json(word);
-    } catch (err) {
+    } catch {
       next(createHttpError(500, "Failed to fetch random word."));
     }
   };

@@ -56,7 +56,7 @@ export class Game {
 
   public start() {
     if (this.startedRounds !== 0)
-      throw `Calling game.start() when startedRounds is not 0`;
+      throw new Error(`Calling game.start() when startedRounds is not 0`);
 
     this.active = true;
 
@@ -76,7 +76,7 @@ export class Game {
     this.messagingCenter.notifyGameStarted(this.room.id, config);
 
     setTimeout(() => {
-      this.startNewRound();
+      void this.startNewRound();
     }, 2000);
   }
 
@@ -113,7 +113,7 @@ export class Game {
       const maxHits = this.teams.length - 1;
       if (guessingManager.hitsCount() === maxHits) {
         if (this.endRoundTimer === null)
-          throw `endRoundTimer has never been set`;
+          throw new Error(`endRoundTimer has never been set`);
 
         clearInterval(this.endRoundTimer);
         this.roundEnded();
@@ -127,7 +127,7 @@ export class Game {
     this.currentTeamIndex = (this.currentTeamIndex + 1) % this.teams.length;
 
     this._currentRound = this.roundFactory.createRound();
-    this._currentRound.start();
+    await this._currentRound.start();
 
     this.endRoundTimer = setTimeout(() => {
       this.roundEnded();
@@ -144,7 +144,7 @@ export class Game {
   private roundEnded() {
     console.log("Round ended");
     if (this._currentRound === null)
-      throw `Internal Error. Round is null in roundEnded handler`;
+      throw new Error(`Internal Error. Round is null in roundEnded handler`);
 
     const report = this._currentRound.guessingManager.getReport(this.evaluator);
 
@@ -152,7 +152,7 @@ export class Game {
 
     const maxRounds = this.teams.length * this.config.rounds.cycles;
     if (this.startedRounds !== maxRounds) {
-      this.startNewRound();
+      void this.startNewRound();
     } else {
       this._currentRound = null;
       this.gameEnded();

@@ -1,18 +1,17 @@
-import { Server as SocketIOServer } from "socket.io";
-import { ChatNamespace } from "./namespaces/ChatNamespace";
-import { ControlsNamespace } from "./namespaces/ControlsNamespace";
-import { DrawingsNamespace } from "./namespaces/DrawingNamespace";
-import { GlobalNamespace } from "./namespaces/GlobalNamespace";
 import type {
   BroadcastMessage,
-  PlayerId,
   ProcessedGameConfig,
   RoomId,
   RoundReport,
   Team,
   TeamId,
 } from "@guessthesketch/common";
+import { Server as SocketIOServer } from "socket.io";
 import type { AppContext } from "./AppContext";
+import { ChatNamespace } from "./namespaces/ChatNamespace";
+import { ControlsNamespace } from "./namespaces/ControlsNamespace";
+import { DrawingsNamespace } from "./namespaces/DrawingNamespace";
+import { GlobalNamespace } from "./namespaces/GlobalNamespace";
 
 // TODO
 

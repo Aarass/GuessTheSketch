@@ -13,7 +13,7 @@ const userSchema = new Schema<User>("User", {
 export type UserRepository = Repository<User>;
 
 export function createUserRepository(): UserRepository {
-  InfrastructureManager.getInstance().connectRedis();
+  void InfrastructureManager.getInstance().connectRedis();
 
   return new Repository(userSchema, client);
 }

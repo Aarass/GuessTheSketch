@@ -12,7 +12,7 @@ import { Pen } from "./classes/tools/concrete/Pen";
 import { createUserRepository } from "./repositories/UserRepository";
 import {
   createMockWordRepository,
-  createWordRepository,
+  // createWordRepository,
 } from "./repositories/WordRepository";
 
 const toolRegistry = ToolRegistry.getInstance();

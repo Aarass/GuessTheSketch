@@ -10,9 +10,7 @@ import { NamespaceClass } from "./Base";
 export class DrawingsNamespace extends NamespaceClass<DrawingsNamespaceType> {
   registerHandlers(
     socket: GuardedSocket<ExtractSocketType<DrawingsNamespaceType>>,
-  ) {
-    socket.join(socket.request.session.roomId);
-  }
+  ) {}
 
   public notifyNewDrawing(room: RoomId, bm: BroadcastMessage) {
     this.namespace.to(room).emit("drawing", bm);

@@ -17,8 +17,6 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
   registerHandlers(
     socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
   ) {
-    socket.join(socket.request.session.roomId);
-
     this.blockOutOfTurnUsers(socket);
 
     socket.on("select tool", this.getOnSelectToolHandler(socket));
@@ -133,9 +131,11 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
       runWithContextUpToRound(socket, (userId, room, _game, round) => {
         console.log(`User ${userId} about to deselect tool`);
 
-        const tool = round.toolsManager.getPlayersTool(userId);
-        const res = round.toolsManager.deselectTool(userId);
-        if (res && tool) {
+        const result = round.toolsManager.deselectTool(userId);
+
+        if (result.isOk()) {
+          const tool = result.value;
+
           this.notifyPlayerDeselectedTool(room, userId, tool.toolType);
         }
       });

@@ -19,7 +19,6 @@ export class ChatNamespace extends NamespaceClass<ChatNamespaceType> {
   registerHandlers(
     socket: GuardedSocket<ExtractSocketType<ChatNamespaceType>>,
   ) {
-    socket.join(socket.request.session.roomId);
     this.setupAuxiliaryRooms(socket);
 
     socket.on("message", this.getOnChatMessageHandler(socket));
@@ -66,7 +65,7 @@ export class ChatNamespace extends NamespaceClass<ChatNamespaceType> {
     // this.namespace.to(room).emit("round-started", teamOnMove.name);
   }
 
-  public notifyRoundEnded(room: RoomId) {
+  public notifyRoundEnded(_room: RoomId) {
     // this.namespace.to(room).emit("round-ended");
   }
 
@@ -97,16 +96,20 @@ export class ChatNamespace extends NamespaceClass<ChatNamespaceType> {
           this.sendUnrestrictedMessage(room.id, newMessage);
           console.log("sending to unrestricted");
         } else {
-          const isCorrectGuess = game.guess(message, userId);
+          const result = game.guess(message, userId);
 
-          if (isCorrectGuess) {
-            console.log("correct");
-            this.addTeamToUnrestrictedRoom(room.id, playersTeam.id);
+          if (result.isOk()) {
+            const isCorrectGuess = result.value;
 
-            this.messagingCenter.notifyPlayerGuessedCorrectly();
-          } else {
-            console.log("sending safe");
-            this.sendSafeMessage(room.id, newMessage);
+            if (isCorrectGuess) {
+              console.log("correct");
+              this.addTeamToUnrestrictedRoom(room.id, playersTeam.id);
+
+              this.messagingCenter.notifyPlayerGuessedCorrectly();
+            } else {
+              console.log("sending safe");
+              this.sendSafeMessage(room.id, newMessage);
+            }
           }
         }
       });

@@ -36,7 +36,7 @@ class WordRepository implements IWordRepository {
 }
 
 export function createWordRepository() {
-  InfrastructureManager.getInstance().connectMongo();
+  void InfrastructureManager.getInstance().connectMongo();
 
   return new WordRepository();
 }

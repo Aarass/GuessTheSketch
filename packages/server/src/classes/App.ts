@@ -6,6 +6,7 @@ import sessionMiddleware from "../middlewares/session";
 import { AppContext } from "./AppContext";
 import { MessagingCenter } from "./MessagingCenter";
 import type { Controller } from "./controllers/Controller";
+import type { RequestListener } from "http";
 
 export class App {
   private rawServer = createServer();
@@ -32,11 +33,10 @@ export class App {
     server.use(sessionMiddleware);
 
     controllers.forEach((controller) => {
-      controller.setContext(this.ctx);
-      server.use(controller.getHandlers());
+      server.use(controller.withContext(this.ctx));
     });
 
-    this.rawServer.addListener("request", server);
+    this.rawServer.addListener("request", server as RequestListener);
   }
 
   private bootstrapSocketServer() {

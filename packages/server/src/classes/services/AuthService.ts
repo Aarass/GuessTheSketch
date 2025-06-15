@@ -11,15 +11,21 @@ export class AuthService {
     try {
       const result = await this.userRepository.save({ username });
 
+      const id = result[EntityId];
+
+      if (id === undefined) {
+        throw new Error("Unexpected");
+      }
+
       const user: User = {
-        id: result[EntityId]! as PlayerId,
+        id: id as PlayerId,
         username: result.username,
       };
 
       return user;
     } catch (err) {
       console.error(err);
-      return Promise.reject("Couldn't create user");
+      throw new Error("Couldn't create user");
     }
   }
 }

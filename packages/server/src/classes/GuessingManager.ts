@@ -12,7 +12,7 @@ export class GuessingManager {
 
   async init() {
     if (this.startTimestamp !== null || this.word !== null)
-      throw `Trying to call init multiple times`;
+      throw new Error(`Trying to call init multiple times`);
 
     this.startTimestamp = Date.now();
     this.word = await this.getRandomWordToGuess();
@@ -23,7 +23,7 @@ export class GuessingManager {
   }
 
   public isCorrectGuess(guess: string) {
-    if (this.word === null) throw `You forgot to call start`;
+    if (this.word === null) throw new Error(`You forgot to call start`);
 
     return this.word === guess;
   }
@@ -44,7 +44,8 @@ export class GuessingManager {
   }
 
   public getReport(evaluator: Evaluator): RoundReport {
-    if (this.startTimestamp === null) throw `You forgot to call start`;
+    if (this.startTimestamp === null)
+      throw new Error(`You forgot to call start`);
 
     return evaluator.evaluate(this.startTimestamp, this.hitTimestamps);
   }
@@ -56,7 +57,7 @@ export class GuessingManager {
       return res.word;
     } else {
       // Mozda da ne ubijem server?
-      throw "Couldn't fetch a word";
+      throw new Error("Couldn't fetch a word");
     }
   }
 }

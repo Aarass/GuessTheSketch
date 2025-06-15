@@ -4,9 +4,9 @@ import type { ExtractSocketType } from "../../utility/socketioTyping";
 import type { MessagingCenter } from "../MessagingCenter";
 import type { AppContext } from "../AppContext";
 
-type ReplaceReturnType<T extends (...a: any) => any, TNewReturn> = (
-  ...a: Parameters<T>
-) => TNewReturn;
+// type ReplaceReturnType<T extends (...a: any) => any, TNewReturn> = (
+//   ...a: Parameters<T>
+// ) => TNewReturn;
 
 export abstract class NamespaceClass<T extends Namespace> {
   protected namespace;

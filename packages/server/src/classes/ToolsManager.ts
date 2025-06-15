@@ -17,14 +17,14 @@ export class ToolsManager {
     private toolStates: Record<ToolType, ToolState>,
   ) {}
 
-  private attachTool(tool: Tool, playerId: PlayerId): Ok<void, any> {
+  private attachTool(tool: Tool, playerId: PlayerId): Ok<void, never> {
     this.inventory.set(playerId, tool);
 
     return ok();
   }
 
-  public detachTool(playerId: PlayerId): Ok<void, any>;
-  public detachTool(tool: Tool): Ok<void, any>;
+  public detachTool(playerId: PlayerId): Ok<void, never>;
+  public detachTool(tool: Tool): Ok<void, never>;
 
   public detachTool(param: PlayerId | Tool) {
     if (typeof param === "object") {
@@ -92,7 +92,7 @@ export class ToolsManager {
     return tool.use(command);
   }
 
-  public deselectTool(playerId: PlayerId): Result<void, string> {
+  public deselectTool(playerId: PlayerId): Result<Tool, string> {
     const tool = this.getPlayersTool(playerId);
 
     if (tool === undefined) {
@@ -102,7 +102,7 @@ export class ToolsManager {
     this.detachTool(playerId);
     tool.releaseResources();
 
-    return ok();
+    return ok(tool);
   }
 
   public getPlayersTool(playerId: PlayerId): Tool | undefined {

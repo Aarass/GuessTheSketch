@@ -13,7 +13,7 @@ export async function connect() {
 }
 
 export function getNewClient() {
-  let new_client = client.duplicate();
+  const new_client = client.duplicate();
   new_client.connect().catch(console.error);
 
   return new_client;

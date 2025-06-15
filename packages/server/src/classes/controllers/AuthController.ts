@@ -35,7 +35,8 @@ export class AuthController extends Controller {
     const validationResult = await LoginDtoSchema.safeParseAsync(req.body);
 
     if (!validationResult.success) {
-      return next(createHttpError(404, validationResult.error));
+      next(createHttpError(404, validationResult.error));
+      return;
     }
 
     const data = validationResult.data;
@@ -69,7 +70,8 @@ export class AuthController extends Controller {
       res.sendStatus(200);
     } catch (err) {
       console.error(err);
-      return next(createHttpError(400, `Logout failed`));
+      next(createHttpError(400, `Logout failed`));
+      return;
     }
   };
 }

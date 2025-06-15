@@ -6,9 +6,9 @@ import type { Game } from "../classes/Game";
 import type { Round } from "../classes/Round";
 import type { PlayerId } from "@guessthesketch/common";
 
-export function runWithContextUpToRoom<T extends GuardedSocket<Socket>>(
-  socket: T,
-  handler: (playerId: PlayerId, room: Room) => void | Promise<void>,
+export function runWithContextUpToRoom<U>(
+  socket: GuardedSocket<Socket>,
+  handler: (playerId: PlayerId, room: Room) => U,
 ) {
   const context = getSocketContext(socket);
 
@@ -20,9 +20,9 @@ export function runWithContextUpToRoom<T extends GuardedSocket<Socket>>(
   }
 }
 
-export function runWithContextUpToGame<T extends GuardedSocket<Socket>>(
-  socket: T,
-  handler: (playerId: PlayerId, room: Room, game: Game) => void | Promise<void>,
+export function runWithContextUpToGame<U>(
+  socket: GuardedSocket<Socket>,
+  handler: (playerId: PlayerId, room: Room, game: Game) => U,
 ) {
   const context = getSocketContext(socket);
 
@@ -34,14 +34,9 @@ export function runWithContextUpToGame<T extends GuardedSocket<Socket>>(
   }
 }
 
-export function runWithContextUpToRound<T extends GuardedSocket<Socket>>(
-  socket: T,
-  handler: (
-    playerId: PlayerId,
-    room: Room,
-    game: Game,
-    round: Round,
-  ) => void | Promise<void>,
+export function runWithContextUpToRound<U>(
+  socket: GuardedSocket<Socket>,
+  handler: (playerId: PlayerId, room: Room, game: Game, round: Round) => U,
 ) {
   const context = getSocketContext(socket);
 
@@ -103,11 +98,11 @@ function logContextNotOkay(context: SocketContext) {
     const callerLine = lines[2 + 1]?.trim() ?? "unknown";
 
     console.error(
-      `Context is not okay \n[${callerLine}]\nContext: ${context}\n ----`,
+      `Context is not okay \n[${callerLine}]\nContext: ${JSON.stringify(context)}\n ----`,
     );
   } else {
     console.error(
-      `Context is not okay. Can't read stack.Context: ${context}\n ----`,
+      `Context is not okay. Can't read stack.Context: ${JSON.stringify(context)}\n ----`,
     );
   }
 }
