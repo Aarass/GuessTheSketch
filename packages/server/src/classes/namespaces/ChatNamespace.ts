@@ -89,7 +89,9 @@ export class ChatNamespace extends NamespaceClass<ChatNamespaceType> {
         if (!playersTeam) return;
 
         const isOnMove = game.isTeamOnMove(playersTeam.id);
-        const alreadyGuessed = round.hasTeamGuessedWord(playersTeam.id);
+        const alreadyGuessed = round.guessingManager.hasTeamGuessedWord(
+          playersTeam.id,
+        );
 
         if (isOnMove || alreadyGuessed) {
           this.sendUnrestrictedMessage(room.id, newMessage);

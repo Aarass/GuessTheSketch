@@ -1,26 +1,17 @@
-import type {
-  PlayerId,
-  RoomId,
-  ToolType,
-  ToolConfig,
-} from "@guessthesketch/common";
-import { Pen } from "./concrete/Pen";
+import type { ToolConfigs, ToolType } from "@guessthesketch/common";
+import type { ToolsManager } from "../ToolsManager";
+import { ToolRegistry } from "../ToolRegistry";
 import { ConsumableTool } from "./Consumable";
 import { TimeoutableTool } from "./Timeoutable";
-import type { Tool } from "./Tool";
-import type { Round } from "../Round";
-import { Eraser } from "./concrete/Eraser";
+import { Tool } from "./Tool";
 
 export class ToolBuilder {
-  private static map: {
-    [key in ToolType]: new (round: Round) => Tool;
-  } = {
-    pen: Pen,
-    eraser: Eraser,
-  };
+  constructor(private toolConfigs: ToolConfigs) {}
 
-  static build(type: ToolType, round: Round, config: ToolConfig): Tool {
-    let tool = this.getBaseTool(type, round);
+  build(type: ToolType, manager: ToolsManager): Tool {
+    let tool = ToolBuilder.getBaseTool(type, manager);
+
+    const config = this.toolConfigs[type];
 
     if (config.consumable !== undefined) {
       tool = new ConsumableTool(tool, config.consumable.maxUses);
@@ -30,14 +21,15 @@ export class ToolBuilder {
       tool = new TimeoutableTool(
         tool,
         config.timeoutable.useTime,
-        config.timeoutable.cooldownTime
+        config.timeoutable.cooldownTime,
       );
     }
 
     return tool;
   }
 
-  private static getBaseTool(type: ToolType, round: Round) {
-    return new this.map[type](round);
+  private static getBaseTool(type: ToolType, manager: ToolsManager) {
+    const constructor = ToolRegistry.getInstance().getToolConstructor(type);
+    return new constructor(manager);
   }
 }

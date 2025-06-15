@@ -1,4 +1,5 @@
-import type { ToolType, BroadcastMessage } from "@guessthesketch/common";
+import type { BroadcastMessage, ToolType } from "@guessthesketch/common";
+import { err, type Result } from "neverthrow";
 import { Tool } from "./Tool";
 
 // -----------------
@@ -9,7 +10,7 @@ export class ConsumableTool extends Tool {
 
   constructor(
     private wrappee: Tool,
-    private maxUses: number
+    private maxUses: number,
   ) {
     super(wrappee.manager);
 
@@ -20,11 +21,11 @@ export class ConsumableTool extends Tool {
     this.wrappee.init();
   }
 
-  override use(param: any) {
+  override use(param: any): Result<BroadcastMessage, string> {
     const toolState = this.manager.getToolState(this.toolType);
 
     if (toolState.timesUsed >= this.maxUses) {
-      throw `Tool consumed`;
+      return err(`Tool consumed`);
     }
 
     return this.wrappee.use(param);

@@ -10,12 +10,16 @@ import type { MessagingCenter } from "./MessagingCenter";
 import type { Room } from "./Room";
 import { Round } from "./Round";
 import type { AppContext } from "./AppContext";
+import { RoundFactory } from "./RoundFactory";
+import { err, ok, type Result } from "neverthrow";
 
 export class Game {
   public active: boolean = false;
 
   private teams: Team[];
   private currentTeamIndex: number = -1;
+
+  private roundFactory;
 
   private _currentRound: Round | null = null;
   public get currentRound() {
@@ -27,12 +31,14 @@ export class Game {
   private leaderboard: Record<TeamId, number>;
 
   constructor(
-    private ctx: AppContext,
+    ctx: AppContext,
     private config: GameConfig,
     private room: Room,
     private messagingCenter: MessagingCenter,
     private evaluator: Evaluator = new MockEvaluator(),
   ) {
+    this.roundFactory = new RoundFactory(config.tools, ctx);
+
     this.teams = config.teams.map((teamConfig) => {
       return {
         id: uuid() as TeamId,
@@ -85,22 +91,27 @@ export class Game {
     return team === this.teams[this.currentTeamIndex].id;
   }
 
-  public guess(guess: string, playerId: PlayerId) {
-    if (this._currentRound === null)
-      throw `Trying to guess word while round is null`;
+  public guess(guess: string, playerId: PlayerId): Result<boolean, string> {
+    if (!this.active) {
+      return err(`Trying to guess when game is not active`);
+    }
 
-    if (!this.active) throw `Trying to guess when game is not active`;
+    if (this._currentRound === null) {
+      return err(`Trying to guess word while round is null`);
+    }
 
-    const isCorrectGuess = this._currentRound.isCorrectGuess(guess);
+    const guessingManager = this._currentRound.guessingManager;
+
+    const isCorrectGuess = guessingManager.isCorrectGuess(guess);
 
     if (isCorrectGuess) {
       const team = this.findPlayersTeam(playerId);
-      if (team === null) throw `Can't find players team`;
+      if (team === null) return err(`Can't find players team`);
 
-      this._currentRound.recordHit(team.id);
+      guessingManager.recordHit(team.id);
 
       const maxHits = this.teams.length - 1;
-      if (this._currentRound.hitsCount() === maxHits) {
+      if (guessingManager.hitsCount() === maxHits) {
         if (this.endRoundTimer === null)
           throw `endRoundTimer has never been set`;
 
@@ -109,19 +120,13 @@ export class Game {
       }
     }
 
-    return isCorrectGuess;
+    return ok(isCorrectGuess);
   }
 
   private async startNewRound() {
     this.currentTeamIndex = (this.currentTeamIndex + 1) % this.teams.length;
 
-    this._currentRound = new Round(
-      this,
-      this.ctx,
-      this.config.tools,
-      this.messagingCenter,
-    );
-
+    this._currentRound = this.roundFactory.createRound();
     this._currentRound.start();
 
     this.endRoundTimer = setTimeout(() => {
@@ -139,9 +144,9 @@ export class Game {
   private roundEnded() {
     console.log("Round ended");
     if (this._currentRound === null)
-      throw `Round is null in roundEnded handler`;
+      throw `Internal Error. Round is null in roundEnded handler`;
 
-    const report = this._currentRound.getReport(this.evaluator);
+    const report = this._currentRound.guessingManager.getReport(this.evaluator);
 
     this.messagingCenter.notifyRoundEnded(this.room.id, report);
 

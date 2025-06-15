@@ -2,7 +2,8 @@ import type { BroadcastMessage, ToolType } from "@guessthesketch/common";
 import { Tool } from "../Tool";
 
 export class Pen extends Tool {
-  toolType: ToolType = "pen";
+  static readonly toolType: ToolType = "pen";
+  readonly toolType = Pen.toolType;
 
   init() {}
 

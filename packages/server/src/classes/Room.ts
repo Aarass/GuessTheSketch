@@ -3,6 +3,7 @@ import { v4 as uuid } from "uuid";
 import { Game } from "./Game";
 import type { MessagingCenter } from "./MessagingCenter";
 import type { AppContext } from "./AppContext";
+import { err, ok, type Result } from "neverthrow";
 
 export class Room {
   private _currentGame: Game | null = null;
@@ -19,29 +20,39 @@ export class Room {
     public id: string = uuid(),
   ) {}
 
-  startGame(config: GameConfig, messagingCenter: MessagingCenter) {
+  public startGame(
+    config: GameConfig,
+    messagingCenter: MessagingCenter,
+  ): Result<void, string> {
     // TODO should these throw?
-    if (this._currentGame) throw `Game already started`;
-    if (!this.isValidGameConfig(config)) throw `Bad config`;
+    if (this._currentGame) {
+      return err(`Game already started`);
+    }
+
+    if (!this.isValidGameConfig(config)) {
+      return err(`Bad config`);
+    }
 
     console.log("About to start the game");
 
     this._currentGame = new Game(this.ctx, config, this, messagingCenter);
     this._currentGame.start();
+
+    return ok();
   }
 
-  addPlayer(playerId: PlayerId, playerName: string) {
+  public addPlayer(playerId: PlayerId, playerName: string) {
     this.players.set(playerId, {
       id: playerId,
       name: playerName,
     });
   }
 
-  removePlayer(playerId: PlayerId) {
+  public removePlayer(playerId: PlayerId) {
     this.players.delete(playerId);
   }
 
-  getAllPlayers() {
+  public getAllPlayers() {
     return this.players.values().toArray();
   }
 

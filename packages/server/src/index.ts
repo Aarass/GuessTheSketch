@@ -6,11 +6,18 @@ import { WordsController } from "./classes/controllers/WordsController";
 import { AuthService } from "./classes/services/AuthService";
 import { UserService } from "./classes/services/UserService";
 import { WordService } from "./classes/services/WordService";
+import { ToolRegistry } from "./classes/ToolRegistry";
+import { Eraser } from "./classes/tools/concrete/Eraser";
+import { Pen } from "./classes/tools/concrete/Pen";
 import { createUserRepository } from "./repositories/UserRepository";
 import {
   createMockWordRepository,
   createWordRepository,
 } from "./repositories/WordRepository";
+
+const toolRegistry = ToolRegistry.getInstance();
+toolRegistry.registerTool(Pen.toolType, Pen);
+toolRegistry.registerTool(Eraser.toolType, Eraser);
 
 const userRepository = createUserRepository();
 const wordRepository = createMockWordRepository();

@@ -1,13 +1,11 @@
 import type { BroadcastMessage, ToolType } from "@guessthesketch/common";
-import type { Round } from "../Round";
-import type { ToolState } from "../states/ToolState";
+import { ok, type Result } from "neverthrow";
+import type { ToolsManager } from "../ToolsManager";
 
 export abstract class Tool {
-  abstract toolType: ToolType;
+  abstract readonly toolType: ToolType;
 
-  id: symbol = Symbol();
-
-  constructor(public manager: Round) {}
+  constructor(public manager: ToolsManager) {}
 
   /**
    * Init is called once a tool is attached and ready.
@@ -17,14 +15,14 @@ export abstract class Tool {
   // -----------------------
   // --- Template method ---
   // -----------------------
-  use(param: any) {
+  use(param: any): Result<BroadcastMessage, string> {
     const toolState = this.manager.getToolState(this.toolType);
     toolState.timesUsed++;
 
-    return this.getBroadcastMessage(param);
+    return ok(this.getBroadcastMessage(param));
   }
 
-  canBeAssigned(): boolean {
+  checkIfEnoughResources(): boolean {
     const toolState = this.manager.getToolState(this.toolType);
     return toolState.toolsLeft > 0;
   }

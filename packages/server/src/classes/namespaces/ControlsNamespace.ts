@@ -11,7 +11,6 @@ import { runWithContextUpToRound } from "../../utility/extractor";
 import type { GuardedSocket } from "../../utility/guarding";
 import type { ExtractSocketType } from "../../utility/socketioTyping";
 import type { Room } from "../Room";
-import type { Round } from "../Round";
 import { NamespaceClass } from "./Base";
 
 export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
@@ -80,8 +79,8 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
       runWithContextUpToRound(socket, (userId, room, _game, round) => {
         console.log(`User ${userId} about to select tool`);
 
-        const selectResult = round.selectTool(toolType, userId);
-        if (selectResult === true) {
+        const selectResult = round.toolsManager.selectTool(toolType, userId);
+        if (selectResult.isOk()) {
           this.notifyPlayerSelectedTool(room, userId, toolType);
         }
       });
@@ -95,12 +94,12 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
       runWithContextUpToRound(socket, (userId, room, _game, round) => {
         console.log(`User ${userId} about to use tool`);
 
-        const tool = round.getPlayersTool(userId);
-        const useResult = round.useTool(userId, drawing);
-        if (useResult && tool) {
-          this.notifyPlayerUsedTool(room, userId, tool.toolType);
+        const result = round.toolsManager.useTool(userId, drawing);
+        if (result.isOk()) {
+          const [tool, drawing] = result.value;
 
-          this.messagingCenter.notifyNewDrawing(room.id, useResult);
+          this.notifyPlayerUsedTool(room, userId, tool.toolType);
+          this.messagingCenter.notifyNewDrawing(room.id, drawing);
 
           // TODO
           // channel.sendToQueue(drawingsQueue, Buffer.from("asd"));
@@ -114,13 +113,15 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
   ) {
     return (id: DrawingId) => {
       runWithContextUpToRound(socket, (userId, room, _game, round) => {
-        const useResult = round.useCommand(userId, {
+        const result = round.toolsManager.useCommand(userId, {
           id: "" as DrawingId,
           type: "eraser",
           toDelete: id,
         });
 
-        this.messagingCenter.notifyNewDrawing(room.id, useResult);
+        if (result.isOk()) {
+          this.messagingCenter.notifyNewDrawing(room.id, result.value);
+        }
       });
     };
   }
@@ -132,8 +133,8 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
       runWithContextUpToRound(socket, (userId, room, _game, round) => {
         console.log(`User ${userId} about to deselect tool`);
 
-        const tool = round.getPlayersTool(userId);
-        const res = round.deselectTool(userId);
+        const tool = round.toolsManager.getPlayersTool(userId);
+        const res = round.toolsManager.deselectTool(userId);
         if (res && tool) {
           this.notifyPlayerDeselectedTool(room, userId, tool.toolType);
         }
