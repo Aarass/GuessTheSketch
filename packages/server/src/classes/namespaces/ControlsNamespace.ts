@@ -93,7 +93,7 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
       runWithContextUpToRound(socket, (userId, room, _game, round) => {
         console.log(`User ${userId} about to use tool`);
 
-        if (!drawing.tempId || !drawing.type) {
+        if (/*!drawing.tempId || */ !drawing.type) {
           console.error("Validation error");
           return;
         }

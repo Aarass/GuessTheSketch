@@ -1,4 +1,7 @@
-import { z } from "zod";
-import type { LoginDtoSchema } from "../schemas/authSchemas";
+import type { PlayerId } from "./ids";
 
-export type LoginDto = z.infer<typeof LoginDtoSchema>;
+export interface LoginResult {
+  id: PlayerId;
+}
+
+export type RefreshResult = LoginResult;

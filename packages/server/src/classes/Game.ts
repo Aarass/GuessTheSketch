@@ -152,6 +152,8 @@ export class Game {
     if (this._currentRound === null)
       throw new Error(`Internal Error. Round is null in roundEnded handler`);
 
+    const teamOnMove = this.teams[this.currentTeamIndex];
+    this.evaluator.setTeamOnMove(teamOnMove.id);
     const report = this._currentRound.guessingManager.getReport(this.evaluator);
 
     this.messagingCenter.notifyRoundEnded(this.room.id, report);

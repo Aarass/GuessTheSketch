@@ -68,6 +68,10 @@ export function Lobby() {
     dispatch(playerLeft(playerId))
   }
 
+  const onStartError = (error: string) => {
+    alert(error)
+  }
+
   const onGameStart = (config: ProcessedGameConfig) => {
     dispatch(setConfigAction(config))
     navigate("/game")
@@ -87,6 +91,7 @@ export function Lobby() {
     sockets.global.on("sync players", onSyncPlayers)
     sockets.global.on("player joined room", onPlayerJoined)
     sockets.global.on("player left room", onPlayerLeft)
+    sockets.global.on("game not started", onStartError)
     sockets.global.on("game started", onGameStart)
     sockets.global.on("game ended", onGameEnded)
 
@@ -99,7 +104,9 @@ export function Lobby() {
       sockets.global?.off("sync players")
       sockets.global?.off("player joined room")
       sockets.global?.off("player left room")
+      sockets.global?.off("game not started")
       sockets.global?.off("game started")
+      sockets.global?.off("game ended")
     }
   }, [])
 

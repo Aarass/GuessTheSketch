@@ -1,9 +1,10 @@
-import type {
-  GameConfig,
-  GlobalNamespace as GlobalNamespaceType,
-  Player,
-  ProcessedGameConfig,
-  RoomId,
+import {
+  GameConfigSchema,
+  type GameConfig,
+  type GlobalNamespace as GlobalNamespaceType,
+  type Player,
+  type ProcessedGameConfig,
+  type RoomId,
 } from "@guessthesketch/common";
 import { runWithContextUpToRoom } from "../../utility/extractor";
 import type { GuardedSocket } from "../../utility/guarding";
@@ -72,16 +73,26 @@ export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
   private getOnStartGameHandler(
     socket: GuardedSocket<ExtractSocketType<GlobalNamespaceType>>,
   ): (config: GameConfig) => void {
-    return (config: GameConfig) => {
+    return (_config: GameConfig) => {
       runWithContextUpToRoom(socket, (userId, room) => {
         if (room.ownerId !== userId) {
           console.log(`You are not the owner of the room`);
           return;
         }
 
-        // TODO validate config
+        const parseResult = GameConfigSchema.safeParse(_config);
 
-        room.startGame(config, this.messagingCenter);
+        if (parseResult.success) {
+          const config = parseResult.data;
+          // TODO ako je error poslati nazad obavestenje
+          // mozes da koristis socket umesto namespace kad saljes
+          // da bi poslao samo onome ko je inicirao startovanje
+          const res = room.startGame(config, this.messagingCenter);
+
+          if (res.isErr()) {
+            socket.emit("game not started", res.error);
+          }
+        }
       });
     };
   }

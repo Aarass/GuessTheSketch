@@ -1,6 +1,9 @@
-import type { Point } from "..";
-
 export type DrawingId = string & { __brand: "DrawingId" };
+
+interface Point {
+  x: number;
+  y: number;
+}
 
 interface DrawingBase {
   id: DrawingId;

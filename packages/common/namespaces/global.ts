@@ -10,6 +10,7 @@ interface ServerToClientEvents {
   "sync players": (players: Player[]) => void;
   "player joined room": (player: Player) => void;
   "player left room": (playerId: PlayerId) => void;
+  "game not started": (error: string) => void;
   "game started": (config: ProcessedGameConfig) => void;
   "game ended": () => void;
 }

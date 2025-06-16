@@ -1,101 +1,62 @@
-export { LoginDtoSchema } from "./schemas/authSchemas";
-export { AddWordDtoSchema } from "./schemas/wordSchemas.ts";
-export type { LoginDto } from "./types/authTypes";
-export type { AddWordDto } from "./types/words.ts";
-export type { User } from "./types/userTypes";
+import type { PlayerId, RoomId, TeamId } from "./types/ids";
+export type { PlayerId, RoomId, TeamId };
 
-export * from "./namespaces/global";
+export * from "./main";
+
+export * from "./schemas/authSchema";
+export * from "./schemas/configSchema";
+export * from "./schemas/wordSchema";
+
+export * from "./namespaces/chat";
 export * from "./namespaces/controls";
 export * from "./namespaces/drawings";
-export * from "./namespaces/chat";
+export * from "./namespaces/global";
 
+export * from "./types/authTypes";
 export * from "./types/drawings";
+export * from "./types/user";
 
-export * from "./ipc/queueNames.ts";
-
-export const toolTypes = ["pen", "eraser"] as const;
-export type ToolType = (typeof toolTypes)[number];
-
-export interface BroadcastMessage {
-  message: string;
-  drawing: any;
-}
+export * from "./ipc/queueNames";
 
 export type Timestamp = number;
 export type DeltaScore = number;
-
-// export type PlayerId = string;
-// export type TeamId = string;
-export type RoomId = string;
-
-type Brand<T, B> = T & { __brand: B };
-
-export type TeamId = Brand<string, "TeamId">;
-export type PlayerId = Brand<string, "PlayerId">;
-
-export type GameConfig = {
-  teams: TeamConfig[];
-  rounds: RoundsConfig;
-  tools: ToolConfigs;
-};
-
-export type ProcessedGameConfig = {
-  teams: (TeamConfig & { id: TeamId })[];
-  rounds: RoundsConfig;
-  tools: ToolConfigs;
-};
-
-export type ToolConfigs = Record<ToolType, ToolConfig>;
-
-export type TeamConfig = {
-  name: string;
-  players: PlayerId[];
-};
-
-export type RoundsConfig = {
-  cycles: number;
-  duration: number;
-};
-
-export type ToolConfig = {
-  count: number;
-  consumable?: {
-    maxUses: number;
-  };
-  timeoutable?: {
-    useTime: number;
-    cooldownTime: number;
-  };
-};
-
-export interface LoginResult {
-  id: PlayerId;
-}
-
-export type RefreshResult = LoginResult;
-
-export type GetRoomOwnerResult =
-  | {
-      success: true;
-      ownerId: string;
-    }
-  | {
-      success: false;
-    };
-
-export interface JoinRoomResult {
-  roomId: RoomId;
-  ownerId: PlayerId;
-}
 
 export interface Player {
   id: PlayerId;
   name: string;
 }
 
-export interface Point {
-  x: number;
-  y: number;
+export type RoundReport = [TeamId, DeltaScore][];
+
+export interface JoinRoomResult {
+  roomId: RoomId;
+  ownerId: PlayerId;
 }
 
-export type RoundReport = [TeamId, DeltaScore][];
+export type Prettify<T> = {
+  [K in keyof T]: T[K];
+} & {};
+
+// export type GetRoomOwnerResult =
+//   | {
+//       success: true;
+//       ownerId: string;
+//     }
+//   | {
+//       success: false;
+//     };
+
+// type _ToolTypes<L extends DrawingList> = {
+//   [I in keyof L]: L[I]["type"];
+// };
+// export const toolTypes: _ToolTypes<DrawingList> = [
+//   "freeline",
+//   "line",
+//   "rect",
+//   "circle",
+//   "dot",
+//   "flood",
+//   "eraser",
+// ] as const;
+//
+// export type ToolType = (typeof toolTypes)[number];

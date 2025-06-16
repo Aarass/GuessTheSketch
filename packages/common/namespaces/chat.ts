@@ -1,5 +1,6 @@
 import { Namespace, Socket } from "socket.io";
-import type { PlayerId, TeamId } from "..";
+import { Socket as CSocket } from "socket.io-client";
+import type { TeamId, PlayerId } from "../types/ids";
 
 interface ClientToServerEvents {
   message: (message: string) => void;
@@ -24,8 +25,6 @@ export type ChatNamespace = Namespace<
   ClientToServerEvents,
   ServerToClientEvents
 >;
-
-import { Socket as CSocket } from "socket.io-client";
 
 export type ChatClientSocket = CSocket<
   ServerToClientEvents,

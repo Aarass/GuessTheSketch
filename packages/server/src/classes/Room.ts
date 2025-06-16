@@ -27,8 +27,11 @@ export class Room {
       return err(`Game already started`);
     }
 
-    if (!this.isValidGameConfig(config)) {
-      return err(`Bad config`);
+    const checkResult = this.isValidGameConfig(config);
+
+    if (checkResult.isErr()) {
+      console.error(checkResult.error);
+      return checkResult;
     }
 
     console.log("About to start the game");
@@ -54,8 +57,34 @@ export class Room {
     return this.players.values().toArray();
   }
 
-  // TODO
-  private isValidGameConfig(_config: GameConfig): boolean {
-    return true;
+  private isValidGameConfig(config: GameConfig): Result<void, string> {
+    if (config.teams.length < 2) {
+      return err("There must be at least 2 teams");
+    }
+
+    const processed = new Set<PlayerId>();
+
+    for (const team of config.teams) {
+      if (team.players.length == 0) {
+        return err("There must be at least one player in a team");
+      }
+
+      for (const player of team.players) {
+        if (!this.players.get(player)) {
+          return err("Passed player with invalid id");
+        }
+
+        if (processed.has(player)) {
+          return err("Same player assigned multiple times");
+        }
+        processed.add(player);
+      }
+    }
+
+    if (this.players.size !== processed.size) {
+      return err("Some players are not assigned");
+    }
+
+    return ok();
   }
 }
