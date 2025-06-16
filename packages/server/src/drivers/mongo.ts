@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
 
-const mongoURI = process.env.MONGO_URI!;
+const mongoURI = process.env.MONGO_URI;
+
+if (!mongoURI) {
+  throw new Error(`MONGO_URI env is not defined`);
+}
 
 /**
  * Important! Mongoose buffers all the commands until it's connected to the database. This means that you don't have to wait until it connects to MongoDB in order to define models, run queries, etc.

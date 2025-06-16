@@ -21,6 +21,9 @@ export class Game {
 
   private roundFactory;
 
+  private roundDuration;
+  private maxRounds;
+
   private _currentRound: Round | null = null;
   public get currentRound() {
     return this._currentRound;
@@ -46,6 +49,9 @@ export class Game {
         players: new Set(teamConfig.players),
       };
     });
+
+    this.maxRounds = this.teams.length * config.rounds.cycles;
+    this.roundDuration = config.rounds.duration;
 
     this.leaderboard = Object.fromEntries(
       this.teams.map((team) => {
@@ -131,7 +137,7 @@ export class Game {
 
     this.endRoundTimer = setTimeout(() => {
       this.roundEnded();
-    }, this.config.rounds.duration);
+    }, this.roundDuration);
 
     this.startedRounds++;
     console.log("Round started");
@@ -150,8 +156,7 @@ export class Game {
 
     this.messagingCenter.notifyRoundEnded(this.room.id, report);
 
-    const maxRounds = this.teams.length * this.config.rounds.cycles;
-    if (this.startedRounds !== maxRounds) {
+    if (this.startedRounds !== this.maxRounds) {
       void this.startNewRound();
     } else {
       this._currentRound = null;

@@ -1,6 +1,7 @@
 import type { RequestHandler } from "express";
 import createHttpError from "http-errors";
 import { Controller } from "./Controller";
+import { AddWordDtoSchema } from "@guessthesketch/common";
 
 export class WordsController extends Controller {
   constructor() {
@@ -14,14 +15,16 @@ export class WordsController extends Controller {
   // Dodaj novu reč
   private addWordHandler: RequestHandler = async (req, res, next) => {
     try {
-      const { word } = req.body;
+      const validationResult = await AddWordDtoSchema.safeParseAsync(req.body);
 
-      if (!word || typeof word !== "string") {
-        next(createHttpError(400, "Invalid word input."));
+      if (!validationResult.success) {
+        next(createHttpError(404, validationResult.error));
         return;
       }
 
-      const newWord = await this.ctx.wordService.addWord(word);
+      const data = validationResult.data;
+
+      const newWord = await this.ctx.wordService.addWord(data.word);
       res.status(201).json(newWord);
     } catch {
       next(createHttpError(500, "Failed to add word."));

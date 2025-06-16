@@ -1,11 +1,12 @@
 import {
   type ControlsNamespace as ControlsNamespaceType,
-  type Drawing,
   type DrawingId,
   type PlayerId,
   type RoundReport,
   type TeamId,
   type ToolType,
+  type UnvalidatedNewDrawing,
+  type UnvalidatedNewDrawingWithType,
 } from "@guessthesketch/common";
 import { runWithContextUpToRound } from "../../utility/extractor";
 import type { GuardedSocket } from "../../utility/guarding";
@@ -88,11 +89,21 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
   private getOnUseToolHandler(
     socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
   ) {
-    return (drawing: Drawing) => {
+    return (drawing: UnvalidatedNewDrawing) => {
       runWithContextUpToRound(socket, (userId, room, _game, round) => {
         console.log(`User ${userId} about to use tool`);
 
-        const result = round.toolsManager.useTool(userId, drawing);
+        if (!drawing.tempId || !drawing.type) {
+          console.error("Validation error");
+          return;
+        }
+
+        // TODO iskoristi drawing.tempId
+
+        const result = round.toolsManager.useTool(
+          userId,
+          drawing as UnvalidatedNewDrawingWithType,
+        );
         if (result.isOk()) {
           const [tool, drawing] = result.value;
 

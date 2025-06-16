@@ -1,7 +1,7 @@
 import { Namespace, Socket } from "socket.io";
 import type {
-  Drawing,
   DrawingId,
+  NewDrawing,
   PlayerId,
   RoundReport,
   TeamId,
@@ -10,7 +10,7 @@ import type {
 
 interface ClientToServerEvents {
   "select tool": (toolType: ToolType) => void;
-  "use tool": (drawing: Drawing) => void;
+  "use tool": (drawing: NewDrawing) => void;
   "deselect tool": () => void;
   "delete drawing": (id: DrawingId) => void;
 }

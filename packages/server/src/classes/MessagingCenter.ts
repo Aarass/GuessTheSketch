@@ -1,5 +1,5 @@
 import type {
-  BroadcastMessage,
+  Drawing,
   ProcessedGameConfig,
   RoomId,
   RoundReport,
@@ -64,7 +64,7 @@ export class MessagingCenter {
     this.namespaces.chat.notifyRoundEnded(room);
   }
 
-  public notifyNewDrawing(room: RoomId, bm: BroadcastMessage) {
-    this.namespaces.drawings.notifyNewDrawing(room, bm);
+  public notifyNewDrawing(room: RoomId, drawing: Drawing) {
+    this.namespaces.drawings.notifyNewDrawing(room, drawing);
   }
 }

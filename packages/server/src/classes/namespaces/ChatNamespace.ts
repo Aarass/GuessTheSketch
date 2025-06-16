@@ -40,7 +40,7 @@ export class ChatNamespace extends NamespaceClass<ChatNamespaceType> {
 
   public notifyGameStarted(room: RoomId, config: ProcessedGameConfig) {
     // TODO treba da se proveri da li je ovo obavezno.
-    // Trenutno, game se stratuje pre nego sto bilo ko stigne da se poveze,
+    // Trenutno se game stratuje pre nego sto bilo ko stigne da se poveze,
     // pa ovo onda nema kog da ubaci u timske sobe.
     // Zato ovo radim posebno za svakog igraca na onConnect tj. u registerHandlers.
     // Ipak, mislim da postoji minimalna sansa da ovo bude korisno:
@@ -137,8 +137,6 @@ export class ChatNamespace extends NamespaceClass<ChatNamespaceType> {
     this.namespace.in(room).socketsLeave(room);
   }
 
-  // TODO obraditi reconnect. Jedna ideja je da u registerHandlers proveris da li je game active,
-  // pa rucno ubacis igraca u teamRoom. To je pod pretpostavkom da ovu metodu zove Game (preko MessagingCenter)
   private setupTeamRooms(roomId: RoomId, config: ProcessedGameConfig) {
     for (const teamConfig of config.teams) {
       for (const playerId of teamConfig.players) {
@@ -157,7 +155,7 @@ export class ChatNamespace extends NamespaceClass<ChatNamespaceType> {
   private addPlayerToPlayerRoom(
     socket: GuardedSocket<ExtractSocketType<ChatNamespaceType>>,
   ) {
-    socket.join(this.getPlayerRoomName(socket.request.session.userId));
+    void socket.join(this.getPlayerRoomName(socket.request.session.userId));
   }
 
   private addPlayerToTeamRoom(

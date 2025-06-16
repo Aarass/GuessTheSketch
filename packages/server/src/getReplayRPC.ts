@@ -1,3 +1,4 @@
+/* eslint-disable */
 import amqp from "amqplib";
 import { v4 as uuid } from "uuid";
 

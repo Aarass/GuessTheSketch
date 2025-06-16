@@ -10,10 +10,7 @@ import { ToolRegistry } from "./classes/ToolRegistry";
 import { Eraser } from "./classes/tools/concrete/Eraser";
 import { Pen } from "./classes/tools/concrete/Pen";
 import { createUserRepository } from "./repositories/UserRepository";
-import {
-  createMockWordRepository,
-  // createWordRepository,
-} from "./repositories/WordRepository";
+import { createMockWordRepository } from "./repositories/WordRepository";
 
 const toolRegistry = ToolRegistry.getInstance();
 toolRegistry.registerTool(Pen.toolType, Pen);

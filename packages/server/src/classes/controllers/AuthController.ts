@@ -40,16 +40,22 @@ export class AuthController extends Controller {
     }
 
     const data = validationResult.data;
-    const user = await this.ctx.authService.login(data);
+    const loginResult = await this.ctx.authService.login(data);
 
-    req.session.userId = user.id;
-    req.session.roomId = null;
+    if (loginResult.isOk()) {
+      const user = loginResult.value;
 
-    const result: LoginResult = { id: user.id };
-    res.status(200).send(result);
+      req.session.userId = user.id;
+      req.session.roomId = null;
+
+      const result: LoginResult = { id: user.id };
+      res.status(200).send(result);
+    } else {
+      next(createHttpError(500, loginResult.error));
+    }
   };
 
-  private refreshHandler: RequestHandler = async (req, res) => {
+  private refreshHandler: RequestHandler = (req, res) => {
     const userId = req.session.userId;
 
     if (userId) {
@@ -60,13 +66,12 @@ export class AuthController extends Controller {
     }
   };
 
-  private logoutHandler: RequestHandler = async (req, res, next) => {
+  private logoutHandler: RequestHandler = (req, res, next) => {
     try {
       req.session.destroy((err) => {
-        if (err) {
-          throw err;
-        }
+        if (err) throw err;
       });
+
       res.sendStatus(200);
     } catch (err) {
       console.error(err);

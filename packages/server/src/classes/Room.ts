@@ -12,7 +12,6 @@ export class Room {
   }
 
   private players: Map<PlayerId, Player> = new Map();
-  // TODO
 
   constructor(
     private ctx: AppContext,
@@ -24,7 +23,6 @@ export class Room {
     config: GameConfig,
     messagingCenter: MessagingCenter,
   ): Result<void, string> {
-    // TODO should these throw?
     if (this._currentGame) {
       return err(`Game already started`);
     }

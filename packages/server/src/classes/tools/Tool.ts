@@ -1,4 +1,8 @@
-import type { BroadcastMessage, ToolType } from "@guessthesketch/common";
+import type {
+  Drawing,
+  ToolType,
+  UnvalidatedNewDrawingWithType,
+} from "@guessthesketch/common";
 import { ok, type Result } from "neverthrow";
 import type { ToolsManager } from "../ToolsManager";
 
@@ -15,11 +19,11 @@ export abstract class Tool {
   // -----------------------
   // --- Template method ---
   // -----------------------
-  use(param: any): Result<BroadcastMessage, string> {
+  use(drawing: UnvalidatedNewDrawingWithType): Result<Drawing, string> {
     const toolState = this.manager.getToolState(this.toolType);
     toolState.timesUsed++;
 
-    return ok(this.getBroadcastMessage(param));
+    return ok(this.getDrawing(drawing));
   }
 
   checkIfEnoughResources(): boolean {
@@ -37,7 +41,7 @@ export abstract class Tool {
     toolState.toolsLeft++;
   }
 
-  abstract getBroadcastMessage(param: any): BroadcastMessage;
+  abstract getDrawing(drawing: UnvalidatedNewDrawingWithType): Drawing;
 }
 
 // /**

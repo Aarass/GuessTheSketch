@@ -1,5 +1,7 @@
 export { LoginDtoSchema } from "./schemas/authSchemas";
+export { AddWordDtoSchema } from "./schemas/wordSchemas.ts";
 export type { LoginDto } from "./types/authTypes";
+export type { AddWordDto } from "./types/words.ts";
 export type { User } from "./types/userTypes";
 
 export * from "./namespaces/global";

@@ -1,13 +1,14 @@
 import {
-  type BroadcastMessage,
+  type Drawing,
   type Eraser,
   type PlayerId,
   type ToolType,
+  type UnvalidatedNewDrawingWithType,
 } from "@guessthesketch/common";
+import { err, ok, Ok, Result } from "neverthrow";
 import { ToolState } from "./states/ToolState";
 import { Tool } from "./tools/Tool";
 import type { ToolBuilder } from "./tools/ToolBuilder";
-import { err, ok, Ok, Result } from "neverthrow";
 
 export class ToolsManager {
   private inventory: Map<PlayerId, Tool> = new Map();
@@ -24,7 +25,7 @@ export class ToolsManager {
   }
 
   public detachTool(playerId: PlayerId): Ok<void, never>;
-  public detachTool(tool: Tool): Ok<void, never>;
+  public detachTool(tool: Tool): Ok<void, never>; // eslint-disable-line @typescript-eslint/unified-signatures
 
   public detachTool(param: PlayerId | Tool) {
     if (typeof param === "object") {
@@ -67,8 +68,8 @@ export class ToolsManager {
 
   public useTool(
     playerId: PlayerId,
-    drawing: any,
-  ): Result<readonly [Tool, BroadcastMessage], string> {
+    drawing: UnvalidatedNewDrawingWithType,
+  ): Result<readonly [Tool, Drawing], string> {
     const tool = this.inventory.get(playerId);
 
     if (tool === undefined) {
@@ -83,10 +84,12 @@ export class ToolsManager {
   // TODO
   // Ovo postoji jer komanda treba da bude dostupna svim igracima.
   // U sustini ispod je sve isto kao obican tool, ali nema selektovanja i deselektovanja
+  // TODO treba razmisliti o ovome. Mozda nije potrebno da se selektuje i deselektuje ali
+  // treba da se proveri da li ima dovoljno resursa
   public useCommand(
     _playerId: PlayerId,
     command: Eraser,
-  ): Result<BroadcastMessage, any> {
+  ): Result<Drawing, string> {
     const tool = this.toolBuilder.build(command.type, this);
 
     return tool.use(command);

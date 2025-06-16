@@ -56,7 +56,6 @@ export class GuessingManager {
     if (res) {
       return res.word;
     } else {
-      // Mozda da ne ubijem server?
       throw new Error("Couldn't fetch a word");
     }
   }

@@ -1,4 +1,8 @@
-import type { BroadcastMessage, ToolType } from "@guessthesketch/common";
+import type {
+  Drawing,
+  ToolType,
+  UnvalidatedNewDrawingWithType,
+} from "@guessthesketch/common";
 import { err, type Result } from "neverthrow";
 import { Tool } from "./Tool";
 
@@ -21,17 +25,19 @@ export class ConsumableTool extends Tool {
     this.wrappee.init();
   }
 
-  override use(param: any): Result<BroadcastMessage, string> {
+  override use(
+    drawing: UnvalidatedNewDrawingWithType,
+  ): Result<Drawing, string> {
     const toolState = this.manager.getToolState(this.toolType);
 
     if (toolState.timesUsed >= this.maxUses) {
       return err(`Tool consumed`);
     }
 
-    return this.wrappee.use(param);
+    return this.wrappee.use(drawing);
   }
 
-  override getBroadcastMessage(param: any): BroadcastMessage {
-    return this.wrappee.getBroadcastMessage(param);
+  override getDrawing(drawing: UnvalidatedNewDrawingWithType): Drawing {
+    return this.wrappee.getDrawing(drawing);
   }
 }

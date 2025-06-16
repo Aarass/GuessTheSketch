@@ -25,7 +25,6 @@ import {
 } from "./GameScreenSlice"
 import { HSVtoRGB, RGBtoHexString } from "../../utils/colors"
 import {
-  BroadcastMessage,
   Drawing,
   DrawingId,
   Point,
@@ -114,8 +113,7 @@ export const Canvas = () => {
       sockets.drawings = io(`ws://${backend}/drawings`)
     }
 
-    const onDrawing = (bm: BroadcastMessage) => {
-      const drawing = bm.drawing as Drawing
+    const onDrawing = (drawing: Drawing) => {
       if (drawing.type == "eraser") {
         const index = state.drawings.findLastIndex(el => {
           return el.id === drawing.toDelete

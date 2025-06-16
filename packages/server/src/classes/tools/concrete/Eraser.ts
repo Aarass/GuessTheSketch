@@ -1,16 +1,21 @@
-import type { BroadcastMessage, ToolType } from "@guessthesketch/common";
+import type {
+  Drawing,
+  DrawingId,
+  ToolType,
+  UnvalidatedNewDrawingWithType,
+} from "@guessthesketch/common";
 import { Tool } from "../Tool";
 
 export class Eraser extends Tool {
   static readonly toolType: ToolType = "eraser";
   readonly toolType = Eraser.toolType;
 
-  init() {}
+  override init() {}
 
-  getBroadcastMessage(param: any): BroadcastMessage {
+  override getDrawing(drawing: UnvalidatedNewDrawingWithType): Drawing {
     return {
-      message: `Player used eraser tool`,
-      drawing: param,
-    };
+      id: "" as DrawingId,
+      ...drawing,
+    } as Drawing;
   }
 }

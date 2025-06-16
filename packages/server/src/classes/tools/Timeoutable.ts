@@ -1,9 +1,12 @@
-// -----------------
-// --- Decorator ---
-
-import type { BroadcastMessage, ToolType } from "@guessthesketch/common";
+import type {
+  Drawing,
+  ToolType,
+  UnvalidatedNewDrawingWithType,
+} from "@guessthesketch/common";
 import { Tool } from "./Tool";
 
+// -----------------
+// --- Decorator ---
 // -----------------
 export class TimeoutableTool extends Tool {
   toolType: ToolType;
@@ -11,14 +14,14 @@ export class TimeoutableTool extends Tool {
   constructor(
     private wrappee: Tool,
     private useTime: number,
-    private cooldownTime: number
+    private cooldownTime: number,
   ) {
     super(wrappee.manager);
 
     this.toolType = this.wrappee.toolType;
   }
 
-  init() {
+  override init() {
     this.wrappee.init();
     setTimeout(() => {
       const manager = this.manager;
@@ -32,15 +35,15 @@ export class TimeoutableTool extends Tool {
     }, this.useTime);
   }
 
-  getBroadcastMessage(param: any): BroadcastMessage {
-    return this.wrappee.getBroadcastMessage(param);
+  override getDrawing(drawing: UnvalidatedNewDrawingWithType): Drawing {
+    return this.wrappee.getDrawing(drawing);
   }
 
-  use(param: any) {
-    return this.wrappee.use(param);
+  override use(drawing: UnvalidatedNewDrawingWithType) {
+    return this.wrappee.use(drawing);
   }
 
-  releaseResources() {
+  override releaseResources() {
     this.wrappee.releaseResources();
     console.log("Released resources of timeoutable tool");
   }

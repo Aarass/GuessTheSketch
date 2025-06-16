@@ -63,7 +63,7 @@ export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
 
         socket.to(room.id).emit("player left room", userId);
 
-        (socket.request.session.roomId as any) = null;
+        (socket.request.session.roomId as any) = null; // eslint-disable-line @typescript-eslint/no-explicit-any
         socket.request.session.save();
       });
     };

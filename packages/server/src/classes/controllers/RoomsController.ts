@@ -13,6 +13,7 @@ export class RoomsController extends Controller {
     this.router.post("/rooms/:id/join", authenticate, this.joinRoomHandler);
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   private createRoomHandler: RequestHandler = async (req, res) => {
     const ownerId = req.session.userId;
     const room = new Room(this.ctx, ownerId);
@@ -21,6 +22,7 @@ export class RoomsController extends Controller {
     res.send({ roomId: room.id });
   };
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   private joinRoomHandler: RequestHandler = async (req, res) => {
     const roomId = req.params["id"];
     const room = GlobalState.getInstance().getRoomById(roomId);

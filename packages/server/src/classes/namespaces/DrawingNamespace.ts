@@ -1,5 +1,5 @@
 import type {
-  BroadcastMessage,
+  Drawing,
   DrawingsNamespace as DrawingsNamespaceType,
   RoomId,
 } from "@guessthesketch/common";
@@ -9,10 +9,10 @@ import { NamespaceClass } from "./Base";
 
 export class DrawingsNamespace extends NamespaceClass<DrawingsNamespaceType> {
   registerHandlers(
-    socket: GuardedSocket<ExtractSocketType<DrawingsNamespaceType>>,
+    _socket: GuardedSocket<ExtractSocketType<DrawingsNamespaceType>>,
   ) {}
 
-  public notifyNewDrawing(room: RoomId, bm: BroadcastMessage) {
-    this.namespace.to(room).emit("drawing", bm);
+  public notifyNewDrawing(room: RoomId, drawing: Drawing) {
+    this.namespace.to(room).emit("drawing", drawing);
   }
 }
