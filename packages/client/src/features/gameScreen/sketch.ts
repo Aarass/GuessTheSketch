@@ -1,6 +1,6 @@
 import p5 from "p5"
 import { GameState } from "./GameState"
-import { Drawing, Point } from "@guessthesketch/common"
+import { Drawing, DrawingInFly, Point } from "@guessthesketch/common"
 import { colorsAreEqual, HexStringToRGB } from "../../utils/colors"
 
 /*
@@ -177,7 +177,7 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
   }
 }
 
-function draw(drawing: Drawing, sketch: p5, pixels?: number[]) {
+function draw(drawing: Drawing | DrawingInFly, sketch: p5, pixels?: number[]) {
   switch (drawing.type) {
     case "freeline":
       sketch.stroke(drawing.color)
@@ -242,7 +242,11 @@ const dirs = [
 
 const ffc = new Map<string, p5.Image>()
 
-async function floodFill(sketch: p5, drawing: Drawing, pixels: number[]) {
+async function floodFill(
+  sketch: p5,
+  drawing: Drawing | DrawingInFly,
+  pixels: number[],
+) {
   if (drawing.type !== "flood") throw ``
 
   const cache = sketch.createImage(sketch.width, sketch.height)
@@ -312,7 +316,19 @@ async function floodFill(sketch: p5, drawing: Drawing, pixels: number[]) {
   }
 
   cache.updatePixels()
-  ffc.set(drawing.id, cache)
+  const id = (drawing as any).id
+  // TODO
+  // TODO
+  // TODO
+  // TODO
+  // TODO
+  // TODO
+  // TODO
+  // TODO
+  // TODO
+  // TODO
+  // TODO
+  ffc.set(id ?? "", cache)
 }
 
 function pointIsOfColor(

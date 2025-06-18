@@ -65,6 +65,7 @@ type DrawingList = readonly [
 ];
 
 export type Drawing = DrawingList[number];
+export type DrawingInFly = _DrawingInFly<DrawingList>;
 export type NewDrawing = _NewDrawing<DrawingList>;
 
 // ************************************************************
@@ -79,6 +80,10 @@ export type UnvalidatedNewDrawing = _UnvalidatedNewDrawing<DrawingList>;
 export type UnvalidatedNewDrawingWithType =
   _UnvalidatedNewDrawingWithType<DrawingList>;
 // ************************************************************
+
+type _DrawingInFly<L extends DrawingList> = {
+  [I in keyof L]: Omit<L[I], "id">;
+}[number];
 
 type _NewDrawing<L extends DrawingList> = {
   [I in keyof L]: Omit<L[I], "id"> & { tempId: string };

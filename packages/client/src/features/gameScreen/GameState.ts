@@ -1,11 +1,11 @@
-import { Tool } from "./GameScreen"
-import { Drawing } from "@guessthesketch/common"
+import { Drawing, DrawingInFly } from "@guessthesketch/common"
+import { Tool } from "../../classes/tools/Tool"
 
 export class GameState {
   currentTool: Tool | null
   drawings: Drawing[]
   inFly: {
-    drawing: Drawing | null
+    drawing: DrawingInFly | null
     i: number | null
   }
 
