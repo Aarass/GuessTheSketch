@@ -1,6 +1,6 @@
 export type DrawingId = string & { __brand: "DrawingId" };
 
-interface Point {
+export interface Point {
   x: number;
   y: number;
 }

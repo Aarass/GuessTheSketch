@@ -82,13 +82,13 @@ function checkUpToRoom(
 function checkUpToGame(
   context: SocketContext,
 ): context is readonly [PlayerId, Room, Game, Round | null | undefined] {
-  return !!context[1] && !!context[2];
+  return !!context[1] && !!context[2] && context[2].active;
 }
 
 function checkUpToRound(
   context: SocketContext,
 ): context is readonly [PlayerId, Room, Game, Round] {
-  return !!context[1] && !!context[2] && !!context[3];
+  return !!context[1] && !!context[2] && context[2].active && !!context[3];
 }
 
 function logContextNotOkay(context: SocketContext) {
@@ -98,11 +98,15 @@ function logContextNotOkay(context: SocketContext) {
     const callerLine = lines[2 + 1]?.trim() ?? "unknown";
 
     console.error(
-      `Context is not okay \n[${callerLine}]\nContext: ${JSON.stringify(context)}\n ----`,
+      `Context is not okay \n[${callerLine}]\nContext: ${printContext(context)}\n ----`,
     );
   } else {
     console.error(
-      `Context is not okay. Can't read stack.Context: ${JSON.stringify(context)}\n ----`,
+      `Context is not okay. Can't read stack.Context: ${printContext(context)}\n ----`,
     );
   }
+}
+
+function printContext(context: SocketContext): string {
+  return `[${context[0]}, ${context[1]?.id ?? "null"}, ${context[2] ? "game ok" : "null"}, ${context[3] ? "room ok" : "null"}, ]`;
 }

@@ -5,19 +5,37 @@ import {
   type Player,
   type ProcessedGameConfig,
   type RoomId,
+  type RoundReport,
+  type TeamId,
 } from "@guessthesketch/common";
-import { runWithContextUpToRoom } from "../../utility/extractor";
+import {
+  runWithContextUpToGame,
+  runWithContextUpToRoom,
+} from "../../utility/extractor";
 import type { GuardedSocket } from "../../utility/guarding";
 import type { ExtractSocketType } from "../../utility/socketioTyping";
+import type { Room } from "../Room";
+import { GlobalState } from "../states/GlobalState";
 import { NamespaceClass } from "./Base";
 
 export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
   registerHandlers(
     socket: GuardedSocket<ExtractSocketType<GlobalNamespaceType>>,
   ) {
+    this.onConnectionHandler(socket).catch(console.error);
+
     socket.on("ready", this.getOnReadyHandler(socket));
-    socket.on("disconnect", this.getOnDisconnectHandler(socket));
+    socket.on("restore", this.getOnRestoreHandler(socket));
     socket.on("start game", this.getOnStartGameHandler(socket));
+    socket.on("disconnect", this.getOnDisconnectHandler(socket));
+  }
+
+  public notifyRoundStarted(room: string, teamOnMoveId: TeamId) {
+    this.namespace.to(room).emit("round started", teamOnMoveId);
+  }
+
+  public notifyRoundEnded(room: string, report: RoundReport) {
+    this.namespace.to(room).emit("round ended", report);
   }
 
   public notifyGameStarted(room: RoomId, config: ProcessedGameConfig) {
@@ -28,44 +46,70 @@ export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
     this.namespace.to(room).emit("game ended");
   }
 
+  public notifyNewOwner(room: string, newOwner: Player) {
+    this.namespace.to(room).emit("new owner", newOwner.id);
+  }
+
+  public notifyPlayerLeft(
+    room: Room,
+    playerId: string & import("zod").BRAND<"PlayerId">,
+  ) {
+    this.namespace.to(room.id).emit("player left room", playerId);
+  }
+
+  private async onConnectionHandler(
+    socket: GuardedSocket<ExtractSocketType<GlobalNamespaceType>>,
+  ) {
+    await runWithContextUpToRoom(socket, async (userId, room) => {
+      const user = await this.ctx.userService.getUserById(userId);
+
+      if (user === null) {
+        socket.disconnect();
+        console.error("User doesn't exist");
+        return;
+      }
+
+      room.addPlayer(userId, user.username);
+
+      socket.to(room.id).emit("player joined room", {
+        id: userId,
+        name: user.username,
+      });
+    });
+
+    // // Ovde hendlam stvari ako je gejm vec u toku
+    // runWithContextUpToGame(socket, (_playerId, _room, game) => {
+    //   socket.emit("game config", game.getProcessedConfig());
+    // });
+  }
+
   private getOnReadyHandler(
     socket: GuardedSocket<ExtractSocketType<GlobalNamespaceType>>,
   ) {
     return async () => {
-      await runWithContextUpToRoom(socket, async (userId, room) => {
-        const user = await this.ctx.userService.getUserById(userId);
-
-        if (user === null) {
-          socket.disconnect();
-          console.error("User doesn't exist");
-          return;
-        }
-
-        room.addPlayer(userId, user.username);
-
+      runWithContextUpToRoom(socket, (_, room) => {
         const allPlayers = room.getAllPlayers();
-        const player: Player = {
-          id: userId,
-          name: user.username,
-        };
-
         socket.emit("sync players", allPlayers);
-        socket.to(room.id).emit("player joined room", player);
       });
     };
   }
 
-  private getOnDisconnectHandler(
+  private getOnRestoreHandler(
     socket: GuardedSocket<ExtractSocketType<GlobalNamespaceType>>,
   ) {
-    return () => {
-      runWithContextUpToRoom(socket, (userId, room) => {
-        room.removePlayer(userId);
+    return async (
+      callback: (payload: {
+        config: ProcessedGameConfig;
+        teamOnMove: TeamId | null;
+      }) => void,
+    ) => {
+      console.warn(`=========== In Restore ===========`);
 
-        socket.to(room.id).emit("player left room", userId);
+      runWithContextUpToGame(socket, (_, _room, game) => {
+        const config = game.getProcessedConfig();
+        const teamOnMove = game.getTeamOnMove();
 
-        (socket.request.session.roomId as any) = null; // eslint-disable-line @typescript-eslint/no-explicit-any
-        socket.request.session.save();
+        callback({ config, teamOnMove: teamOnMove?.id ?? null });
       });
     };
   }
@@ -84,14 +128,34 @@ export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
 
         if (parseResult.success) {
           const config = parseResult.data;
-          // TODO ako je error poslati nazad obavestenje
-          // mozes da koristis socket umesto namespace kad saljes
-          // da bi poslao samo onome ko je inicirao startovanje
           const res = room.startGame(config, this.messagingCenter);
 
           if (res.isErr()) {
             socket.emit("game not started", res.error);
           }
+        }
+      });
+    };
+  }
+
+  private getOnDisconnectHandler(
+    socket: GuardedSocket<ExtractSocketType<GlobalNamespaceType>>,
+  ) {
+    return () => {
+      runWithContextUpToRoom(socket, (userId, room) => {
+        const result = room.removePlayer(userId);
+
+        if (result.isOk()) {
+          const [removedPlayer, newOwner] = result.value;
+
+          this.notifyPlayerLeft(room, removedPlayer.id);
+          if (newOwner) {
+            this.notifyNewOwner(room.id, newOwner);
+          }
+        }
+
+        if (room.getPlayersCount() === 0) {
+          GlobalState.getInstance().removeRoom(room.id);
         }
       });
     };

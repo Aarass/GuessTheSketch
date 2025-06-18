@@ -2,8 +2,6 @@ import {
   type ControlsNamespace as ControlsNamespaceType,
   type DrawingId,
   type PlayerId,
-  type RoundReport,
-  type TeamId,
   type ToolType,
   type UnvalidatedNewDrawing,
   type UnvalidatedNewDrawingWithType,
@@ -25,14 +23,6 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
     socket.on("delete drawing", this.getOnDeleteDrawingHandler(socket));
     socket.on("deselect tool", this.getOnDeselectToolHandler(socket));
     socket.on("disconnect", this.getOnDeselectToolHandler(socket));
-  }
-
-  public notifyRoundStarted(room: string, teamOnMoveId: TeamId) {
-    this.namespace.to(room).emit("round started", teamOnMoveId);
-  }
-
-  public notifyRoundEnded(room: string, report: RoundReport) {
-    this.namespace.to(room).emit("round ended", report);
   }
 
   public notifyPlayerSelectedTool(

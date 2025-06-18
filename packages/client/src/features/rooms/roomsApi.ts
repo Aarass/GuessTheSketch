@@ -20,3 +20,12 @@ export async function joinRoom(roomId: string) {
 
   return (await res.json()) as JoinRoomResult
 }
+
+export async function tryRefresh() {
+  const res = await fetch(`http://${backend}/rooms/refresh`, {
+    method: "post",
+    credentials: "include",
+  })
+
+  return (await res.json()) as JoinRoomResult
+}

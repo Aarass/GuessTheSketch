@@ -1,116 +1,66 @@
+import { GameConfig, ProcessedGameConfig } from "@guessthesketch/common"
 import { useEffect, useRef, useState } from "react"
-import { backend, sockets } from "../../global"
-import { io } from "socket.io-client"
-import {
-  GameConfig,
-  Player,
-  PlayerId,
-  ProcessedGameConfig,
-} from "@guessthesketch/common"
 import { useNavigate } from "react-router"
-import { NotLoggedIn } from "../auth/RedirectToLoginScreen"
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
+import { sockets } from "../../global"
 import { selectMyId } from "../auth/AuthSlice"
-import {
-  playerJoined,
-  playerLeft,
-  selectPlayers,
-  selectRoomInfo,
-  syncPlayers,
-} from "../rooms/RoomSlice"
+import { selectPlayers, selectRoomInfo } from "../rooms/RoomSlice"
 
+import { ConnectionManager } from "../../classes/ConnectionManager"
 import { setConfig as setConfigAction } from "../gameScreen/GameScreenSlice"
 import { LogoutButton } from "../global/Logout"
 
-const initialConfig = `{
-    "rounds": {
-      "cycles": 1,
-      "duration": 15000
-    },
-    "teams": [
-      {
-        "name": "Tim A",
-        "players": ["id1", "id2"]
-      },
-      {
-        "name": "Tim B",
-        "players": ["id3", "id4"]
-      }
-    ],
-    "tools": {
-      "pen": {
-        "count": 2
-      },
-      "eraser": {
-        "count": 1
-      }
-    }
-  }`
-
+/**
+ * myId must be set when mounting this component
+ */
 export function Lobby() {
   const isFirstTime = useRef(true)
 
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+
+  const myId = useAppSelector(selectMyId)!
   const roomInfo = useAppSelector(selectRoomInfo)
-  const myId = useAppSelector(selectMyId)
+
   const [config, setConfig] = useState(initialConfig)
 
-  const onSyncPlayers = (players: Player[]) => {
-    dispatch(syncPlayers(players))
-  }
-
-  const onPlayerJoined = (player: Player) => {
-    dispatch(playerJoined(player))
-  }
-
-  const onPlayerLeft = (playerId: PlayerId) => {
-    dispatch(playerLeft(playerId))
-  }
-
-  const onStartError = (error: string) => {
-    alert(error)
-  }
-
-  const onGameStart = (config: ProcessedGameConfig) => {
+  const onGameStarted = (config: ProcessedGameConfig) => {
     dispatch(setConfigAction(config))
     navigate("/game")
   }
 
-  const onGameEnded = () => {
-    console.log("Game Ended!")
+  const onGameNotStarted = (error: string) => {
+    alert(error)
   }
 
   useEffect(() => {
-    if (myId === null) return
+    ConnectionManager.getInstance().ensureGlobalIsConnected()
 
-    if (sockets.global === null) {
-      sockets.global = io(`ws://${backend}`, { withCredentials: true })
-    }
-
-    sockets.global.on("sync players", onSyncPlayers)
-    sockets.global.on("player joined room", onPlayerJoined)
-    sockets.global.on("player left room", onPlayerLeft)
-    sockets.global.on("game not started", onStartError)
-    sockets.global.on("game started", onGameStart)
-    sockets.global.on("game ended", onGameEnded)
+    sockets.global!.on("game started", onGameStarted)
+    sockets.global!.on("game not started", onGameNotStarted)
 
     if (isFirstTime.current) {
-      sockets.global.emit("ready")
+      // Ovo radim zbog reactovo strict moda
+      // Ovo odlaze slanje ready eventa, do sledeceg tick-a, sto bi,
+      // nadam se, trebalo da bude dovoljno da se listeneri ponovo
+      // prikace.
+      // Nisam siguran koliko ovo stavrno moze da bude problem, ali
+      // ako ni ovo resenje nije dovoljno, moze da se proba
+      // da se saceka malo duze od jednog ticka
+      setTimeout(() => {
+        sockets.global!.emit("ready")
+      }, 0)
+
       isFirstTime.current = false
     }
 
     return () => {
-      sockets.global?.off("sync players")
-      sockets.global?.off("player joined room")
-      sockets.global?.off("player left room")
-      sockets.global?.off("game not started")
-      sockets.global?.off("game started")
-      sockets.global?.off("game ended")
+      sockets.global?.off("game started", onGameStarted)
+      sockets.global?.off("game not started", onGameNotStarted)
     }
   }, [])
 
-  return myId ? (
+  return (
     <div className="flex h-full w-full flex-col items-center justify-center">
       <p>{roomInfo.id}</p>
       <div className="flex">
@@ -143,8 +93,6 @@ export function Lobby() {
 
       <LogoutButton />
     </div>
-  ) : (
-    NotLoggedIn()
   )
 }
 
@@ -162,3 +110,28 @@ function Players() {
     </div>
   )
 }
+
+const initialConfig = `{
+    "rounds": {
+      "cycles": 3,
+      "duration": 25000
+    },
+    "teams": [
+      {
+        "name": "Tim A",
+        "players": ["id1", "id2"]
+      },
+      {
+        "name": "Tim B",
+        "players": ["id3", "id4"]
+      }
+    ],
+    "tools": {
+      "pen": {
+        "count": 2
+      },
+      "eraser": {
+        "count": 1
+      }
+    }
+  }`

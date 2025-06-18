@@ -1,11 +1,14 @@
 import { Player, PlayerId, RoomId } from "@guessthesketch/common"
+import { PayloadAction } from "@reduxjs/toolkit"
 import { createAppSlice } from "../../app/createAppSlice"
+import { tryRestore as tryRestoreFurther } from "../gameScreen/GameScreenSlice"
+import { sockets } from "../../global"
+import { logout } from "../auth/AuthSlice"
 import {
   createRoom as createRoomRequest,
   joinRoom as joinRoomRequest,
+  tryRefresh as tryRefreshRequest,
 } from "./roomsApi"
-import { PayloadAction } from "@reduxjs/toolkit"
-import { logout } from "../auth/AuthSlice"
 
 const initialState = {
   roomId: null as RoomId | null,
@@ -43,8 +46,29 @@ export const roomSlice = createAppSlice({
         },
       },
     ),
+    tryRestore: create.asyncThunk(
+      async (_, { dispatch }) => {
+        const { ownerId, roomId } = await tryRefreshRequest()
+        console.log("**** Ovo je trenutak kad imam i roomId")
+
+        dispatch(tryRestoreFurther())
+
+        return [roomId, ownerId] as const
+      },
+      {
+        fulfilled: (state, action) => {
+          const [roomId, ownerId] = action.payload
+
+          state.ownerId = ownerId
+          state.roomId = roomId
+        },
+      },
+    ),
     syncPlayers: create.reducer((state, action: PayloadAction<Player[]>) => {
       state.players = action.payload
+    }),
+    ownerChanged: create.reducer((state, action: PayloadAction<PlayerId>) => {
+      state.ownerId = action.payload
     }),
     playerJoined: create.reducer((state, action: PayloadAction<Player>) => {
       state.players.push(action.payload)
@@ -74,8 +98,15 @@ export const roomSlice = createAppSlice({
   },
 })
 
-export const { createRoom, joinRoom, syncPlayers, playerJoined, playerLeft } =
-  roomSlice.actions
+export const {
+  createRoom,
+  joinRoom,
+  tryRestore,
+  syncPlayers,
+  ownerChanged,
+  playerJoined,
+  playerLeft,
+} = roomSlice.actions
 export const {
   selectRoomId,
   selectRoomOwnerId,

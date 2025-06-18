@@ -23,7 +23,7 @@ export class Room {
     config: GameConfig,
     messagingCenter: MessagingCenter,
   ): Result<void, string> {
-    if (this._currentGame) {
+    if (this._currentGame?.active) {
       return err(`Game already started`);
     }
 
@@ -49,12 +49,39 @@ export class Room {
     });
   }
 
-  public removePlayer(playerId: PlayerId) {
+  public removePlayer(
+    playerId: PlayerId,
+  ): Result<[Player, Player | null], string> {
+    const player = this.players.get(playerId);
+
+    if (!player) {
+      return err(`Can't find player with passed id`);
+    }
+
     this.players.delete(playerId);
+
+    if (this.ownerId === player.id) {
+      const newOwner = this.tryFindNewOwner();
+
+      if (newOwner) {
+        this.ownerId = newOwner.id;
+        return ok([player, newOwner]);
+      }
+    }
+
+    return ok([player, null]);
   }
 
   public getAllPlayers() {
     return this.players.values().toArray();
+  }
+
+  public getPlayersCount() {
+    return this.players.size;
+  }
+
+  private tryFindNewOwner() {
+    return this.players.values().next().value;
   }
 
   private isValidGameConfig(config: GameConfig): Result<void, string> {

@@ -1,45 +1,41 @@
 import { ChatMessage } from "@guessthesketch/common"
 import { useEffect, useState } from "react"
 import { io } from "socket.io-client"
-import { useAppSelector } from "../../app/hooks"
 import { backend, sockets } from "../../global"
-import { selectMyId } from "../auth/AuthSlice"
 
+/**
+ * myId and roomId must be set
+ */
 export const Chat = () => {
-  const myId = useAppSelector(selectMyId)
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [newMessage, setNewMessage] = useState<string>("");
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [newMessage, setNewMessage] = useState<string>("")
 
   useEffect(() => {
-    if (!myId) return;
-
     if (!sockets.chat) {
+      console.log("connection to chat")
       sockets.chat = io(`ws://${backend}/chat`)
     }
 
     // Kada drugi igrac pošalje poruku
     sockets.chat.on("message", (message: ChatMessage) => {
-      setMessages((prevMessages) => [...prevMessages, message]);
+      setMessages(prevMessages => [...prevMessages, message])
       console.log("stigla poruka")
-    });
-
+    })
 
     return () => {
-      sockets.chat?.off("message");
-    };
+      sockets.chat?.off("message")
+    }
   }, [])
-
 
   // Funkcija za slanje poruke
   const sendMessage = () => {
-    const msg =  newMessage.trim()
+    const msg = newMessage.trim()
 
     if (msg) {
-      sockets.chat?.emit("message", msg); // Emituj poruku na server
-      setNewMessage(""); // Očisti input nakon slanja
+      sockets.chat?.emit("message", msg) // Emituj poruku na server
+      setNewMessage("") // Očisti input nakon slanja
     }
-  };
-
+  }
 
   return (
     <div className="chat-container">
@@ -57,23 +53,21 @@ export const Chat = () => {
 
       {/* Unos nove poruke */}
       <div className="message-input">
-
-
-      <form
-        onSubmit={async e => {
-          e.preventDefault()
+        <form
+          onSubmit={async e => {
+            e.preventDefault()
             sendMessage()
-        }}
-      >
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Type a message..."
-        />
+          }}
+        >
+          <input
+            type="text"
+            value={newMessage}
+            onChange={e => setNewMessage(e.target.value)}
+            placeholder="Type a message..."
+          />
           <button type="submit">Send</button>
-      </form>
+        </form>
       </div>
     </div>
-  );
+  )
 }

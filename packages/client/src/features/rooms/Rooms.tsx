@@ -1,27 +1,25 @@
 import { useEffect, useState } from "react"
-import { useAppDispatch, useAppSelector } from "../../app/hooks"
-import { selectMyId } from "../auth/AuthSlice"
-import { NotLoggedIn } from "../auth/RedirectToLoginScreen"
 import { useNavigate } from "react-router"
-import { joinRoom, createRoom, selectRoomInfo } from "./RoomSlice"
+import { useAppDispatch, useAppSelector } from "../../app/hooks"
 import { LogoutButton } from "../global/Logout"
+import { createRoom, joinRoom, selectRoomInfo } from "./RoomSlice"
 
+/**
+ * myId must be set when mounting this component
+ */
 export function Rooms() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const [localRoomId, setLocalRoomId] = useState("")
-  const myId = useAppSelector(selectMyId)
 
   const roomInfo = useAppSelector(selectRoomInfo)
   useEffect(() => {
-    if (myId === null) return
-
     if (roomInfo.id !== null && roomInfo.ownerId !== null) {
       navigate("/lobby")
     }
-  }, [roomInfo, myId])
+  }, [roomInfo])
 
-  return myId ? (
+  return (
     <div className="flex h-full w-full items-center justify-center">
       <form
         onSubmit={e => {
@@ -53,7 +51,5 @@ export function Rooms() {
       </form>
       <LogoutButton />
     </div>
-  ) : (
-    NotLoggedIn()
   )
 }

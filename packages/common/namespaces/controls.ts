@@ -1,12 +1,5 @@
 import { Namespace, Socket } from "socket.io";
-import type {
-  DrawingId,
-  NewDrawing,
-  PlayerId,
-  RoundReport,
-  TeamId,
-  ToolType,
-} from "..";
+import type { DrawingId, NewDrawing, PlayerId, ToolType } from "..";
 
 interface ClientToServerEvents {
   "select tool": (toolType: ToolType) => void;
@@ -19,8 +12,6 @@ interface ServerToClientEvents {
   "player selected tool": (playerId: PlayerId, toolType: ToolType) => void;
   "player used tool": (playerId: PlayerId, toolType: ToolType) => void;
   "player deselected tool": (playerId: PlayerId, toolType: ToolType) => void;
-  "round started": (teamOnMove: TeamId) => void;
-  "round ended": (report: RoundReport) => void;
 }
 
 export type ControlsSocket = Socket<ClientToServerEvents, ServerToClientEvents>;

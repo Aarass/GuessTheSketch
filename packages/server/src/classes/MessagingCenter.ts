@@ -55,12 +55,12 @@ export class MessagingCenter {
   }
 
   public notifyRoundStarted(room: RoomId, teamOnMove: Team) {
-    this.namespaces.controls.notifyRoundStarted(room, teamOnMove.id);
+    this.namespaces.global.notifyRoundStarted(room, teamOnMove.id);
     this.namespaces.chat.notifyRoundStarted(room, teamOnMove);
   }
 
   public notifyRoundEnded(room: RoomId, report: RoundReport) {
-    this.namespaces.controls.notifyRoundEnded(room, report);
+    this.namespaces.global.notifyRoundEnded(room, report);
     this.namespaces.chat.notifyRoundEnded(room);
   }
 

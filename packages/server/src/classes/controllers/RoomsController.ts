@@ -11,6 +11,7 @@ export class RoomsController extends Controller {
 
     this.router.post("/rooms", authenticate, this.createRoomHandler);
     this.router.post("/rooms/:id/join", authenticate, this.joinRoomHandler);
+    this.router.post("/rooms/refresh", authenticate, this.refreshHandler);
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
@@ -41,5 +42,38 @@ export class RoomsController extends Controller {
       console.log("No room found");
       res.sendStatus(400);
     }
+  };
+
+  // eslint-disable-next-line @typescript-eslint/require-await
+  private refreshHandler: RequestHandler = async (req, res) => {
+    console.warn("refreshHandler u room");
+    const userId = req.session.userId;
+    const roomId = req.session.roomId;
+    req.session.save();
+
+    if (!roomId) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const room = GlobalState.getInstance().getRoomById(roomId);
+    if (!room) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const user = await this.ctx.userService.getUserById(userId);
+    if (!user) {
+      res.sendStatus(400);
+      return;
+    }
+
+    room.addPlayer(userId, user.username);
+
+    const result: JoinRoomResult = {
+      roomId: room.id,
+      ownerId: room.ownerId,
+    };
+    res.send(result);
   };
 }

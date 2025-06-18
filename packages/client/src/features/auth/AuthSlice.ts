@@ -8,10 +8,10 @@ import {
 import { LoginResult, PlayerId, RefreshResult } from "@guessthesketch/common"
 
 interface AuthState {
-  myId: PlayerId | null
+  myId: PlayerId | null | undefined
 }
 
-const initialState: AuthState = { myId: null }
+const initialState: AuthState = { myId: undefined }
 
 export const authSlice = createAppSlice({
   name: "auth",
@@ -27,6 +27,9 @@ export const authSlice = createAppSlice({
         fulfilled: (state, action) => {
           state.myId = action.payload.id
         },
+        rejected: state => {
+          state.myId = null
+        },
       },
     ),
     refresh: create.asyncThunk(
@@ -38,6 +41,10 @@ export const authSlice = createAppSlice({
       {
         fulfilled: (state, action) => {
           state.myId = action.payload.id
+          console.log("**** Ovo je trenutak kad imam userId")
+        },
+        rejected: state => {
+          state.myId = null
         },
       },
     ),

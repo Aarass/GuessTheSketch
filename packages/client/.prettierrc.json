@@ -1,5 +1,4 @@
 {
   "semi": false,
-  "arrowParens": "avoid",
-  "plugins": ["prettier-plugin-tailwindcss"]
+  "arrowParens": "avoid"
 }

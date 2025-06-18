@@ -2,10 +2,12 @@ import { createSelector, type PayloadAction } from "@reduxjs/toolkit"
 import type { ProcessedGameConfig, TeamId } from "@guessthesketch/common"
 import { createAppSlice } from "../../app/createAppSlice"
 import { logout, selectMyId } from "../auth/AuthSlice"
+import { sockets } from "../../global"
+import { ConnectionManager } from "../../classes/ConnectionManager"
 
 export interface GameScreenState {
   config: ProcessedGameConfig | undefined
-  teamOnMove: TeamId | undefined
+  teamOnMove: TeamId | undefined | null
   color: string
   size: number
 }
@@ -27,7 +29,7 @@ export const gameScreenSlice = createAppSlice({
       },
     ),
     setTeamOnMove: create.reducer(
-      (state, action: PayloadAction<TeamId | undefined>) => {
+      (state, action: PayloadAction<TeamId | null>) => {
         state.teamOnMove = action.payload
       },
     ),
@@ -37,6 +39,27 @@ export const gameScreenSlice = createAppSlice({
     setSize: create.reducer((state, action: PayloadAction<number>) => {
       state.size = action.payload
     }),
+    tryRestore: create.asyncThunk(
+      async () => {
+        ConnectionManager.getInstance().ensureGlobalIsConnected()
+
+        const { config, teamOnMove } = await sockets
+          .global!.timeout(1000)
+          .emitWithAck("restore")
+
+        return [config, teamOnMove] as const
+      },
+      {
+        fulfilled: (state, action) => {
+          const [config, teamOnMove] = action.payload
+
+          state.config = config
+          state.teamOnMove = teamOnMove
+
+          console.log("**** Ovo je trenutak kad imam sve sto je potrebno")
+        },
+      },
+    ),
   }),
   extraReducers: builder => {
     builder.addCase(logout.fulfilled, state => {
@@ -52,7 +75,7 @@ export const gameScreenSlice = createAppSlice({
   },
 })
 
-export const { setColor, setSize, setTeamOnMove, setConfig } =
+export const { setColor, setSize, setTeamOnMove, setConfig, tryRestore } =
   gameScreenSlice.actions
 export const { selectColor, selectSize, selectConfig, selectTeamOnMove } =
   gameScreenSlice.selectors
@@ -62,19 +85,19 @@ export const selectIsMyTeamOnMove = createSelector(
   selectConfig,
   selectTeamOnMove,
   (myId, config, teamOnMove) => {
-    if (config === undefined) {
+    if (!config) {
       console.log(
         "config is undefined, when trying to check if my team is on move",
       )
       return false
     }
 
-    if (myId === null) {
+    if (!myId) {
       console.log("myId is null, when trying to check if my team is on move")
       return false
     }
 
-    if (teamOnMove === undefined) {
+    if (!teamOnMove) {
       return false
     }
 

@@ -1,105 +1,90 @@
+import { Drawing, DrawingId, Point, ToolType } from "@guessthesketch/common"
 import p5 from "p5"
+import { PropsWithChildren, useEffect, useRef, useState } from "react"
 import {
-  LuTrash2,
-  LuUndo2,
+  LuCircle,
+  LuCircleX,
+  LuPaintBucket,
+  LuPen,
   LuPipette,
   LuRectangleHorizontal,
-  LuCircle,
-  LuPen,
-  LuPaintBucket,
-  LuCircleX,
+  LuTrash2,
+  LuUndo2,
 } from "react-icons/lu"
 import { TbLine } from "react-icons/tb"
-import { PropsWithChildren, useEffect, useRef, useState } from "react"
-import { initSketch } from "./sketch"
-import { GameState } from "./GameState"
+import { useNavigate } from "react-router"
+import { io } from "socket.io-client"
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
 import { store } from "../../app/store"
+import { ConnectionManager } from "../../classes/ConnectionManager"
+import { backend, sockets } from "../../global"
+import { HSVtoRGB, RGBtoHexString } from "../../utils/colors"
+import { Chat } from "../chat/Chat"
+import { LogoutButton } from "../global/Logout"
+import { Leaderboard } from "../leaderboard/Leaderboard"
+import { selectRoomId, tryRestore } from "../rooms/RoomSlice"
 import {
   selectColor,
   selectIsMyTeamOnMove,
   selectSize,
   setColor,
   setSize,
-  setTeamOnMove,
 } from "./GameScreenSlice"
-import { HSVtoRGB, RGBtoHexString } from "../../utils/colors"
-import {
-  Drawing,
-  DrawingId,
-  Point,
-  RoundReport,
-  TeamId,
-  ToolType,
-} from "@guessthesketch/common"
-import { backend, sockets } from "../../global"
-import { io } from "socket.io-client"
-import { selectMyId } from "../auth/AuthSlice"
-import { LogoutButton } from "../global/Logout"
-import { Chat } from "../chat/Chat"
-import { Leaderboard } from "../leaderboard/Leaderboard"
-import { useNavigate } from "react-router"
+import { GameState } from "./GameState"
+import { initSketch } from "./sketch"
 
+/**
+ * myId must be set when mounting this component
+ */
 export const GameScreen = () => {
-  const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const myId = useAppSelector(selectMyId)
+
+  const roomId = useAppSelector(selectRoomId)
   const isMyTeamOnMove = useAppSelector(selectIsMyTeamOnMove)
 
-  const onRoundStarted = (teamOnMove: TeamId) => {
-    dispatch(setTeamOnMove(teamOnMove))
-    console.log(`Round started. Team on move: ${teamOnMove}`)
-  }
-
-  const onRoundEnded = (roundReport: RoundReport) => {
-    dispatch(setTeamOnMove(undefined))
-    GameState.getInstance().reset()
-
-    console.log("Round ended. Heres round report", roundReport)
-  }
+  const sentRestoreRequest = useRef(false)
 
   useEffect(() => {
-    if (myId === null) return
+    if (!roomId) {
+      // Ako udje u ovaj if znaci da je refreshana stranica
 
-    if (sockets.controls === null) {
-      sockets.controls = io(`ws://${backend}/controls`)
+      console.log("nema configa")
+
+      if (!sentRestoreRequest.current) {
+        sentRestoreRequest.current = true
+
+        dispatch(tryRestore())
+      }
+      return
     }
 
-    sockets.controls.on("round started", onRoundStarted)
-    sockets.controls.on("round ended", onRoundEnded)
+    ConnectionManager.getInstance().ensureGlobalIsConnected()
+  }, [roomId])
 
-    return () => {
-      sockets.controls?.off("round started", onRoundStarted)
-      sockets.controls?.off("round ended", onRoundEnded)
-    }
-  }, [])
+  const canCreateSocketConnection = !!roomId
 
   return (
-    <div className="flex h-full w-full items-center justify-center">
-      <div className="flex">
-        <Leaderboard></Leaderboard>
-        <div className="flex flex-col items-center">
-          <Canvas></Canvas>
-          {isMyTeamOnMove ? <Tools></Tools> : null}
+    <div className="flex flex-col h-full w-full items-center justify-center">
+      <DebugButtons />
+      {canCreateSocketConnection ? (
+        <div className="flex">
+          <Leaderboard></Leaderboard>
+          <div className="flex flex-col items-center">
+            <Canvas></Canvas>
+            {isMyTeamOnMove ? <Tools></Tools> : null}
+          </div>
+          <Chat></Chat>
         </div>
-        <Chat></Chat>
-      </div>
-
-      <button
-        onClick={() => {
-          navigate("/rooms")
-        }}
-      >
-        Rooms
-      </button>
-
-      <LogoutButton />
+      ) : null}
     </div>
   )
 }
 
 let sketch: p5 | null = null
 
+/**
+ * myId and roomId must be set
+ */
 export const Canvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const state = GameState.getInstance()
@@ -110,32 +95,38 @@ export const Canvas = () => {
     }
 
     if (sockets.drawings === null) {
+      console.log("connection to drawings")
       sockets.drawings = io(`ws://${backend}/drawings`)
     }
 
-    const onDrawing = (drawing: Drawing) => {
-      if (drawing.type == "eraser") {
-        const index = state.drawings.findLastIndex(el => {
-          return el.id === drawing.toDelete
-        })
-
-        if (index === -1) {
-          console.log("Can't find drawing to delete with id: ", drawing.id)
-          return
-        }
-
-        state.drawings.splice(index, 1)
-      } else {
-        state.drawings.push(drawing)
-      }
-    }
-
+    console.log("About to register for drawing")
     sockets.drawings.on("drawing", onDrawing)
 
     return () => {
-      sockets.drawings?.off("drawing")
+      sketch = null
+
+      console.log("About to unregister for drawing")
+      sockets.drawings?.off("drawing", onDrawing)
     }
   }, [])
+
+  const onDrawing = (drawing: Drawing) => {
+    console.log(drawing)
+    if (drawing.type == "eraser") {
+      const index = state.drawings.findLastIndex(el => {
+        return el.id === drawing.toDelete
+      })
+
+      if (index === -1) {
+        console.log("Can't find drawing to delete with id: ", drawing.id)
+        return
+      }
+
+      state.drawings.splice(index, 1)
+    } else {
+      state.drawings.push(drawing)
+    }
+  }
 
   return (
     <div>
@@ -144,7 +135,16 @@ export const Canvas = () => {
   )
 }
 
+/**
+ * myId and roomId must be set
+ */
 export const Tools = () => {
+  useEffect(() => {
+    ConnectionManager.getInstance().ensureControlsIsConnected()
+
+    // TODO attach listeners for controls
+  }, [])
+
   return (
     <div className="mt-4 flex flex-row items-center justify-items-center">
       <div className="mr-4 flex flex-col items-center justify-items-center">
@@ -789,4 +789,30 @@ function DrawingAutoFillIn() {
     color,
     size,
   }
+}
+
+function DebugButtons() {
+  const navigate = useNavigate()
+
+  return (
+    <div className="flex">
+      <button
+        onClick={() => {
+          navigate("/rooms")
+        }}
+      >
+        Rooms
+      </button>
+
+      <button
+        onClick={() => {
+          navigate("/lobby")
+        }}
+      >
+        Lobby
+      </button>
+
+      <LogoutButton />
+    </div>
+  )
 }

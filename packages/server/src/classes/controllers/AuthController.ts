@@ -56,6 +56,7 @@ export class AuthController extends Controller {
   };
 
   private refreshHandler: RequestHandler = (req, res) => {
+    console.warn("refreshHandler u auth");
     const userId = req.session.userId;
 
     if (userId) {

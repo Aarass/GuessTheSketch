@@ -1,6 +1,7 @@
 import type {
   GameConfig,
   PlayerId,
+  ProcessedGameConfig,
   Team,
   TeamId,
 } from "@guessthesketch/common";
@@ -68,18 +69,10 @@ export class Game {
 
     console.log("Game started");
 
-    const config = {
-      ...this.config,
-      teams: this.teams.map((team) => {
-        return {
-          id: team.id,
-          name: team.name,
-          players: Array.from(team.players.values()),
-        };
-      }),
-    };
-
-    this.messagingCenter.notifyGameStarted(this.room.id, config);
+    this.messagingCenter.notifyGameStarted(
+      this.room.id,
+      this.getProcessedConfig(),
+    );
 
     setTimeout(() => {
       void this.startNewRound();
@@ -91,6 +84,12 @@ export class Game {
     const team = this.findPlayersTeam(player);
 
     return team === currentTeam;
+  }
+
+  public getTeamOnMove() {
+    if (!this.active || !this._currentRound) return null;
+
+    return this.teams[this.currentTeamIndex];
   }
 
   public isTeamOnMove(team: TeamId): boolean {
@@ -184,5 +183,19 @@ export class Game {
       }
     }
     return null;
+  }
+
+  // TODO
+  public getProcessedConfig() {
+    return {
+      ...this.config,
+      teams: this.teams.map((team) => {
+        return {
+          id: team.id,
+          name: team.name,
+          players: Array.from(team.players.values()),
+        };
+      }),
+    } satisfies ProcessedGameConfig;
   }
 }
