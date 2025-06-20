@@ -47,9 +47,9 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
 
     sketch.draw = () => {
       const drawings = gameState.getAllDrawings()
-      const thereIsNewDrawings = nextStart !== drawings.length
+      const needsRedraw = nextStart !== drawings.length
 
-      if (thereIsNewDrawings) {
+      if (needsRedraw) {
         commitBuffer.draw(() => {
           sketch.push()
           applyTransform()
@@ -84,7 +84,7 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
           null as any as Framebuffer /* Safety measures*/,
         )
       } else {
-        if (thereIsNewDrawings) {
+        if (needsRedraw) {
           sketch.background(bg)
           sketch.image(commitBuffer, 0, 0)
         }
@@ -132,12 +132,6 @@ function draw(
   sketch: p5,
   commitBuffer: Framebuffer,
 ) {
-  // sketch.fill(255)
-  // sketch.noStroke()
-  // sketch.rect(10, 10, 100, 100)
-  //
-  // return undefined
-
   switch (drawing.type) {
     case "freeline":
       sketch.stroke(drawing.color)
@@ -148,19 +142,12 @@ function draw(
         return
       }
 
-      let i = 0
-
-      if (gameState.inFly?.drawing === drawing) {
-        if (gameState.inFly.i === null || gameState.inFly.i === undefined)
-          throw `zaboravio si da postavis i`
-
-        i = gameState.inFly.i
-        gameState.inFly.i = drawing.points.length - 2
+      sketch.beginShape(0x0001)
+      for (let i = 0; i < drawing.points.length - 1; i++) {
+        sketch.vertex(drawing.points[i].x, drawing.points[i].y)
+        sketch.vertex(drawing.points[i + 1].x, drawing.points[i + 1].y)
       }
-
-      for (; i < drawing.points.length - 1; i++) {
-        line(drawing.points[i], drawing.points[i + 1])
-      }
+      sketch.endShape()
 
       break
     case "line":
