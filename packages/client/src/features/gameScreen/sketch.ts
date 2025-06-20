@@ -13,11 +13,8 @@ type Framebuffer = p5.Framebuffer & {
   updatePixels(): void
 }
 
-const mustRedrawTypes: DrawingInFly["type"][] = ["circle", "rect", "line"]
-
-const gameState = GameState.getInstance()
-
 const bg = 0 // TODO
+const gameState = GameState.getInstance()
 
 /**
  * Osiguraj zivotom ako treba da se ova funkcija ne pozove vise
@@ -32,13 +29,16 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
     let nextStart = -1
 
     sketch.setup = () => {
+      sketch.setAttributes("depth", false)
       sketch.createCanvas(700, 500, "webgl", canvas)
 
       sketch.background(bg)
       sketch.fill(0)
       sketch.noStroke()
 
-      commitBuffer = sketch.createFramebuffer() as any as Framebuffer
+      commitBuffer = sketch.createFramebuffer({
+        depth: false,
+      }) as any as Framebuffer
     }
 
     function applyTransform() {
@@ -47,6 +47,12 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
 
     sketch.draw = () => {
       const drawings = gameState.getAllDrawings()
+
+      const undoHappened = nextStart > drawings.length
+      if (undoHappened) {
+        nextStart = -1
+      }
+
       const needsRedraw = nextStart !== drawings.length
 
       if (needsRedraw) {
@@ -59,7 +65,7 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
           }
 
           for (let i = Math.max(nextStart, 0); i < drawings.length; i++) {
-            draw(drawings[i], sketch, commitBuffer)
+            draw(drawings[i])
           }
 
           sketch.pop()
@@ -69,43 +75,35 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
       }
 
       applyTransform()
+      sketch.background(bg)
+      sketch.image(commitBuffer, 0, 0)
 
       if (gameState.inFly) {
-        const drawing = gameState.inFly.drawing
-
-        if (mustRedrawTypes.includes(drawing.type)) {
-          sketch.background(bg)
-          sketch.image(commitBuffer, 0, 0)
-        }
-
-        draw(
-          gameState.inFly.drawing,
-          sketch,
-          null as any as Framebuffer /* Safety measures*/,
-        )
-      } else {
-        if (needsRedraw) {
-          sketch.background(bg)
-          sketch.image(commitBuffer, 0, 0)
-        }
+        draw(gameState.inFly.drawing)
       }
 
-      // sketch.fill(255)
-      // sketch.noStroke()
-      // sketch.rect(10, 10, 100, 100)
+      // if (gameState.inFly) {
+      //   const drawing = gameState.inFly.drawing
+      //
+      //   if (mustRedrawTypes.includes(drawing.type)) {
+      //     sketch.background(bg)
+      //     sketch.image(commitBuffer, 0, 0)
+      //   }
+      //
+      //   draw(
+      //     gameState.inFly.drawing,
+      //     sketch,
+      //     null as any as Framebuffer /* Safety measures*/,
+      //   )
+      // } else {
+      //   if (needsRedraw) {
+      //     sketch.background(bg)
+      //     sketch.image(commitBuffer, 0, 0)
+      //   }
+      // }
 
-      // showFramerate()
+      showFramerate()
     }
-
-    // if (gameState.inFly === null) {
-    //   sketch.image(commitBuffer, 0, 0)
-    // } else {
-    //   const drawing = gameState.inFly.drawing
-    //   if (problematicTypes.includes(drawing.type)) {
-    //     sketch.image(commitBuffer, 0, 0)
-    //   }
-    //   draw(drawing, sketch, commitBuffer)
-    // }
 
     const pg = sketch.createGraphics(256, 256)
 
@@ -124,77 +122,80 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
 
       sketch.pop()
     }
-  }
-}
 
-function draw(
-  drawing: Drawing | NewDrawing | DrawingInFly,
-  sketch: p5,
-  commitBuffer: Framebuffer,
-) {
-  switch (drawing.type) {
-    case "freeline":
-      sketch.stroke(drawing.color)
-      sketch.strokeWeight(drawing.size)
+    function draw(drawing: Drawing | NewDrawing | DrawingInFly) {
+      switch (drawing.type) {
+        case "freeline":
+          sketch.stroke(drawing.color)
+          sketch.strokeWeight(drawing.size)
 
-      if (drawing.points.length == 1) {
-        sketch.point(drawing.points[0].x, drawing.points[0].y)
-        return
+          if (drawing.points.length == 1) {
+            sketch.point(drawing.points[0].x, drawing.points[0].y)
+            return
+          }
+
+          sketch.noFill()
+          // sketch.beginShape(0x0001)
+          sketch.beginShape()
+          for (let i = 0; i < drawing.points.length - 1; i++) {
+            sketch.vertex(drawing.points[i].x, drawing.points[i].y)
+            sketch.vertex(drawing.points[i + 1].x, drawing.points[i + 1].y)
+          }
+          sketch.endShape()
+
+          break
+        case "line":
+          sketch.stroke(drawing.color)
+          sketch.strokeWeight(drawing.size)
+          line(drawing.p1, drawing.p2)
+          break
+        case "dot":
+          sketch.stroke(drawing.color)
+          sketch.strokeWeight(drawing.size)
+          sketch.point(drawing.p.x, drawing.p.y)
+          break
+        case "circle":
+          sketch.noStroke()
+          sketch.fill(drawing.color)
+          sketch.ellipse(drawing.p.x, drawing.p.y, drawing.r)
+          break
+        case "rect":
+          sketch.noStroke()
+          sketch.fill(drawing.color)
+          sketch.rect(
+            drawing.topLeft.x,
+            drawing.topLeft.y,
+            drawing.w,
+            drawing.h,
+          )
+          break
+        case "flood":
+          let id
+
+          if ((drawing as Drawing).id) {
+            id = (drawing as Drawing).id
+          } else if ((drawing as NewDrawing).tempId) {
+            id = (drawing as NewDrawing).tempId
+          } else {
+            throw `floodFill can't be infly drawing`
+          }
+
+          const cachedDrawing = ffc.get(id)
+
+          if (cachedDrawing) {
+            sketch.image(cachedDrawing, 0, 0)
+          } else {
+            commitBuffer.loadPixels()
+            floodFill(sketch, drawing, commitBuffer.pixels)
+            commitBuffer.updatePixels()
+          }
+          break
       }
 
-      sketch.beginShape(0x0001)
-      for (let i = 0; i < drawing.points.length - 1; i++) {
-        sketch.vertex(drawing.points[i].x, drawing.points[i].y)
-        sketch.vertex(drawing.points[i + 1].x, drawing.points[i + 1].y)
+      function line(p1: Point, p2: Point) {
+        sketch.line(p1.x, p1.y, 0.00075, p2.x, p2.y, 0.00075)
       }
-      sketch.endShape()
-
-      break
-    case "line":
-      sketch.stroke(drawing.color)
-      sketch.strokeWeight(drawing.size)
-      line(drawing.p1, drawing.p2)
-      break
-    case "dot":
-      sketch.stroke(drawing.color)
-      sketch.strokeWeight(drawing.size)
-      sketch.point(drawing.p.x, drawing.p.y)
-      break
-    case "circle":
-      sketch.noStroke()
-      sketch.fill(drawing.color)
-      sketch.ellipse(drawing.p.x, drawing.p.y, drawing.r)
-      break
-    case "rect":
-      sketch.noStroke()
-      sketch.fill(drawing.color)
-      sketch.rect(drawing.topLeft.x, drawing.topLeft.y, drawing.w, drawing.h)
-      break
-    case "flood":
-      let id
-
-      if ((drawing as Drawing).id) {
-        id = (drawing as Drawing).id
-      } else if ((drawing as NewDrawing).tempId) {
-        id = (drawing as NewDrawing).tempId
-      } else {
-        throw `floodFill can't be infly drawing`
-      }
-
-      const cachedDrawing = ffc.get(id)
-
-      if (cachedDrawing) {
-        sketch.image(cachedDrawing, 0, 0)
-      } else {
-        commitBuffer.loadPixels()
-        floodFill(sketch, drawing, commitBuffer.pixels)
-        commitBuffer.updatePixels()
-      }
-      break
-  }
-
-  function line(p1: Point, p2: Point) {
-    sketch.line(p1.x, p1.y, 0.00075, p2.x, p2.y, 0.00075)
+    }
   }
 }
 
