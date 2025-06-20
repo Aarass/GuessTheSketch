@@ -1,4 +1,4 @@
 export abstract class Command {
-  abstract execute(): void
+  abstract execute(): Promise<void>
   abstract getName(): string
 }

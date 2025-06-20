@@ -1,4 +1,4 @@
-import { ToolType, Drawing, NewDrawing } from "@guessthesketch/common"
+import { NewDrawing, ToolType } from "@guessthesketch/common"
 import { DrawingAutoFillIn } from "../../../utils/autoFillin"
 import { Tool } from "../Tool"
 
@@ -7,7 +7,7 @@ export class FloodFillTool extends Tool {
 
   onMouseReleased(event: MouseEvent): void {
     let drawing: NewDrawing
-    if (this.gameState.drawings.length == 0) {
+    if (this.gameState.getAllDrawings().length == 0) {
       drawing = {
         tempId: Date.now().toString(),
         ...DrawingAutoFillIn(),

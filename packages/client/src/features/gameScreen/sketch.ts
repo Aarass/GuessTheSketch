@@ -1,183 +1,143 @@
 import p5 from "p5"
 import { GameState } from "./GameState"
-import { Drawing, DrawingInFly, Point } from "@guessthesketch/common"
+import {
+  Drawing,
+  DrawingInFly,
+  NewDrawing,
+  Point,
+} from "@guessthesketch/common"
 import { colorsAreEqual, HexStringToRGB } from "../../utils/colors"
-
-/*
- * Note, da sledeci put ne gubis vreme.
-
- * Index u Snapshot-u je index crteza koji je poslednji iscrtan. Dakle,
- * to je crtez koji je obuhvacen snapshotom. Snapshot sadrzi taj index.
- *  
- * NextStart predstavljla indeks crteza koji treba biti prvi iscrtan u novoj
- * iteraciji. Dakle, taj crtez ne pripada ni jednom snapshotu.
- * 
- * Jos jedna stvar NextStart moze da ima vrenost -1. Ne mogu da se setim zasto,
- * ali mislim da je zbog brisanje pozadine.
- */
 
 type Framebuffer = p5.Framebuffer & {
   loadPixels(): void
   updatePixels(): void
 }
 
-type Index = number & { __brand: "Index" }
-type Pixels = number[] & { __brand: "Pixels" }
-
-type Snapshot = {
-  index: Index
-  pixels: Pixels
-}
+const mustRedrawTypes: DrawingInFly["type"][] = ["circle", "rect", "line"]
 
 const gameState = GameState.getInstance()
 
-const snapshots: Snapshot[] = []
-const snapshotStep = 5
+const bg = 0 // TODO
 
+/**
+ * Osiguraj zivotom ako treba da se ova funkcija ne pozove vise
+ * od jednom za isti canvas/sketch. p5.js poludi ako se to desi.
+ * createCanvas je izvor problema. Nije do nas do p5.js-a je.
+ */
 export const initSketch = (canvas: HTMLCanvasElement) => {
   return (sketch: p5) => {
     gameState.reset()
 
-    const bg = 0
-    let nextStart = -1
     let commitBuffer: Framebuffer
+    let nextStart = -1
 
-    let pg: any
     sketch.setup = () => {
       sketch.createCanvas(700, 500, "webgl", canvas)
-
-      commitBuffer = sketch.createFramebuffer() as any as Framebuffer
 
       sketch.background(bg)
       sketch.fill(0)
       sketch.noStroke()
-      // sketch.noLoop()
 
-      pg = sketch.createGraphics(256, 256)
+      commitBuffer = sketch.createFramebuffer() as any as Framebuffer
     }
 
-    function applyTransforms() {
+    function applyTransform() {
       sketch.translate(-sketch.width / 2, -sketch.height / 2)
     }
 
     sketch.draw = () => {
-      const drawings = gameState.drawings
-      const drawingsLength = gameState.drawings.length
+      const drawings = gameState.getAllDrawings()
+      const thereIsNewDrawings = nextStart !== drawings.length
 
-      const undoHappened = nextStart > drawingsLength
+      if (thereIsNewDrawings) {
+        commitBuffer.draw(() => {
+          sketch.push()
+          applyTransform()
 
-      if (undoHappened) {
-        let currentSnapshot: Snapshot | null = null
-
-        for (let i = snapshots.length - 1; i >= 0; i--) {
-          if (snapshots[i].index >= drawingsLength) {
-            snapshots.pop()
-          } else {
-            currentSnapshot = snapshots[i]
-            break
+          if (nextStart <= 0) {
+            sketch.background(bg)
           }
-        }
 
-        // console.log("Novi aktuelni snapshot je: ", currentSnapshot)
+          for (let i = Math.max(nextStart, 0); i < drawings.length; i++) {
+            draw(drawings[i], sketch, commitBuffer)
+          }
 
-        if (currentSnapshot) {
-          commitBuffer.loadPixels()
-          for (let i = 0; i < currentSnapshot.pixels.length; i++)
-            commitBuffer.pixels[i] = currentSnapshot.pixels[i]
-          commitBuffer.updatePixels()
+          sketch.pop()
+        })
 
-          nextStart = currentSnapshot.index + 1
-        } else {
-          nextStart = -1
-        }
-
-        // console.log("NextStart je sada: ", nextStart)
+        nextStart = drawings.length
       }
 
-      if (nextStart !== drawingsLength) {
-        commitBuffer.begin()
+      applyTransform()
 
-        if (nextStart <= 0) {
+      if (gameState.inFly) {
+        const drawing = gameState.inFly.drawing
+
+        if (mustRedrawTypes.includes(drawing.type)) {
           sketch.background(bg)
-        }
-
-        applyTransforms()
-
-        for (let i = Math.max(nextStart, 0); i < drawingsLength; i++) {
-          const drawing = drawings[i]
-
-          if (drawing.type === "flood") {
-            const cachedDrawing = ffc.get(drawing.id)
-
-            if (cachedDrawing) {
-              sketch.image(cachedDrawing, 0, 0)
-            } else {
-              commitBuffer.loadPixels()
-              draw(drawing, sketch, commitBuffer.pixels)
-              commitBuffer.updatePixels()
-            }
-          } else {
-            draw(drawing, sketch, [])
-          }
-        }
-
-        commitBuffer.end()
-        nextStart = drawingsLength
-
-        if (drawingsLength > 0 && drawingsLength % snapshotStep === 0) {
-          const currentIndex = drawingsLength - 1
-          const currentSnapshot = snapshots.at(-1)
-
-          // console.log(
-          //   `currentIndex: ${currentIndex}, currentSnapshot:`,
-          //   currentSnapshot,
-          // )
-
-          if (
-            currentSnapshot === undefined ||
-            currentSnapshot.index !== currentIndex
-          ) {
-            commitBuffer.loadPixels()
-            snapshots.push({
-              index: currentIndex as Index,
-              pixels: commitBuffer.pixels.slice() as Pixels,
-            })
-
-            // console.log("Ubacio sam novi snapshot:", snapshots.at(-1))
-          }
-        }
-      }
-
-      const drawingInFly = gameState.inFly.drawing
-
-      const problematicTypes: Drawing["type"][] = ["circle", "rect", "line"]
-
-      applyTransforms()
-
-      if (drawingInFly === null) {
-        sketch.image(commitBuffer, 0, 0)
-      } else {
-        if (problematicTypes.includes(drawingInFly.type)) {
           sketch.image(commitBuffer, 0, 0)
         }
-        draw(drawingInFly, sketch)
+
+        draw(
+          gameState.inFly.drawing,
+          sketch,
+          null as any as Framebuffer /* Safety measures*/,
+        )
+      } else {
+        if (thereIsNewDrawings) {
+          sketch.background(bg)
+          sketch.image(commitBuffer, 0, 0)
+        }
       }
 
-      if (false) {
-        sketch.noStroke()
-        sketch.noFill()
-        sketch.translate(50, 50)
-        ;(pg as any).background(255)
-        ;(pg as any).textSize(200)
-        ;(pg as any).text(Math.round(sketch.frameRate()), 20, 200)
-        sketch.texture(pg)
-        sketch.plane(50)
-      }
+      // sketch.fill(255)
+      // sketch.noStroke()
+      // sketch.rect(10, 10, 100, 100)
+
+      // showFramerate()
+    }
+
+    // if (gameState.inFly === null) {
+    //   sketch.image(commitBuffer, 0, 0)
+    // } else {
+    //   const drawing = gameState.inFly.drawing
+    //   if (problematicTypes.includes(drawing.type)) {
+    //     sketch.image(commitBuffer, 0, 0)
+    //   }
+    //   draw(drawing, sketch, commitBuffer)
+    // }
+
+    const pg = sketch.createGraphics(256, 256)
+
+    function showFramerate() {
+      pg.background(255)
+      pg.textSize(200)
+      pg.text(Math.round(sketch.frameRate()), 20, 200)
+
+      sketch.push()
+
+      sketch.noFill()
+      sketch.noStroke()
+      sketch.translate(50, 50)
+      sketch.texture(pg as any)
+      sketch.plane(50)
+
+      sketch.pop()
     }
   }
 }
 
-function draw(drawing: Drawing | DrawingInFly, sketch: p5, pixels?: number[]) {
+function draw(
+  drawing: Drawing | NewDrawing | DrawingInFly,
+  sketch: p5,
+  commitBuffer: Framebuffer,
+) {
+  // sketch.fill(255)
+  // sketch.noStroke()
+  // sketch.rect(10, 10, 100, 100)
+  //
+  // return undefined
+
   switch (drawing.type) {
     case "freeline":
       sketch.stroke(drawing.color)
@@ -190,16 +150,17 @@ function draw(drawing: Drawing | DrawingInFly, sketch: p5, pixels?: number[]) {
 
       let i = 0
 
-      if (drawing == gameState.inFly.drawing) {
-        if (gameState.inFly.i === null) throw `zaboravio si da postavis i`
+      if (gameState.inFly?.drawing === drawing) {
+        if (gameState.inFly.i === null || gameState.inFly.i === undefined)
+          throw `zaboravio si da postavis i`
+
         i = gameState.inFly.i
+        gameState.inFly.i = drawing.points.length - 2
       }
 
       for (; i < drawing.points.length - 1; i++) {
         line(drawing.points[i], drawing.points[i + 1])
       }
-
-      gameState.inFly.i = i
 
       break
     case "line":
@@ -223,8 +184,25 @@ function draw(drawing: Drawing | DrawingInFly, sketch: p5, pixels?: number[]) {
       sketch.rect(drawing.topLeft.x, drawing.topLeft.y, drawing.w, drawing.h)
       break
     case "flood":
-      if (pixels === undefined) throw ``
-      floodFill(sketch, drawing, pixels)
+      let id
+
+      if ((drawing as Drawing).id) {
+        id = (drawing as Drawing).id
+      } else if ((drawing as NewDrawing).tempId) {
+        id = (drawing as NewDrawing).tempId
+      } else {
+        throw `floodFill can't be infly drawing`
+      }
+
+      const cachedDrawing = ffc.get(id)
+
+      if (cachedDrawing) {
+        sketch.image(cachedDrawing, 0, 0)
+      } else {
+        commitBuffer.loadPixels()
+        floodFill(sketch, drawing, commitBuffer.pixels)
+        commitBuffer.updatePixels()
+      }
       break
   }
 
@@ -244,14 +222,13 @@ const ffc = new Map<string, p5.Image>()
 
 async function floodFill(
   sketch: p5,
-  drawing: Drawing | DrawingInFly,
+  drawing: Drawing | NewDrawing | DrawingInFly,
   pixels: number[],
 ) {
   if (drawing.type !== "flood") throw ``
 
   const cache = sketch.createImage(sketch.width, sketch.height)
   cache.loadPixels()
-  const imgPixels = cache.pixels
 
   const d = sketch.pixelDensity()
   const w = sketch.width

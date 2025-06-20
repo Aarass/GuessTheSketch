@@ -1,4 +1,10 @@
-import { ToolType, Point, Drawing, NewDrawing } from "@guessthesketch/common"
+import {
+  ToolType,
+  Point,
+  Drawing,
+  NewDrawing,
+  DrawingInFly,
+} from "@guessthesketch/common"
 import { Tool } from "../Tool"
 import { DrawingAutoFillIn } from "../../../utils/autoFillin"
 
@@ -7,9 +13,8 @@ export class PenTool extends Tool {
 
   points: Point[] = []
 
-  override showTmpDrawing(drawing: Drawing): void {
-    super.showTmpDrawing(drawing)
-    this.gameState.inFly.i = 0
+  override showTmpDrawing(drawing: DrawingInFly) {
+    this.gameState.inFly = { drawing, i: 0 }
   }
 
   onMousePressed(event: MouseEvent) {

@@ -2,10 +2,26 @@ import { Namespace, Socket } from "socket.io";
 import type { DrawingId, NewDrawing, PlayerId, ToolType } from "..";
 
 interface ClientToServerEvents {
-  "select tool": (toolType: ToolType) => void;
-  "use tool": (drawing: NewDrawing) => void;
-  "deselect tool": () => void;
-  "delete drawing": (id: DrawingId) => void;
+  // "select tool": (toolType: ToolType) => void;
+  "select tool": (
+    toolType: ToolType,
+    callback: (payload: { success: boolean }) => void,
+  ) => void;
+
+  // "use tool": (drawing: NewDrawing) => void;
+  "use tool": (
+    drawing: NewDrawing,
+    callback: (payload: { success: boolean }) => void,
+  ) => void;
+
+  // "deselect tool": () => void;
+  "deselect tool": (callback: (payload: { success: boolean }) => void) => void;
+
+  // "delete drawing": (id: DrawingId) => void;
+  "delete drawing": (
+    id: DrawingId,
+    callback: (payload: { success: boolean }) => void,
+  ) => void;
 }
 
 interface ServerToClientEvents {

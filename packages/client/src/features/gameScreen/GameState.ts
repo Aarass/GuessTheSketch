@@ -1,32 +1,28 @@
-import { Drawing, DrawingInFly } from "@guessthesketch/common"
+import { Drawing, DrawingInFly, NewDrawing } from "@guessthesketch/common"
 import { Tool } from "../../classes/tools/Tool"
 
-export class GameState {
-  currentTool: Tool | null
-  drawings: Drawing[]
-  inFly: {
-    drawing: DrawingInFly | null
-    i: number | null
-  }
+type InFly = {
+  drawing: DrawingInFly
+  i?: number | null | undefined
+}
 
-  private constructor() {
-    this.currentTool = null
-    this.drawings = []
-    this.inFly = {
-      drawing: null,
-      i: null,
-    }
-  }
+export class GameState {
+  currentTool: Tool | null = null
+  inFly: InFly | null = null
+  unconfirmedDrawings: NewDrawing[] = []
+  confirmedDrawings: Drawing[] = []
 
   reset() {
     this.currentTool?.deactivate()
-    this.currentTool = null
 
-    this.drawings = []
-    this.inFly = {
-      drawing: null,
-      i: null,
-    }
+    this.currentTool = null
+    this.inFly = null
+    this.unconfirmedDrawings = []
+    this.confirmedDrawings = []
+  }
+
+  getAllDrawings(): (Drawing | NewDrawing)[] {
+    return [...this.confirmedDrawings, ...this.unconfirmedDrawings]
   }
 
   private static instance: GameState | null = null

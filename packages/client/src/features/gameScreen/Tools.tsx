@@ -25,6 +25,7 @@ import { LineTool } from "../../classes/tools/concrete/Line"
 import { PipetteTool } from "../../classes/tools/concrete/Pipete"
 import { RectTool } from "../../classes/tools/concrete/Rect"
 import { sketch } from "./Canvas"
+import { Command } from "../../classes/commands/command"
 
 /**
  * myId and roomId must be set
@@ -160,8 +161,8 @@ export const SelectTool = () => {
       [new SelectToolCommand(LineTool, sketch), <TbLine />],
       [new SelectToolCommand(FloodFillTool, sketch), <LuPaintBucket />],
       [new SelectToolCommand(PipetteTool, sketch), <LuPipette />],
-      [new UndoCommand(sketch), <LuUndo2 />],
-      [new DeleteAllCommand(sketch), <LuTrash2 />],
+      [new UndoCommand(), <LuUndo2 />],
+      [new DeleteAllCommand(), <LuTrash2 />],
     ])
   }, [sketch])
 

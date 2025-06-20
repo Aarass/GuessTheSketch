@@ -22,15 +22,26 @@ export abstract class Tool {
   ) {}
 
   showTmpDrawing(drawing: DrawingInFly) {
-    this.gameState.inFly.drawing = drawing
+    this.gameState.inFly = { drawing }
   }
 
   // TODO
   // crtez odavnde treba da ode u neki niz privremenih crteza
   // gde ce cekati potvrdu ili zabranu od servera
-  commit(drawing: NewDrawing) {
+  async commit(drawing: NewDrawing) {
     // this.gameState.drawings.push(drawing)
-    sockets.controls?.emit("use tool", drawing)
+    if (sockets.controls) {
+      const { success } = await sockets.controls.emitWithAck(
+        "use tool",
+        drawing,
+      )
+
+      if (success) {
+        // TODO
+      } else {
+        // TODO
+      }
+    }
   }
 
   activate() {
@@ -56,8 +67,7 @@ export abstract class Tool {
       }
 
       inFlyTimeoutHandle = window.setTimeout(() => {
-        this.gameState.inFly.drawing = null
-        this.gameState.inFly.i = null
+        this.gameState.inFly = null
       }, 300)
     })
 

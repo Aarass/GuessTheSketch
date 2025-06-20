@@ -1,26 +1,27 @@
-import p5 from "p5"
 import { GameState } from "../../../features/gameScreen/GameState"
 import { sockets } from "../../../global"
 import { Command } from "../command"
 
 export class UndoCommand extends Command {
-  constructor(private sketch: p5) {
-    super()
-  }
-
-  execute(): void {
+  override async execute() {
     const gameState = GameState.getInstance()
 
-    const last = gameState.drawings.at(-1)
-    if (last === undefined) {
-      return
+    const drawingToDelete = gameState.confirmedDrawings.at(-1)
+    if (!drawingToDelete) return
+
+    // TODO opet mozda nesto optimistic
+
+    if (sockets.controls) {
+      const {} = await sockets.controls.emitWithAck(
+        "delete drawing",
+        drawingToDelete.id,
+      )
+    } else {
+      throw new Error("Controls namespace is null")
     }
-
-    //this.sketch.redraw()
-
-    sockets.controls?.emit("delete drawing", last.id)
   }
-  getName(): string {
+
+  override getName(): string {
     return "Undo"
   }
 }

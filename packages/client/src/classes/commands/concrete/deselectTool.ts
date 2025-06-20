@@ -2,19 +2,29 @@ import { GameState } from "../../../features/gameScreen/GameState"
 import { sockets } from "../../../global"
 import { Command } from "../command"
 
-export class DeselectTool extends Command {
-  execute(): void {
-    const gameState = GameState.getInstance()
-    const prev = gameState.currentTool
-    if (prev) {
-      prev.onDeselect()
-      sockets.controls?.emit("deselect tool")
-    }
+const gameState = GameState.getInstance()
 
-    gameState.currentTool = null
+export class DeselectTool extends Command {
+  override async execute() {
+    // TODO nesto optimistic mozda?
+    // da privremeno deselecta tool dok ne dobije odgovor
+    // a onda da i potvrdi
+
+    if (sockets.controls) {
+      const { success } = await sockets.controls.emitWithAck("deselect tool")
+
+      if (success) {
+        if (gameState.currentTool) {
+          gameState.currentTool.onDeselect()
+          gameState.currentTool = null
+        }
+      }
+    } else {
+      throw new Error("Controls namespace is null")
+    }
   }
 
-  getName(): string {
+  override getName(): string {
     return "Deselect"
   }
 }

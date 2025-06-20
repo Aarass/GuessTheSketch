@@ -6,51 +6,53 @@ import { backend, sockets } from "../../global"
 import { GameState } from "./GameState"
 import { initSketch } from "./sketch"
 
+// TODO
+// ne exportovati vec proslediti
 export let sketch: p5 | null = null
 
 /**
  * myId and roomId must be set
  */
 export function Canvas() {
+  const hasCreatedSketch = useRef<boolean>(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const state = GameState.getInstance()
 
   useEffect(() => {
-    if (sketch === null && canvasRef.current !== null) {
-      sketch = new p5(initSketch(canvasRef.current))
-    }
+    if (!canvasRef.current) return
 
+    if (!hasCreatedSketch.current) {
+      sketch = new p5(initSketch(canvasRef.current))
+
+      hasCreatedSketch.current = true
+    }
+  }, [canvasRef.current])
+
+  useEffect(() => {
     if (sockets.drawings === null) {
       console.log("connection to drawings")
       sockets.drawings = io(`ws://${backend}/drawings`)
     }
 
-    console.log("About to register for drawing")
     sockets.drawings.on("drawing", onDrawing)
 
     return () => {
-      sketch = null
-
-      console.log("About to unregister for drawing")
       sockets.drawings?.off("drawing", onDrawing)
     }
   }, [])
 
   const onDrawing = (drawing: Drawing) => {
-    console.log(drawing)
-    if (drawing.type == "eraser") {
-      const index = state.drawings.findLastIndex(el => {
+    if (drawing.type !== "eraser") {
+      state.confirmedDrawings.push(drawing)
+    } else {
+      const index = state.confirmedDrawings.findLastIndex(el => {
         return el.id === drawing.toDelete
       })
 
-      if (index === -1) {
-        console.log("Can't find drawing to delete with id: ", drawing.id)
-        return
-      }
+      if (index === -1)
+        throw `Can't find drawing to delete with id: ${drawing.id}`
 
-      state.drawings.splice(index, 1)
-    } else {
-      state.drawings.push(drawing)
+      state.confirmedDrawings.splice(index, 1)
     }
   }
 

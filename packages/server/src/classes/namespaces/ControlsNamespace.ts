@@ -22,7 +22,7 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
     socket.on("use tool", this.getOnUseToolHandler(socket));
     socket.on("delete drawing", this.getOnDeleteDrawingHandler(socket));
     socket.on("deselect tool", this.getOnDeselectToolHandler(socket));
-    socket.on("disconnect", this.getOnDeselectToolHandler(socket));
+    socket.on("disconnect", this.getOnDisconnectHandler(socket));
   }
 
   public notifyPlayerSelectedTool(
@@ -64,12 +64,16 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
   private getOnSelectToolHandler(
     socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
   ) {
-    return (toolType: ToolType) => {
+    return (
+      toolType: ToolType,
+      callback: (payload: { success: boolean }) => void,
+    ) => {
       runWithContextUpToRound(socket, (userId, room, _game, round) => {
         console.log(`User ${userId} about to select tool`);
 
-        const selectResult = round.toolsManager.selectTool(toolType, userId);
-        if (selectResult.isOk()) {
+        const result = round.toolsManager.selectTool(toolType, userId);
+        callback({ success: result.isOk() });
+        if (result.isOk()) {
           this.notifyPlayerSelectedTool(room, userId, toolType);
         }
       });
@@ -79,7 +83,10 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
   private getOnUseToolHandler(
     socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
   ) {
-    return (drawing: UnvalidatedNewDrawing) => {
+    return (
+      drawing: UnvalidatedNewDrawing,
+      callback: (payload: { success: boolean }) => void,
+    ) => {
       runWithContextUpToRound(socket, (userId, room, _game, round) => {
         console.log(`User ${userId} about to use tool`);
 
@@ -94,6 +101,9 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
           userId,
           drawing as UnvalidatedNewDrawingWithType,
         );
+
+        callback({ success: result.isOk() });
+
         if (result.isOk()) {
           const [tool, drawing] = result.value;
 
@@ -110,7 +120,10 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
   private getOnDeleteDrawingHandler(
     socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
   ) {
-    return (id: DrawingId) => {
+    return (
+      id: DrawingId,
+      callback: (payload: { success: boolean }) => void,
+    ) => {
       runWithContextUpToRound(socket, (userId, room, _game, round) => {
         const result = round.toolsManager.useCommand(userId, {
           id: "" as DrawingId,
@@ -118,6 +131,7 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
           toDelete: id,
         });
 
+        callback({ success: result.isOk() });
         if (result.isOk()) {
           this.messagingCenter.notifyNewDrawing(room.id, result.value);
         }
@@ -128,10 +142,27 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
   private getOnDeselectToolHandler(
     socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
   ) {
-    return () => {
+    return (callback: (payload: { success: boolean }) => void) => {
       runWithContextUpToRound(socket, (userId, room, _game, round) => {
         console.log(`User ${userId} about to deselect tool`);
 
+        const result = round.toolsManager.deselectTool(userId);
+
+        callback({ success: result.isOk() });
+        if (result.isOk()) {
+          const tool = result.value;
+
+          this.notifyPlayerDeselectedTool(room, userId, tool.toolType);
+        }
+      });
+    };
+  }
+
+  private getOnDisconnectHandler(
+    socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
+  ) {
+    return () => {
+      runWithContextUpToRound(socket, (userId, room, _game, round) => {
         const result = round.toolsManager.deselectTool(userId);
 
         if (result.isOk()) {
