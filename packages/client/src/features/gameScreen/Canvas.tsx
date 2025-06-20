@@ -43,16 +43,12 @@ export function Canvas() {
 
   const onDrawing = (drawing: Drawing) => {
     if (drawing.type !== "eraser") {
+      console.log(drawing)
       state.confirmedDrawings.push(drawing)
     } else {
-      const index = state.confirmedDrawings.findLastIndex(el => {
-        return el.id === drawing.toDelete
-      })
-
-      if (index === -1)
-        throw `Can't find drawing to delete with id: ${drawing.id}`
-
-      state.confirmedDrawings.splice(index, 1)
+      state.confirmedDrawings = state.confirmedDrawings.filter(
+        d => d.id !== drawing.toDelete,
+      )
     }
   }
 

@@ -22,26 +22,19 @@ export abstract class Tool {
   ) {}
 
   showTmpDrawing(drawing: DrawingInFly) {
-    this.gameState.inFly = { drawing }
+    this.gameState.drawingInFly = drawing
   }
 
-  // TODO
-  // crtez odavnde treba da ode u neki niz privremenih crteza
-  // gde ce cekati potvrdu ili zabranu od servera
   async commit(drawing: NewDrawing) {
-    // this.gameState.drawings.push(drawing)
-    if (sockets.controls) {
-      const { success } = await sockets.controls.emitWithAck(
-        "use tool",
-        drawing,
-      )
-
-      if (success) {
-        // TODO
-      } else {
-        // TODO
-      }
+    if (!sockets.controls) {
+      throw new Error(`Controls socket is not connected`)
     }
+
+    console.log("dodajem")
+    this.gameState.unconfirmedDrawings.add(drawing)
+    await sockets.controls.emitWithAck("use tool", drawing)
+    console.log("removeam")
+    this.gameState.unconfirmedDrawings.remove(drawing)
   }
 
   activate() {
@@ -66,9 +59,10 @@ export abstract class Tool {
         this.onMouseReleased(e)
       }
 
+      // Ovo resava flickering
       inFlyTimeoutHandle = window.setTimeout(() => {
-        this.gameState.inFly = null
-      }, 300)
+        this.gameState.drawingInFly = null
+      }, 100)
     })
 
     this.sketch.mouseClicked = () => {}

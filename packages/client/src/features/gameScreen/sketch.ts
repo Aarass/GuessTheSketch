@@ -1,17 +1,13 @@
-import p5 from "p5"
-import { GameState } from "./GameState"
 import {
   Drawing,
   DrawingInFly,
+  FloodFill,
   NewDrawing,
   Point,
 } from "@guessthesketch/common"
+import p5 from "p5"
 import { colorsAreEqual, HexStringToRGB } from "../../utils/colors"
-
-type Framebuffer = p5.Framebuffer & {
-  loadPixels(): void
-  updatePixels(): void
-}
+import { GameState } from "./GameState"
 
 const bg = 0 // TODO
 const gameState = GameState.getInstance()
@@ -41,13 +37,10 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
       }) as any as Framebuffer
     }
 
-    function applyTransform() {
-      sketch.translate(-sketch.width / 2, -sketch.height / 2)
-    }
-
     sketch.draw = () => {
       const drawings = gameState.getAllDrawings()
 
+      // TODO
       const undoHappened = nextStart > drawings.length
       if (undoHappened) {
         nextStart = -1
@@ -57,7 +50,6 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
 
       if (needsRedraw) {
         commitBuffer.draw(() => {
-          sketch.push()
           applyTransform()
 
           if (nextStart <= 0) {
@@ -67,42 +59,28 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
           for (let i = Math.max(nextStart, 0); i < drawings.length; i++) {
             draw(drawings[i])
           }
-
-          sketch.pop()
         })
 
         nextStart = drawings.length
+      }
+
+      for (const d of gameState.unconfirmedDrawings.getAll()) {
+        draw(d)
       }
 
       applyTransform()
       sketch.background(bg)
       sketch.image(commitBuffer, 0, 0)
 
-      if (gameState.inFly) {
-        draw(gameState.inFly.drawing)
+      if (gameState.drawingInFly) {
+        draw(gameState.drawingInFly)
       }
 
-      // if (gameState.inFly) {
-      //   const drawing = gameState.inFly.drawing
-      //
-      //   if (mustRedrawTypes.includes(drawing.type)) {
-      //     sketch.background(bg)
-      //     sketch.image(commitBuffer, 0, 0)
-      //   }
-      //
-      //   draw(
-      //     gameState.inFly.drawing,
-      //     sketch,
-      //     null as any as Framebuffer /* Safety measures*/,
-      //   )
-      // } else {
-      //   if (needsRedraw) {
-      //     sketch.background(bg)
-      //     sketch.image(commitBuffer, 0, 0)
-      //   }
-      // }
+      // showFramerate()
+    }
 
-      showFramerate()
+    function applyTransform() {
+      sketch.translate(-sketch.width / 2, -sketch.height / 2)
     }
 
     const pg = sketch.createGraphics(256, 256)
@@ -129,19 +107,27 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
           sketch.stroke(drawing.color)
           sketch.strokeWeight(drawing.size)
 
-          if (drawing.points.length == 1) {
+          if (drawing.points.length === 1) {
             sketch.point(drawing.points[0].x, drawing.points[0].y)
             return
           }
 
+          // Either works
+          // -------------------------------------------------
           sketch.noFill()
-          // sketch.beginShape(0x0001)
           sketch.beginShape()
-          for (let i = 0; i < drawing.points.length - 1; i++) {
+          for (let i = 0; i < drawing.points.length; i++) {
             sketch.vertex(drawing.points[i].x, drawing.points[i].y)
-            sketch.vertex(drawing.points[i + 1].x, drawing.points[i + 1].y)
           }
           sketch.endShape()
+          // -------------------------------------------------
+          // sketch.beginShape(0x0001)
+          // for (let i = 0; i < drawing.points.length - 1; i++) {
+          //   sketch.vertex(drawing.points[i].x, drawing.points[i].y)
+          //   sketch.vertex(drawing.points[i + 1].x, drawing.points[i + 1].y)
+          // }
+          // sketch.endShape()
+          // -------------------------------------------------
 
           break
         case "line":
@@ -170,17 +156,7 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
           )
           break
         case "flood":
-          let id
-
-          if ((drawing as Drawing).id) {
-            id = (drawing as Drawing).id
-          } else if ((drawing as NewDrawing).tempId) {
-            id = (drawing as NewDrawing).tempId
-          } else {
-            throw `floodFill can't be infly drawing`
-          }
-
-          const cachedDrawing = ffc.get(id)
+          const cachedDrawing = ffc.get(getId(drawing))
 
           if (cachedDrawing) {
             sketch.image(cachedDrawing, 0, 0)
@@ -210,11 +186,9 @@ const ffc = new Map<string, p5.Image>()
 
 async function floodFill(
   sketch: p5,
-  drawing: Drawing | NewDrawing | DrawingInFly,
+  drawing: FloodFill | Omit<FloodFill, "id">,
   pixels: number[],
 ) {
-  if (drawing.type !== "flood") throw ``
-
   const cache = sketch.createImage(sketch.width, sketch.height)
   cache.loadPixels()
 
@@ -281,19 +255,19 @@ async function floodFill(
   }
 
   cache.updatePixels()
-  const id = (drawing as any).id
-  // TODO
-  // TODO
-  // TODO
-  // TODO
-  // TODO
-  // TODO
-  // TODO
-  // TODO
-  // TODO
-  // TODO
-  // TODO
-  ffc.set(id ?? "", cache)
+  ffc.set(getId(drawing as any), cache)
+}
+
+function getId(drawing: FloodFill | Omit<FloodFill, "id">) {
+  let id
+
+  if ((drawing as Drawing).id) {
+    id = (drawing as Drawing).id
+  } else {
+    id = `${drawing.p.x}${drawing.p}`
+  }
+
+  return id
 }
 
 function pointIsOfColor(
@@ -363,4 +337,9 @@ function setColor(
       pixels[index + 3] = 255
     }
   }
+}
+
+type Framebuffer = p5.Framebuffer & {
+  loadPixels(): void
+  updatePixels(): void
 }

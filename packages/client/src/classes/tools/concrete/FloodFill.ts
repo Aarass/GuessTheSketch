@@ -9,7 +9,6 @@ export class FloodFillTool extends Tool {
     let drawing: NewDrawing
     if (this.gameState.getAllDrawings().length == 0) {
       drawing = {
-        tempId: Date.now().toString(),
         ...DrawingAutoFillIn(),
         type: "rect",
         topLeft: {
@@ -21,7 +20,6 @@ export class FloodFillTool extends Tool {
       }
     } else {
       drawing = {
-        tempId: Date.now().toString(),
         ...DrawingAutoFillIn(),
         type: "flood",
         p: {
@@ -32,8 +30,6 @@ export class FloodFillTool extends Tool {
     }
 
     this.commit(drawing)
-
-    //this.sketch.redraw()
   }
 
   onMousePressed(event: MouseEvent): void {}

@@ -1,9 +1,11 @@
 import type {
   Drawing,
+  DrawingId,
   ToolType,
   UnvalidatedNewDrawingWithType,
 } from "@guessthesketch/common";
 import { ok, type Result } from "neverthrow";
+import { v4 as uuid } from "uuid";
 import type { ToolsManager } from "../ToolsManager";
 
 export abstract class Tool {
@@ -23,7 +25,10 @@ export abstract class Tool {
     const toolState = this.manager.getToolState(this.toolType);
     toolState.timesUsed++;
 
-    return ok(this.getDrawing(drawing));
+    return ok({
+      ...this.getDrawing(drawing),
+      id: uuid() as DrawingId,
+    });
   }
 
   checkIfEnoughResources(): boolean {

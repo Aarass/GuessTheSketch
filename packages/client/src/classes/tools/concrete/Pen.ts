@@ -14,7 +14,7 @@ export class PenTool extends Tool {
   points: Point[] = []
 
   override showTmpDrawing(drawing: DrawingInFly) {
-    this.gameState.inFly = { drawing, i: 0 }
+    this.gameState.drawingInFly = drawing
   }
 
   onMousePressed(event: MouseEvent) {
@@ -25,7 +25,7 @@ export class PenTool extends Tool {
       },
     ]
 
-    const tmp: Drawing = {
+    const tmp: DrawingInFly = {
       ...DrawingAutoFillIn(),
       type: "freeline",
       points: this.points,
@@ -48,15 +48,12 @@ export class PenTool extends Tool {
 
   onMouseReleased(event: MouseEvent): void {
     const drawing: NewDrawing = {
-      tempId: Date.now().toString(),
       ...DrawingAutoFillIn(),
       type: "freeline",
       points: [...this.points],
     }
 
     this.commit(drawing)
-
-    //this.sketch.redraw()
   }
 
   onDeselect(): void {}

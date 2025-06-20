@@ -6,18 +6,23 @@ export class UndoCommand extends Command {
   override async execute() {
     const gameState = GameState.getInstance()
 
-    const drawingToDelete = gameState.confirmedDrawings.at(-1)
-    if (!drawingToDelete) return
+    const work = async () => {
+      const drawingToDelete = gameState.confirmedDrawings.at(-1)
+      if (!drawingToDelete) return
 
-    // TODO opet mozda nesto optimistic
+      // TODO opet mozda nesto optimistic
 
-    if (sockets.controls) {
-      const {} = await sockets.controls.emitWithAck(
-        "delete drawing",
-        drawingToDelete.id,
-      )
+      if (sockets.controls) {
+        await sockets.controls.emitWithAck("delete drawing", drawingToDelete.id)
+      } else {
+        throw new Error("Controls namespace is null")
+      }
+    }
+
+    if (gameState.unconfirmedDrawings.getAll().length === 0) {
+      work()
     } else {
-      throw new Error("Controls namespace is null")
+      gameState.unconfirmedDrawings.onEmptyOnce(work)
     }
   }
 

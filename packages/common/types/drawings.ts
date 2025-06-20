@@ -93,11 +93,11 @@ type _DrawingInFly<L extends DrawingList> = {
 }[number];
 
 type _NewDrawing<L extends DrawingList> = {
-  [I in keyof L]: Omit<L[I], "id"> & { tempId: string };
+  [I in keyof L]: Omit<L[I], "id">;
 }[number];
 
 type _UnvalidatedNewDrawing<L extends DrawingList> = {
-  [I in keyof L]: Partial<Omit<L[I], "id"> & { tempId: string }>;
+  [I in keyof L]: Partial<Omit<L[I], "id">>;
 }[number];
 
 type _UnvalidatedNewDrawingWithType<L extends DrawingList> = {

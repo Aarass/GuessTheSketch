@@ -1,4 +1,10 @@
-import { ToolType, Point, Drawing, NewDrawing } from "@guessthesketch/common"
+import {
+  ToolType,
+  Point,
+  Drawing,
+  NewDrawing,
+  DrawingInFly,
+} from "@guessthesketch/common"
 import { DrawingAutoFillIn } from "../../../utils/autoFillin"
 import { Tool } from "../Tool"
 
@@ -18,7 +24,7 @@ export class RectTool extends Tool {
   }
 
   onMouseDragged(_: MouseEvent): void {
-    const tmp: Drawing = {
+    const tmp: DrawingInFly = {
       ...DrawingAutoFillIn(),
       type: "rect",
       topLeft: {
@@ -30,13 +36,10 @@ export class RectTool extends Tool {
     }
 
     this.showTmpDrawing(tmp)
-
-    //this.sketch.redraw()
   }
 
   onMouseReleased(_: MouseEvent): void {
     const drawing: NewDrawing = {
-      tempId: Date.now().toString(),
       ...DrawingAutoFillIn(),
       type: "rect",
       topLeft: {
@@ -48,8 +51,6 @@ export class RectTool extends Tool {
     }
 
     this.commit(drawing)
-
-    //this.sketch.redraw()
   }
 
   onDeselect(): void {}
