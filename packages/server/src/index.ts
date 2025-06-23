@@ -1,6 +1,7 @@
 import { App } from "./classes/App";
 import { AppContext } from "./classes/AppContext";
 import { AuthController } from "./classes/controllers/AuthController";
+import { ReplayController } from "./classes/controllers/ReplayController";
 import { RoomsController } from "./classes/controllers/RoomsController";
 import { WordsController } from "./classes/controllers/WordsController";
 import { AuthService } from "./classes/services/AuthService";
@@ -30,6 +31,7 @@ const controllers = [
   new AuthController(),
   new RoomsController(),
   new WordsController(),
+  new ReplayController(),
 ];
 
 const ctx = new AppContext(

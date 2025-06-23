@@ -4,6 +4,7 @@ export const client = createClient({ url: "redis://localhost:6380" });
 
 export async function connect() {
   try {
+    if (client.isOpen) return;
     await client.connect();
     console.log("Redis connected...");
   } catch (error) {

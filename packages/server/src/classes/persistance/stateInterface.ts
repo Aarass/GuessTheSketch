@@ -1,4 +1,9 @@
-import type { RoomId, Drawing } from "@guessthesketch/common";
+import type {
+  Drawing,
+  GetRoundReplayDto,
+  RoomId,
+  RoundReplay,
+} from "@guessthesketch/common";
 import type { GameId, RoundId } from "@guessthesketch/common/types/ids";
 
 export interface PersistanceServiceState {
@@ -8,10 +13,5 @@ export interface PersistanceServiceState {
     round: RoundId,
     drawing: Drawing,
   ): void;
-  getGameReplay(roomId: string, gameId: string): Promise<any>;
-  getRoundReplay(
-    roomId: string,
-    gameId: string,
-    roundId: string,
-  ): Promise<Drawing[]>;
+  getRoundReplay(dto: GetRoundReplayDto): Promise<RoundReplay>;
 }

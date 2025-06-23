@@ -1,9 +1,15 @@
 import { createSelector, type PayloadAction } from "@reduxjs/toolkit"
-import type { ProcessedGameConfig, TeamId } from "@guessthesketch/common"
+import type {
+  ProcessedGameConfig,
+  RoundReplay,
+  TeamId,
+} from "@guessthesketch/common"
 import { createAppSlice } from "../../app/createAppSlice"
 import { logout, selectMyId } from "../auth/AuthSlice"
 import { sockets } from "../../global"
 import { ConnectionManager } from "../../classes/ConnectionManager"
+import { refresh as restoreDrawingsRequest } from "./replayApi"
+import { GameState } from "./GameState"
 
 export interface GameScreenState {
   config: ProcessedGameConfig | undefined
@@ -39,13 +45,18 @@ export const gameScreenSlice = createAppSlice({
     setSize: create.reducer((state, action: PayloadAction<number>) => {
       state.size = action.payload
     }),
+
     tryRestore: create.asyncThunk(
-      async () => {
+      async (_, { dispatch }) => {
         ConnectionManager.getInstance().ensureGlobalIsConnected()
 
         const { config, teamOnMove } = await sockets
           .global!.timeout(1000)
           .emitWithAck("restore")
+
+        if (teamOnMove) {
+          dispatch(restoreDrawings())
+        }
 
         return [config, teamOnMove] as const
       },
@@ -57,6 +68,25 @@ export const gameScreenSlice = createAppSlice({
           state.teamOnMove = teamOnMove
 
           console.log("**** Ovo je trenutak kad imam sve sto je potrebno")
+        },
+      },
+    ),
+    restoreDrawings: create.asyncThunk(
+      async () => {
+        console.log("About to send replay request")
+        const res = await restoreDrawingsRequest()
+        const replay = (await res.json()) as RoundReplay
+
+        console.log(replay)
+
+        return replay
+      },
+      {
+        fulfilled: (state, action) => {
+          const replay = action.payload
+
+          const s = GameState.getInstance()
+          s.confirmedDrawings = [...replay, ...s.confirmedDrawings]
         },
       },
     ),
@@ -75,8 +105,14 @@ export const gameScreenSlice = createAppSlice({
   },
 })
 
-export const { setColor, setSize, setTeamOnMove, setConfig, tryRestore } =
-  gameScreenSlice.actions
+export const {
+  setColor,
+  setSize,
+  setTeamOnMove,
+  setConfig,
+  tryRestore,
+  restoreDrawings,
+} = gameScreenSlice.actions
 export const { selectColor, selectSize, selectConfig, selectTeamOnMove } =
   gameScreenSlice.selectors
 

@@ -7,42 +7,63 @@ export class ReplayController extends Controller {
   constructor() {
     super();
 
-    this.router.get(
-      "/replay/:roomId/:gameId",
-      authenticate,
-      this.gameReplayHandler,
-    );
-
-    this.router.get(
-      "/replay/:roomId/:gameId/:roundId",
-      authenticate,
-      this.roundReplayHandler,
-    );
+    this.router.get("/replay/refresh", authenticate, this.refreshHandler);
   }
 
-  private gameReplayHandler: RequestHandler = async (req, res) => {
-    const roomId = req.params["roomId"];
-    const gameId = req.params["gameId"];
+  private refreshHandler: RequestHandler = async (req, res) => {
+    const roomId = req.session.roomId;
 
-    const replay = await this.ctx.persistanceService.getGameReplay(
-      roomId,
-      gameId,
-    );
+    if (!roomId) {
+      res.sendStatus(400);
+      return;
+    }
 
-    res.send(replay);
-  };
+    const room = GlobalState.getInstance().getRoomById(roomId);
 
-  private roundReplayHandler: RequestHandler = async (req, res) => {
-    const roomId = req.params["roomId"];
-    const gameId = req.params["gameId"];
-    const roundId = req.params["roundId"];
+    if (!room) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const game = room.currentGame;
+    if (!game) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const round = game.currentRound;
+
+    if (!round) {
+      res.sendStatus(400);
+      return;
+    }
 
     const replay = await this.ctx.persistanceService.getRoundReplay(
-      roomId,
-      gameId,
-      roundId,
+      room.id,
+      game.id,
+      round.id,
     );
 
     res.send(replay);
   };
 }
+
+// this.router.get(
+//   "/replay/:roomId/:gameId/:roundId",
+//   authenticate,
+//   this.roundReplayHandler,
+// );
+
+// private roundReplayHandler: RequestHandler = async (req, res) => {
+//   const roomId = req.params["roomId"];
+//   const gameId = req.params["gameId"];
+//   const roundId = req.params["roundId"];
+//
+//   const replay = await this.ctx.persistanceService.getRoundReplay(
+//     roomId as RoomId,
+//     gameId as GameId,
+//     roundId as RoundId,
+//   );
+//
+//   res.send(replay);
+// };

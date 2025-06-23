@@ -1,4 +1,8 @@
-import type { RoomId, Drawing } from "@guessthesketch/common";
+import type {
+  RoomId,
+  Drawing,
+  GetRoundReplayDto,
+} from "@guessthesketch/common";
 import { getChannel } from "../../drivers/rabbit";
 import { ConnectedState } from "../persistance/connectedState";
 import { NotConnectedState } from "../persistance/notConnectedState";
@@ -19,12 +23,7 @@ export class PersistanceService {
     const result = await getChannel();
 
     if (result.isOk()) {
-      const channel = result.value;
-
-      const newState = new ConnectedState(channel);
-      await newState.init();
-
-      this.state = newState;
+      this.state = await ConnectedState.create(result.value);
     }
   }
 
@@ -37,10 +36,12 @@ export class PersistanceService {
     this.state.notifyNewDrawing(room, game, round, drawing);
   }
 
-  public getGameReplay(roomId: string, gameId: string) {
-    return this.state.getGameReplay(roomId, gameId);
-  }
-  public getRoundReplay(roomId: string, gameId: string, roundId: string) {
-    return this.state.getRoundReplay(roomId, gameId, roundId);
+  public getRoundReplay(roomId: RoomId, gameId: GameId, roundId: RoundId) {
+    const dto: GetRoundReplayDto = {
+      roomId,
+      gameId,
+      roundId,
+    };
+    return this.state.getRoundReplay(dto);
   }
 }

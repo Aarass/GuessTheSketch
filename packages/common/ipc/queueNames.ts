@@ -1,2 +1,3 @@
 export const drawingsQueueName = "drawings";
-export const replayQueueName = "replay";
+export const roundReplayQueueName = "rreplay";
+export const gameReplayQueueName = "greplay";

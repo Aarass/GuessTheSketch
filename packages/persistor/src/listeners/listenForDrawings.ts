@@ -1,6 +1,6 @@
 import { drawingsQueueName, type QueuedDrawing } from "@guessthesketch/common";
 import amqp from "amqplib";
-import { repository, type Entry } from "../repositories/drawingRepository";
+import { repository, type Entry } from "../repositories/DrawingRepository";
 
 export async function listenForDrawings(channel: amqp.Channel) {
   await channel.assertQueue(drawingsQueueName);

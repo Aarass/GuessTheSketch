@@ -1,4 +1,9 @@
-import type { RoomId, Drawing } from "@guessthesketch/common";
+import type {
+  RoomId,
+  Drawing,
+  GetRoundReplayDto,
+  RoundReplay,
+} from "@guessthesketch/common";
 import type { PersistanceServiceState } from "./stateInterface";
 import type { GameId, RoundId } from "@guessthesketch/common/types/ids";
 
@@ -10,15 +15,7 @@ export class NotConnectedState implements PersistanceServiceState {
     _drawing: Drawing,
   ) {}
 
-  public getGameReplay(_roomId: string, _gameId: string): Promise<any> {
-    return Promise.resolve({});
-  }
-
-  public getRoundReplay(
-    _roomId: string,
-    _gameId: string,
-    _roundId: string,
-  ): Promise<Drawing[]> {
+  getRoundReplay(_dto: GetRoundReplayDto): Promise<RoundReplay> {
     return Promise.resolve([]);
   }
 }
