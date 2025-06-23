@@ -10,6 +10,3 @@ export function DrawingAutoFillIn() {
     size,
   }
 }
-
-// TODO zameniti za nesto sto ce teze kreirati konflikte - neki uuid ili tako nesto
-// id: Date.now().toString() as DrawingId,

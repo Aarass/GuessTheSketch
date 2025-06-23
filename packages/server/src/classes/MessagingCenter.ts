@@ -12,25 +12,18 @@ import { ChatNamespace } from "./namespaces/ChatNamespace";
 import { ControlsNamespace } from "./namespaces/ControlsNamespace";
 import { DrawingsNamespace } from "./namespaces/DrawingNamespace";
 import { GlobalNamespace } from "./namespaces/GlobalNamespace";
-
-// TODO
-
-// import amqp from "amqplib";
-// import { drawingsQueueName } from "@guessthesketch/common";
-
-// const url = process.env.AMQPURL ?? "amqp://localhost";
-//
-// const connection = await amqp.connect(url);
-// const channel = await connection.createChannel();
-// const { queue: drawingsQueue } = await channel.assertQueue(drawingsQueueName);
+import type { PersistanceService } from "./services/PersitanceService";
+import type { GameId, RoundId } from "@guessthesketch/common/types/ids";
 
 // ----------------
 // --- Mediator ---
 // ----------------
 export class MessagingCenter {
   private namespaces;
+  private persistanceService: PersistanceService;
 
   constructor(server: SocketIOServer, ctx: AppContext) {
+    this.persistanceService = ctx.persistanceService;
     this.namespaces = {
       global: new GlobalNamespace("", server, this, ctx),
       drawings: new DrawingsNamespace("drawings", server, this, ctx),
@@ -39,7 +32,7 @@ export class MessagingCenter {
     };
   }
 
-  notifyPlayerGuessedCorrectly() {
+  public notifyPlayerGuessedCorrectly() {
     //TODO
     console.log("Method not implemented.");
   }
@@ -64,7 +57,13 @@ export class MessagingCenter {
     this.namespaces.chat.notifyRoundEnded(room);
   }
 
-  public notifyNewDrawing(room: RoomId, drawing: Drawing) {
+  public notifyNewDrawing(
+    room: RoomId,
+    game: GameId,
+    round: RoundId,
+    drawing: Drawing,
+  ) {
     this.namespaces.drawings.notifyNewDrawing(room, drawing);
+    this.persistanceService.notifyNewDrawing(room, game, round, drawing);
   }
 }

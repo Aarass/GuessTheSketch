@@ -87,7 +87,7 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
       drawing: UnvalidatedNewDrawing,
       callback: (payload: { success: boolean }) => void,
     ) => {
-      runWithContextUpToRound(socket, (userId, room, _game, round) => {
+      runWithContextUpToRound(socket, (userId, room, game, round) => {
         console.log(`User ${userId} about to use tool`);
 
         if (!drawing.type) {
@@ -106,10 +106,12 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
           const [tool, drawing] = result.value;
 
           this.notifyPlayerUsedTool(room, userId, tool.toolType);
-          this.messagingCenter.notifyNewDrawing(room.id, drawing);
-
-          // TODO
-          // channel.sendToQueue(drawingsQueue, Buffer.from("asd"));
+          this.messagingCenter.notifyNewDrawing(
+            room.id,
+            game.id,
+            round.id,
+            drawing,
+          );
         }
       });
     };
@@ -122,7 +124,7 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
       id: DrawingId,
       callback: (payload: { success: boolean }) => void,
     ) => {
-      runWithContextUpToRound(socket, (userId, room, _game, round) => {
+      runWithContextUpToRound(socket, (userId, room, game, round) => {
         const result = round.toolsManager.useCommand(userId, {
           id: "" as DrawingId,
           type: "eraser",
@@ -131,7 +133,12 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
 
         callback({ success: result.isOk() });
         if (result.isOk()) {
-          this.messagingCenter.notifyNewDrawing(room.id, result.value);
+          this.messagingCenter.notifyNewDrawing(
+            room.id,
+            game.id,
+            round.id,
+            result.value,
+          );
         }
       });
     };

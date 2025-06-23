@@ -17,6 +17,7 @@ export * from "./types/drawings";
 export * from "./types/user";
 
 export * from "./ipc/queueNames";
+export * from "./ipc/types";
 
 export type Timestamp = number;
 export type DeltaScore = number;

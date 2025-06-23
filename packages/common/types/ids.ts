@@ -1,12 +1,16 @@
 import { z } from "zod";
 
 export const PlayerIdSchema = z.string().brand<"PlayerId">();
-export type PlayerId = z.infer<typeof PlayerIdSchema>; //
+export type PlayerId = z.infer<typeof PlayerIdSchema>;
 
 export const TeamIdSchema = z.string().brand<"TeamId">();
-export type TeamId = z.infer<typeof TeamIdSchema>; //
+export type TeamId = z.infer<typeof TeamIdSchema>;
 
-export type RoomId = string;
-// type Brand<T, B> = T & { __brand: B };
-// export type TeamId = Brand<string, "TeamId">;
-// export type PlayerId = Brand<string, "PlayerId">;
+export const RoomIdSchema = z.string().brand<"RoomId">();
+export type RoomId = z.infer<typeof RoomIdSchema>;
+
+export const GameIdSchema = z.string().brand<"GameId">();
+export type GameId = z.infer<typeof GameIdSchema>;
+
+export const RoundIdSchema = z.string().brand<"RoundId">();
+export type RoundId = z.infer<typeof RoundIdSchema>;

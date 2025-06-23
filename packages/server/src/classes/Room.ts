@@ -1,4 +1,9 @@
-import type { GameConfig, Player, PlayerId } from "@guessthesketch/common";
+import type {
+  GameConfig,
+  Player,
+  PlayerId,
+  RoomId,
+} from "@guessthesketch/common";
 import { v4 as uuid } from "uuid";
 import { Game } from "./Game";
 import type { MessagingCenter } from "./MessagingCenter";
@@ -6,6 +11,8 @@ import type { AppContext } from "./AppContext";
 import { err, ok, type Result } from "neverthrow";
 
 export class Room {
+  public id: RoomId = uuid() as RoomId;
+
   private _currentGame: Game | null = null;
   public get currentGame() {
     return this._currentGame;
@@ -16,7 +23,6 @@ export class Room {
   constructor(
     private ctx: AppContext,
     public ownerId: PlayerId,
-    public id: string = uuid(),
   ) {}
 
   public startGame(

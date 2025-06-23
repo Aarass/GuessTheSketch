@@ -54,7 +54,7 @@ export class ChatNamespace extends NamespaceClass<ChatNamespaceType> {
     // this.namespace.to(room).emit("start game", config);
   }
 
-  public notifyGameEnded(room: string, teamIds: TeamId[]) {
+  public notifyGameEnded(room: RoomId, teamIds: TeamId[]) {
     this.clearTeamRooms(room, teamIds);
   }
 

@@ -13,8 +13,11 @@ import { Round } from "./Round";
 import type { AppContext } from "./AppContext";
 import { RoundFactory } from "./RoundFactory";
 import { err, ok, type Result } from "neverthrow";
+import type { GameId } from "@guessthesketch/common/types/ids";
 
 export class Game {
+  public id: GameId = uuid() as GameId;
+
   public active: boolean = false;
 
   private teams: Team[];

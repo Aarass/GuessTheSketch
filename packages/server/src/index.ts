@@ -4,6 +4,7 @@ import { AuthController } from "./classes/controllers/AuthController";
 import { RoomsController } from "./classes/controllers/RoomsController";
 import { WordsController } from "./classes/controllers/WordsController";
 import { AuthService } from "./classes/services/AuthService";
+import { PersistanceService } from "./classes/services/PersitanceService";
 import { UserService } from "./classes/services/UserService";
 import { WordService } from "./classes/services/WordService";
 import { ToolRegistry } from "./classes/ToolRegistry";
@@ -23,6 +24,7 @@ const wordRepository = createMockWordRepository();
 const authService = new AuthService(userRepository);
 const userService = new UserService(userRepository);
 const wordService = new WordService(wordRepository);
+const persistanceService = new PersistanceService();
 
 const controllers = [
   new AuthController(),
@@ -30,7 +32,12 @@ const controllers = [
   new WordsController(),
 ];
 
-const ctx = new AppContext(authService, userService, wordService);
+const ctx = new AppContext(
+  authService,
+  userService,
+  wordService,
+  persistanceService,
+);
 const app = new App(ctx, controllers);
 
 app.run();

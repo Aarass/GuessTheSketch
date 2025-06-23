@@ -1,7 +1,7 @@
 import { GlobalState } from "../states/GlobalState";
 import { authenticate } from "../../middlewares/express/authenticate";
 import { Room } from "../Room";
-import type { JoinRoomResult } from "@guessthesketch/common";
+import type { JoinRoomResult, RoomId } from "@guessthesketch/common";
 import { Controller } from "./Controller";
 import type { RequestHandler } from "express";
 
@@ -26,7 +26,7 @@ export class RoomsController extends Controller {
   // eslint-disable-next-line @typescript-eslint/require-await
   private joinRoomHandler: RequestHandler = async (req, res) => {
     const roomId = req.params["id"];
-    const room = GlobalState.getInstance().getRoomById(roomId);
+    const room = GlobalState.getInstance().getRoomById(roomId as RoomId);
 
     if (room) {
       const result: JoinRoomResult = {
@@ -34,7 +34,7 @@ export class RoomsController extends Controller {
         ownerId: room.ownerId,
       };
 
-      req.session.roomId = roomId;
+      req.session.roomId = roomId as RoomId;
       res.send(result);
 
       console.log("User joined room via http");
