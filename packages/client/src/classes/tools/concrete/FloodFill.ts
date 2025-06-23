@@ -6,27 +6,13 @@ export class FloodFillTool extends Tool {
   public type: ToolType = "pen"
 
   onMouseReleased(event: MouseEvent): void {
-    let drawing: NewDrawing
-    if (this.gameState.getAllDrawings().length == 0) {
-      drawing = {
-        ...DrawingAutoFillIn(),
-        type: "rect",
-        topLeft: {
-          x: 0,
-          y: 0,
-        },
-        w: this.sketch.width,
-        h: this.sketch.height,
-      }
-    } else {
-      drawing = {
-        ...DrawingAutoFillIn(),
-        type: "flood",
-        p: {
-          x: this.sketch.mouseX,
-          y: this.sketch.mouseY,
-        },
-      }
+    let drawing: NewDrawing = {
+      ...DrawingAutoFillIn(),
+      type: "flood",
+      p: {
+        x: this.sketch.mouseX,
+        y: this.sketch.mouseY,
+      },
     }
 
     this.commit(drawing)
