@@ -3,7 +3,6 @@ import {
   DrawingInFly,
   FloodFill,
   NewDrawing,
-  Point,
 } from "@guessthesketch/common"
 import p5 from "p5"
 import { colorsAreEqual, HexStringToRGB } from "../../utils/colors"
@@ -38,14 +37,31 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
     }
 
     sketch.draw = () => {
-      const drawings = gameState.getAllDrawings()
+      applyTransform()
+      sketch.background(bg)
 
-      // TODO
-      const undoHappened = nextStart > drawings.length
-      if (undoHappened) {
+      prepareConfirmed()
+      drawConfirmed()
+      drawUnconfirmed()
+      drawInFly()
+
+      if (false) {
+        drawFramerate()
+      }
+    }
+
+    function applyTransform() {
+      sketch.translate(-sketch.width / 2, -sketch.height / 2)
+    }
+
+    function prepareConfirmed() {
+      if (gameState.deleteFlag === true) {
         nextStart = -1
+
+        gameState.deleteFlag = false
       }
 
+      const drawings = gameState.confirmedDrawings
       const needsRedraw = nextStart !== drawings.length
 
       if (needsRedraw) {
@@ -63,29 +79,27 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
 
         nextStart = drawings.length
       }
+    }
 
+    function drawConfirmed() {
+      sketch.image(commitBuffer, 0, 0)
+    }
+
+    function drawUnconfirmed() {
       for (const d of gameState.unconfirmedDrawings.getAll()) {
         draw(d)
       }
+    }
 
-      applyTransform()
-      sketch.background(bg)
-      sketch.image(commitBuffer, 0, 0)
-
+    function drawInFly() {
       if (gameState.drawingInFly) {
         draw(gameState.drawingInFly)
       }
-
-      // showFramerate()
-    }
-
-    function applyTransform() {
-      sketch.translate(-sketch.width / 2, -sketch.height / 2)
     }
 
     const pg = sketch.createGraphics(256, 256)
 
-    function showFramerate() {
+    function drawFramerate() {
       pg.background(255)
       pg.textSize(200)
       pg.text(Math.round(sketch.frameRate()), 20, 200)
@@ -133,7 +147,14 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
         case "line":
           sketch.stroke(drawing.color)
           sketch.strokeWeight(drawing.size)
-          line(drawing.p1, drawing.p2)
+          sketch.line(
+            drawing.p1.x,
+            drawing.p1.y,
+            0,
+            drawing.p2.x,
+            drawing.p2.y,
+            0,
+          )
           break
         case "dot":
           sketch.stroke(drawing.color)
@@ -156,20 +177,19 @@ export const initSketch = (canvas: HTMLCanvasElement) => {
           )
           break
         case "flood":
-          const cachedDrawing = ffc.get(getId(drawing))
+          const cachedResult = ffcGet(drawing)
 
-          if (cachedDrawing) {
-            sketch.image(cachedDrawing, 0, 0)
+          if (cachedResult) {
+            sketch.image(cachedResult, 0, 0)
           } else {
             commitBuffer.loadPixels()
-            floodFill(sketch, drawing, commitBuffer.pixels)
-            commitBuffer.updatePixels()
+            const result = floodFill(sketch, drawing, commitBuffer.pixels)
+            if (result) {
+              sketch.image(result, 0, 0)
+              ffcSet(drawing, result)
+            }
           }
           break
-      }
-
-      function line(p1: Point, p2: Point) {
-        sketch.line(p1.x, p1.y, 0.00075, p2.x, p2.y, 0.00075)
       }
     }
   }
@@ -182,16 +202,13 @@ const dirs = [
   [-1, 0],
 ]
 
-const ffc = new Map<string, p5.Image>()
-
-async function floodFill(
+// TODO ovo je mnogo messy resenje,
+// siguran siguran sam da moze bolje
+function floodFill(
   sketch: p5,
   drawing: FloodFill | Omit<FloodFill, "id">,
-  pixels: number[],
+  sourcePixels: number[],
 ) {
-  const cache = sketch.createImage(sketch.width, sketch.height)
-  cache.loadPixels()
-
   const d = sketch.pixelDensity()
   const w = sketch.width
 
@@ -199,6 +216,8 @@ async function floodFill(
   const y = Math.round(drawing.p.y)
 
   const index = 4 * (y * d * w * d + x * d)
+
+  const pixels = Array.from(sourcePixels)
 
   const startColor = {
     r: pixels[index],
@@ -210,7 +229,10 @@ async function floodFill(
 
   if (colorsAreEqual(startColor, targetColor)) return
 
+  const result = sketch.createImage(sketch.width, sketch.height)
   const queue = [{ x, y }]
+
+  result.loadPixels()
 
   while (queue.length > 0) {
     const currentPos = queue.pop()!
@@ -227,7 +249,8 @@ async function floodFill(
       continue
 
     setColor(pixels, currentPos.x, currentPos.y, targetColor, d, w)
-    cache.set(currentPos.x, currentPos.y, [
+    // setColor(result.pixels, currentPos.x, currentPos.y, targetColor, d, w)
+    result.set(currentPos.x, currentPos.y, [
       targetColor.r,
       targetColor.g,
       targetColor.b,
@@ -244,7 +267,8 @@ async function floodFill(
         queue.push(newPos)
       } else {
         setColor(pixels, newPos.x, newPos.y, targetColor, d, w)
-        cache.set(newPos.x, newPos.y, [
+        // setColor(result.pixels, newPos.x, newPos.y, targetColor, d, w)
+        result.set(newPos.x, newPos.y, [
           targetColor.r,
           targetColor.g,
           targetColor.b,
@@ -254,20 +278,24 @@ async function floodFill(
     }
   }
 
-  cache.updatePixels()
-  ffc.set(getId(drawing as any), cache)
+  result.updatePixels()
+  return result
 }
 
-function getId(drawing: FloodFill | Omit<FloodFill, "id">) {
-  let id
+const ffc = new Map<string, p5.Image>()
 
-  if ((drawing as Drawing).id) {
-    id = (drawing as Drawing).id
-  } else {
-    id = `${drawing.p.x}${drawing.p}`
+type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
+
+function ffcSet(drawing: MakeOptional<FloodFill, "id">, image: p5.Image) {
+  if (drawing.id) {
+    ffc.set(drawing.id, image)
   }
+}
 
-  return id
+function ffcGet(drawing: MakeOptional<FloodFill, "id">) {
+  if (drawing.id) {
+    return ffc.get(drawing.id)
+  }
 }
 
 function pointIsOfColor(

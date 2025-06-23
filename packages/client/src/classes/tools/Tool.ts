@@ -30,11 +30,15 @@ export abstract class Tool {
       throw new Error(`Controls socket is not connected`)
     }
 
-    console.log("dodajem")
     this.gameState.unconfirmedDrawings.add(drawing)
-    await sockets.controls.emitWithAck("use tool", drawing)
-    console.log("removeam")
-    this.gameState.unconfirmedDrawings.remove(drawing)
+
+    const { success } = await sockets.controls.emitWithAck("use tool", drawing)
+
+    if (success) {
+      this.gameState.unconfirmedDrawings.confirm(drawing)
+    } else {
+      this.gameState.unconfirmedDrawings.reject(drawing)
+    }
   }
 
   activate() {

@@ -3,22 +3,18 @@ import { Tool } from "../../classes/tools/Tool"
 
 export class GameState {
   currentTool: Tool | null = null
-  drawingInFly: DrawingInFly | null = null
   confirmedDrawings: Drawing[] = []
   unconfirmedDrawings = new UnconfirmedDrawings()
+  drawingInFly: DrawingInFly | null = null
+  deleteFlag: boolean = false
 
   reset() {
     this.currentTool?.deactivate()
 
     this.currentTool = null
-    this.drawingInFly = null
-    this.unconfirmedDrawings = new UnconfirmedDrawings()
     this.confirmedDrawings = []
-  }
-
-  getAllDrawings(): (Drawing | NewDrawing)[] {
-    return this.confirmedDrawings
-    // return [...this.confirmedDrawings, ...this.unconfirmedDrawings.getAll()]
+    this.unconfirmedDrawings = new UnconfirmedDrawings()
+    this.drawingInFly = null
   }
 
   private static instance: GameState | null = null
@@ -37,7 +33,16 @@ class UnconfirmedDrawings {
     this.drawings.push(drawing)
   }
 
-  public remove(drawing: NewDrawing) {
+  public confirm(drawing: NewDrawing) {
+    this.remove(drawing)
+  }
+
+  public reject(drawing: NewDrawing) {
+    this.removeListeners()
+    this.remove(drawing)
+  }
+
+  private remove(drawing: NewDrawing) {
     this.drawings = this.drawings.filter(d => d !== drawing)
 
     if (this.drawings.length === 0) {
@@ -51,16 +56,18 @@ class UnconfirmedDrawings {
 
   private listeners: (() => void)[] = []
 
-  /**
-   * Ne mozes opet da se pretplatis iz listenera.
-   * Mrzi me da prepravljam, mislim da nam svakako ne treba to.
-   */
   public onEmptyOnce(listener: () => void) {
     this.listeners.push(listener)
   }
 
-  private emitEmpty() {
-    this.listeners.forEach(l => l())
+  private removeListeners() {
     this.listeners = []
+  }
+
+  private emitEmpty() {
+    const copy = [...this.listeners]
+    this.listeners = []
+
+    copy.forEach(l => l())
   }
 }

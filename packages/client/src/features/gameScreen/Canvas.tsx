@@ -46,6 +46,7 @@ export function Canvas() {
       console.log(drawing)
       state.confirmedDrawings.push(drawing)
     } else {
+      state.deleteFlag = true
       state.confirmedDrawings = state.confirmedDrawings.filter(
         d => d.id !== drawing.toDelete,
       )

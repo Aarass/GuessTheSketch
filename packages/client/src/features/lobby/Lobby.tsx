@@ -119,11 +119,11 @@ const initialConfig = `{
     "teams": [
       {
         "name": "Tim A",
-        "players": ["id1", "id2"]
+        "players": ["id1"]
       },
       {
         "name": "Tim B",
-        "players": ["id3", "id4"]
+        "players": ["id2"]
       }
     ],
     "tools": {
