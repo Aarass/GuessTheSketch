@@ -9,6 +9,7 @@ import { selectRoomId, tryRestore } from "../rooms/RoomSlice"
 import { Canvas } from "./Canvas"
 import { selectIsMyTeamOnMove } from "./GameScreenSlice"
 import { Tools } from "./Tools"
+import { Word } from "./wordToGuess/Word"
 
 /**
  * myId must be set when mounting this component
@@ -47,8 +48,9 @@ export const GameScreen = () => {
         <div className="flex">
           <Leaderboard></Leaderboard>
           <div className="flex flex-col items-center">
-            <Canvas></Canvas>
-            {isMyTeamOnMove ? <Tools></Tools> : null}
+            <Word />
+            <Canvas />
+            {isMyTeamOnMove ? <Tools /> : null}
           </div>
           <Chat></Chat>
         </div>

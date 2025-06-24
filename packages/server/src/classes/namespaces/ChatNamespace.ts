@@ -14,6 +14,7 @@ import {
 import type { GuardedSocket } from "../../utility/guarding";
 import type { ExtractSocketType } from "../../utility/socketioTyping";
 import { NamespaceClass } from "./Base";
+import { GlobalState } from "../states/GlobalState";
 
 export class ChatNamespace extends NamespaceClass<ChatNamespaceType> {
   registerHandlers(
@@ -62,7 +63,20 @@ export class ChatNamespace extends NamespaceClass<ChatNamespaceType> {
     this.clearUnrestrictedRoom(room);
     this.addTeamToUnrestrictedRoom(room, teamOnMove.id);
 
-    // this.namespace.to(room).emit("round-started", teamOnMove.name);
+    const ur = this.getUnrestrictedRoomName(room);
+    const guessingManager =
+      GlobalState.getInstance().getRoomById(room)?.currentGame?.currentRound!
+        .guessingManager;
+
+    if (!guessingManager) {
+      return;
+    }
+
+    this.namespace.to(ur).emit("word", guessingManager.getWord(false)!);
+    this.namespace
+      .to(room)
+      .except(ur)
+      .emit("word", guessingManager.getWord(true)!);
   }
 
   public notifyRoundEnded(_room: RoomId) {

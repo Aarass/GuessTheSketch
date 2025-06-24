@@ -78,7 +78,7 @@ export const gameScreenSlice = createAppSlice({
       },
       {
         fulfilled: (_, action) => {
-          GameState.getInstance().bulkProccessDrawings(action.payload)
+          GameState.getInstance().prependDrawings(action.payload)
         },
       },
     ),

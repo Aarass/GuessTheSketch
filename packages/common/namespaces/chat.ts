@@ -13,6 +13,7 @@ export type ChatMessage = {
 
 interface ServerToClientEvents {
   message: (message: ChatMessage) => void;
+  word: (word: string) => void;
   // "start game": (config: GameConfig) => void;
   // "join-drawing-room": () => void;
   // "round-started": (drawingTeam: string) => void;

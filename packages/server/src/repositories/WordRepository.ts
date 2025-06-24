@@ -56,9 +56,12 @@ class MockWordRepository implements IWordRepository {
   }
 
   getRandomWord(): Promise<IWord | null> {
-    return new Promise((resolve) => {
-      resolve(new Word({ word: "cat" }));
+    const words = ["apple", "banana", "kiwi", "orange"];
+    const word = new Word({
+      word: words[Math.floor(Math.random() * words.length)],
     });
+
+    return Promise.resolve(word);
   }
 }
 

@@ -1,7 +1,7 @@
 import { ChatMessage } from "@guessthesketch/common"
 import { useEffect, useState } from "react"
-import { io } from "socket.io-client"
-import { backend, sockets } from "../../global"
+import { ConnectionManager } from "../../classes/ConnectionManager"
+import { sockets } from "../../global"
 
 /**
  * myId and roomId must be set
@@ -11,29 +11,24 @@ export const Chat = () => {
   const [newMessage, setNewMessage] = useState<string>("")
 
   useEffect(() => {
-    if (!sockets.chat) {
-      console.log("connection to chat")
-      sockets.chat = io(`ws://${backend}/chat`)
-    }
+    ConnectionManager.getInstance().ensureChatIsConnected()
 
-    // Kada drugi igrac pošalje poruku
-    sockets.chat.on("message", (message: ChatMessage) => {
-      setMessages(prevMessages => [...prevMessages, message])
-      console.log("stigla poruka")
-    })
-
+    sockets.chat!.on("message", onMessage)
     return () => {
-      sockets.chat?.off("message")
+      sockets.chat?.off("message", onMessage)
     }
   }, [])
 
-  // Funkcija za slanje poruke
-  const sendMessage = () => {
+  function onMessage(message: ChatMessage) {
+    setMessages(prevMessages => [...prevMessages, message])
+  }
+
+  function sendMessage() {
     const msg = newMessage.trim()
 
     if (msg) {
-      sockets.chat?.emit("message", msg) // Emituj poruku na server
-      setNewMessage("") // Očisti input nakon slanja
+      sockets.chat?.emit("message", msg)
+      setNewMessage("")
     }
   }
 

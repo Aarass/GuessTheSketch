@@ -20,7 +20,7 @@ export class GameState {
     }
   }
 
-  bulkProccessDrawings(drawings: Drawing[]) {
+  prependDrawings(drawings: Drawing[]) {
     const copy = [...this.confirmedDrawings]
     this.confirmedDrawings = []
 
@@ -38,6 +38,7 @@ export class GameState {
     this.confirmedDrawings = []
     this.unconfirmedDrawings = new UnconfirmedDrawings()
     this.drawingInFly = null
+    this.deleteFlag = true
   }
 
   private static instance: GameState | null = null

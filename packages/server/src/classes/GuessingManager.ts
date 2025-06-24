@@ -50,6 +50,18 @@ export class GuessingManager {
     return evaluator.evaluate(this.startTimestamp, this.hitTimestamps);
   }
 
+  public getWord(masked: boolean) {
+    if (!this.word) {
+      return null;
+    }
+
+    if (masked) {
+      return "?".repeat(this.word.length);
+    } else {
+      return this.word;
+    }
+  }
+
   private async getRandomWordToGuess() {
     const res = await this.ctx.wordService.getRandomWord();
 

@@ -46,6 +46,14 @@ export class ConnectionManager {
     }
   }
 
+  public ensureChatIsConnected() {
+    console.log("ensure connect to chat")
+    if (!sockets.chat) {
+      console.log("connection to chat")
+      sockets.chat = io(`ws://${backend}/chat`)
+    }
+  }
+
   // TODO kad, kako?
   // public disconnectGlobal() {
   // Nesto od ova dva: *nisam proverio*
