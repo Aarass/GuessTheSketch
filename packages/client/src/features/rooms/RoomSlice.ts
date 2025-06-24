@@ -49,7 +49,6 @@ export const roomSlice = createAppSlice({
     tryRestore: create.asyncThunk(
       async (_, { dispatch }) => {
         const { ownerId, roomId } = await tryRefreshRequest()
-        console.log("**** Ovo je trenutak kad imam i roomId")
 
         dispatch(tryRestoreFurther())
 

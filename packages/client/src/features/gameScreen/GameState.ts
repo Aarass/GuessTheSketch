@@ -8,6 +8,29 @@ export class GameState {
   drawingInFly: DrawingInFly | null = null
   deleteFlag: boolean = false
 
+  processNewDrawing(drawing: Drawing) {
+    if (drawing.type !== "eraser") {
+      console.log(drawing)
+      this.confirmedDrawings.push(drawing)
+    } else {
+      this.deleteFlag = true
+      this.confirmedDrawings = this.confirmedDrawings.filter(
+        d => d.id !== drawing.toDelete,
+      )
+    }
+  }
+
+  bulkProccessDrawings(drawings: Drawing[]) {
+    const copy = [...this.confirmedDrawings]
+    this.confirmedDrawings = []
+
+    for (const drawing of drawings) {
+      this.processNewDrawing(drawing)
+    }
+
+    this.confirmedDrawings.push(...copy)
+  }
+
   reset() {
     this.currentTool?.deactivate()
 

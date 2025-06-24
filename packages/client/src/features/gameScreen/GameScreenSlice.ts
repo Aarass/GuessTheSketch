@@ -66,27 +66,19 @@ export const gameScreenSlice = createAppSlice({
 
           state.config = config
           state.teamOnMove = teamOnMove
-
-          console.log("**** Ovo je trenutak kad imam sve sto je potrebno")
         },
       },
     ),
     restoreDrawings: create.asyncThunk(
       async () => {
-        console.log("About to send replay request")
         const res = await restoreDrawingsRequest()
         const replay = (await res.json()) as RoundReplay
-
-        console.log(replay)
 
         return replay
       },
       {
-        fulfilled: (state, action) => {
-          const replay = action.payload
-
-          const s = GameState.getInstance()
-          s.confirmedDrawings = [...replay, ...s.confirmedDrawings]
+        fulfilled: (_, action) => {
+          GameState.getInstance().bulkProccessDrawings(action.payload)
         },
       },
     ),
