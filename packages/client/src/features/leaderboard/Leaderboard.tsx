@@ -6,31 +6,31 @@ import { useEffect, useState } from "react"
 import { ConnectionManager } from "../../classes/ConnectionManager"
 import { sockets } from "../../global"
 import { useAppSelector } from "../../app/hooks"
-import { selectTeamsConfig } from "../gameScreen/GameScreenSlice"
+import {
+  selectLeaderboard,
+  selectTeamsConfig,
+} from "../gameScreen/GameScreenSlice"
 import { ReportOverlay } from "../report/ReportOverlay"
+import { selectPlayers } from "../rooms/RoomSlice"
 
 /**
  * myId and roomId must be set
  */
 export const Leaderboard = () => {
-  const [leaderboard, setLeaderboard] = useState<LeaderboardType | undefined>()
+  // const [leaderboard, setLeaderboard] = useState<LeaderboardType | undefined>()
   const [report, setReport] = useState<RoundReport | null>(null)
+  const leaderboard = useAppSelector(selectLeaderboard)
   const teamsConfig = useAppSelector(selectTeamsConfig)
+  const players = useAppSelector(selectPlayers)
 
   useEffect(() => {
     ConnectionManager.getInstance().ensureGlobalIsConnected()
 
-    sockets.global!.on("leaderboard", onLeaderboard)
     sockets.global!.on("round ended", onRoundEnded)
     return () => {
-      sockets.global?.off("leaderboard", onLeaderboard)
       sockets.global?.off("round ended", onRoundEnded)
     }
   }, [])
-
-  function onLeaderboard(leaderboard: LeaderboardType) {
-    setLeaderboard(leaderboard)
-  }
 
   function onRoundEnded(report: RoundReport): void {
     setReport(report)
@@ -41,11 +41,15 @@ export const Leaderboard = () => {
   }
 
   function getPrettyLeaderboard() {
+    console.log("ovde", teamsConfig, leaderboard)
     if (teamsConfig && leaderboard) {
       return teamsConfig.map(team => {
         return {
           name: team.name,
           points: leaderboard[team.id],
+          players: team.players.map(
+            id => players.find(p => p.id === id)?.name ?? "no name",
+          ),
         }
       })
     }

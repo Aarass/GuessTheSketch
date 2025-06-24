@@ -11,6 +11,7 @@ import { GameScreen } from "./features/gameScreen/GameScreen"
 import { Lobby } from "./features/lobby/Lobby"
 import { Rooms } from "./features/rooms/Rooms"
 import "./index.css"
+import { EndScreen } from "./features/endScreen/EndScreen"
 
 store.dispatch(refresh())
 
@@ -29,6 +30,7 @@ if (container) {
               <Route path="/rooms" element={<Rooms />} />
               <Route path="/lobby" element={<Lobby />} />
               <Route path="/game" element={<GameScreen />} />
+              <Route path="/end" element={<EndScreen />} />
             </Route>
           </Routes>
         </BrowserRouter>

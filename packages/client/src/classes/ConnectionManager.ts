@@ -10,6 +10,7 @@ import { io } from "socket.io-client"
 import { store } from "../app/store"
 import {
   setConfig,
+  setLeaderboard,
   setTeamOnMove,
 } from "../features/gameScreen/GameScreenSlice"
 import {
@@ -112,5 +113,5 @@ function onRoundEnded(roundReport: RoundReport) {
 }
 
 function onLeaderboard(leaderboard: Leaderboard) {
-  // store.dispatch(set(null))
+  store.dispatch(setLeaderboard(leaderboard))
 }

@@ -48,7 +48,7 @@ export const GameScreen = () => {
   }, [roomId])
 
   function onGameEnded() {
-    navigate("/lobby")
+    navigate("/end")
   }
 
   const canCreateSocketConnection = !!roomId

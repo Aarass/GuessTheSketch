@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { ConnectionManager } from "../../../classes/ConnectionManager"
 import { sockets } from "../../../global"
-import { GetCurrentWord, MakeGetCurrentWordRequest } from "./WordApi"
+import { MakeGetCurrentWordRequest } from "./WordApi"
 
 /**
  * myId and roomId must be set
@@ -43,8 +43,10 @@ export function Word() {
   }
 
   return (
-    <div>
-      <p>{word}</p>
+    <div className="flex gap-2">
+      {word?.split("").map(l => {
+        return <span className="underline">{l}</span>
+      })}
     </div>
   )
 }

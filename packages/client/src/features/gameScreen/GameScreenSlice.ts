@@ -1,6 +1,6 @@
 import { createSelector, type PayloadAction } from "@reduxjs/toolkit"
 import type {
-  // Leaderboard,
+  Leaderboard,
   ProcessedGameConfig,
   RoundReplay,
   TeamId,
@@ -20,7 +20,7 @@ export interface GameScreenState {
   color: string
   size: number
   // -------------------------------
-  // leaderboard: Leaderboard | undefined
+  leaderboard: Leaderboard | undefined
 }
 
 const initialState: GameScreenState = {
@@ -28,7 +28,7 @@ const initialState: GameScreenState = {
   teamOnMove: undefined,
   color: "#FFFFFF",
   size: 7,
-  // leaderboard: undefined,
+  leaderboard: undefined,
 }
 
 export const gameScreenSlice = createAppSlice({
@@ -51,11 +51,11 @@ export const gameScreenSlice = createAppSlice({
     setSize: create.reducer((state, action: PayloadAction<number>) => {
       state.size = action.payload
     }),
-    // setLeaderboard: create.reducer(
-    //   (state, action: PayloadAction<Leaderboard>) => {
-    //     state.leaderboard = action.payload
-    //   },
-    // ),
+    setLeaderboard: create.reducer(
+      (state, action: PayloadAction<Leaderboard>) => {
+        state.leaderboard = action.payload
+      },
+    ),
 
     tryRestore: create.asyncThunk(
       async (_, { dispatch }) => {
@@ -106,7 +106,7 @@ export const gameScreenSlice = createAppSlice({
     selectConfig: state => state.config,
     selectTeamOnMove: state => state.teamOnMove,
     selectTeamsConfig: state => state.config?.teams,
-    // selectLeaderboard: state => state.leaderboard,
+    selectLeaderboard: state => state.leaderboard,
   },
 })
 
@@ -117,6 +117,7 @@ export const {
   setConfig,
   tryRestore,
   restoreDrawings,
+  setLeaderboard,
 } = gameScreenSlice.actions
 
 export const {
@@ -125,7 +126,7 @@ export const {
   selectConfig,
   selectTeamOnMove,
   selectTeamsConfig,
-  // selectLeaderboard,
+  selectLeaderboard,
 } = gameScreenSlice.selectors
 
 export const selectIsMyTeamOnMove = createSelector(
