@@ -10,12 +10,14 @@ import { Canvas } from "./Canvas"
 import { selectIsMyTeamOnMove } from "./GameScreenSlice"
 import { Tools } from "./Tools"
 import { Word } from "./wordToGuess/Word"
+import { sockets } from "../../global"
 
 /**
  * myId must be set when mounting this component
  */
 export const GameScreen = () => {
   const dispatch = useAppDispatch()
+  const navigate = useNavigate()
 
   const roomId = useAppSelector(selectRoomId)
   const isMyTeamOnMove = useAppSelector(selectIsMyTeamOnMove)
@@ -37,7 +39,17 @@ export const GameScreen = () => {
     }
 
     ConnectionManager.getInstance().ensureGlobalIsConnected()
+
+    sockets.global!.on("game ended", onGameEnded)
+
+    return () => {
+      sockets.global?.off("game ended", onGameEnded)
+    }
   }, [roomId])
+
+  function onGameEnded() {
+    navigate("/lobby")
+  }
 
   const canCreateSocketConnection = !!roomId
 

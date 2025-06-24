@@ -20,7 +20,7 @@ export function Word() {
   }, [])
 
   useEffect(() => {
-    ;(async () => {
+    void (async () => {
       try {
         const restoredWord = await getCurrentWord()
 
@@ -28,7 +28,7 @@ export function Word() {
           setWord(restoredWord)
         }
       } catch {}
-    })().catch(console.error)
+    })()
   }, [])
 
   function onWord(word: string) {
