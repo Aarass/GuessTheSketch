@@ -1,4 +1,5 @@
 import {
+  Leaderboard,
   Player,
   PlayerId,
   ProcessedGameConfig,
@@ -32,9 +33,9 @@ export class ConnectionManager {
       sockets.global.on("player joined room", onPlayerJoined)
       sockets.global.on("player left room", onPlayerLeft)
       sockets.global.on("game config", onGameConfig)
-
-      sockets.global!.on("round started", onRoundStarted)
-      sockets.global!.on("round ended", onRoundEnded)
+      sockets.global.on("round started", onRoundStarted)
+      sockets.global.on("round ended", onRoundEnded)
+      sockets.global.on("leaderboard", onLeaderboard)
     }
   }
 
@@ -102,14 +103,14 @@ function onGameConfig(config: ProcessedGameConfig) {
 }
 
 function onRoundStarted(teamOnMove: TeamId) {
-  console.log(`Round started. Team on move: ${teamOnMove}`)
-
   store.dispatch(setTeamOnMove(teamOnMove))
 }
 
 function onRoundEnded(roundReport: RoundReport) {
-  console.log("Round ended. Heres round report", roundReport)
-
   store.dispatch(setTeamOnMove(null))
   GameState.getInstance().reset()
+}
+
+function onLeaderboard(leaderboard: Leaderboard) {
+  // store.dispatch(set(null))
 }

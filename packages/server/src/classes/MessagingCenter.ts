@@ -1,5 +1,6 @@
 import type {
   Drawing,
+  Leaderboard,
   ProcessedGameConfig,
   RoomId,
   RoundReport,
@@ -30,6 +31,10 @@ export class MessagingCenter {
       controls: new ControlsNamespace("controls", server, this, ctx),
       chat: new ChatNamespace("chat", server, this, ctx),
     };
+  }
+
+  public notifyLeaderboardUpdated(room: RoomId, leaderboard: Leaderboard) {
+    this.namespaces.global.notifyLeaderboardUpdated(room, leaderboard);
   }
 
   public notifyPlayerGuessedCorrectly() {

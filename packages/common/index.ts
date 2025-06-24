@@ -15,6 +15,7 @@ export * from "./namespaces/global";
 export * from "./types/authTypes";
 export * from "./types/drawings";
 export * from "./types/user";
+export * from "./types/leaderboard";
 
 export * from "./ipc/queueNames";
 export * from "./ipc/types";

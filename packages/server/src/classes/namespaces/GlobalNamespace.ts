@@ -2,7 +2,9 @@ import {
   GameConfigSchema,
   type GameConfig,
   type GlobalNamespace as GlobalNamespaceType,
+  type Leaderboard,
   type Player,
+  type PlayerId,
   type ProcessedGameConfig,
   type RoomId,
   type RoundReport,
@@ -30,30 +32,31 @@ export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
     socket.on("disconnect", this.getOnDisconnectHandler(socket));
   }
 
-  public notifyRoundStarted(room: string, teamOnMoveId: TeamId) {
+  public notifyRoundStarted(room: RoomId, teamOnMoveId: TeamId) {
     this.namespace.to(room).emit("round started", teamOnMoveId);
   }
 
-  public notifyRoundEnded(room: string, report: RoundReport) {
+  public notifyRoundEnded(room: RoomId, report: RoundReport) {
     this.namespace.to(room).emit("round ended", report);
+  }
+
+  public notifyLeaderboardUpdated(room: RoomId, leaderboard: Leaderboard) {
+    this.namespace.to(room).emit("leaderboard", leaderboard);
   }
 
   public notifyGameStarted(room: RoomId, config: ProcessedGameConfig) {
     this.namespace.to(room).emit("game started", config);
   }
 
-  public notifyGameEnded(room: string) {
+  public notifyGameEnded(room: RoomId) {
     this.namespace.to(room).emit("game ended");
   }
 
-  public notifyNewOwner(room: string, newOwner: Player) {
+  public notifyNewOwner(room: RoomId, newOwner: Player) {
     this.namespace.to(room).emit("new owner", newOwner.id);
   }
 
-  public notifyPlayerLeft(
-    room: Room,
-    playerId: string & import("zod").BRAND<"PlayerId">,
-  ) {
+  public notifyPlayerLeft(room: Room, playerId: PlayerId) {
     this.namespace.to(room.id).emit("player left room", playerId);
   }
 

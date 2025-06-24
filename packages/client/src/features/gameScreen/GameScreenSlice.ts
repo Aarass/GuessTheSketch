@@ -1,5 +1,6 @@
 import { createSelector, type PayloadAction } from "@reduxjs/toolkit"
 import type {
+  // Leaderboard,
   ProcessedGameConfig,
   RoundReplay,
   TeamId,
@@ -14,8 +15,12 @@ import { GameState } from "./GameState"
 export interface GameScreenState {
   config: ProcessedGameConfig | undefined
   teamOnMove: TeamId | undefined | null
+  // TODO ovo pomeriti odavde
+  // -------------------------------
   color: string
   size: number
+  // -------------------------------
+  // leaderboard: Leaderboard | undefined
 }
 
 const initialState: GameScreenState = {
@@ -23,6 +28,7 @@ const initialState: GameScreenState = {
   teamOnMove: undefined,
   color: "#FFFFFF",
   size: 7,
+  // leaderboard: undefined,
 }
 
 export const gameScreenSlice = createAppSlice({
@@ -45,6 +51,11 @@ export const gameScreenSlice = createAppSlice({
     setSize: create.reducer((state, action: PayloadAction<number>) => {
       state.size = action.payload
     }),
+    // setLeaderboard: create.reducer(
+    //   (state, action: PayloadAction<Leaderboard>) => {
+    //     state.leaderboard = action.payload
+    //   },
+    // ),
 
     tryRestore: create.asyncThunk(
       async (_, { dispatch }) => {
@@ -94,6 +105,8 @@ export const gameScreenSlice = createAppSlice({
     selectSize: state => state.size,
     selectConfig: state => state.config,
     selectTeamOnMove: state => state.teamOnMove,
+    selectTeamsConfig: state => state.config?.teams,
+    // selectLeaderboard: state => state.leaderboard,
   },
 })
 
@@ -105,8 +118,15 @@ export const {
   tryRestore,
   restoreDrawings,
 } = gameScreenSlice.actions
-export const { selectColor, selectSize, selectConfig, selectTeamOnMove } =
-  gameScreenSlice.selectors
+
+export const {
+  selectColor,
+  selectSize,
+  selectConfig,
+  selectTeamOnMove,
+  selectTeamsConfig,
+  // selectLeaderboard,
+} = gameScreenSlice.selectors
 
 export const selectIsMyTeamOnMove = createSelector(
   selectMyId,

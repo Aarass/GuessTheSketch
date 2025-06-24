@@ -1,12 +1,14 @@
 import type {
   GameConfig,
+  Leaderboard,
   PlayerId,
   ProcessedGameConfig,
+  RoundReport,
   Team,
   TeamId,
 } from "@guessthesketch/common";
 import { v4 as uuid } from "uuid";
-import { Evaluator, MockEvaluator } from "./evaluators/Evaluator";
+import { Evaluator } from "./evaluators/Evaluator";
 import type { MessagingCenter } from "./MessagingCenter";
 import type { Room } from "./Room";
 import { Round } from "./Round";
@@ -14,6 +16,8 @@ import type { AppContext } from "./AppContext";
 import { RoundFactory } from "./RoundFactory";
 import { err, ok, type Result } from "neverthrow";
 import type { GameId } from "@guessthesketch/common/types/ids";
+import { MockEvaluator } from "./evaluators/MockEvaluator";
+import { SimpleEvaluator } from "./evaluators/SimpleEvaluator";
 
 export class Game {
   public id: GameId = uuid() as GameId;
@@ -35,14 +39,14 @@ export class Game {
   private startedRounds = 0;
   private endRoundTimer: Timer | null = null;
 
-  private leaderboard: Record<TeamId, number>;
+  private leaderboard: Leaderboard;
 
   constructor(
     ctx: AppContext,
     private config: GameConfig,
     private room: Room,
     private messagingCenter: MessagingCenter,
-    private evaluator: Evaluator = new MockEvaluator(),
+    private evaluator: Evaluator = new SimpleEvaluator(),
   ) {
     this.roundFactory = new RoundFactory(config.tools, ctx);
 
@@ -75,6 +79,11 @@ export class Game {
     this.messagingCenter.notifyGameStarted(
       this.room.id,
       this.getProcessedConfig(),
+    );
+
+    this.messagingCenter.notifyLeaderboardUpdated(
+      this.room.id,
+      this.leaderboard,
     );
 
     setTimeout(() => {
@@ -155,8 +164,11 @@ export class Game {
       throw new Error(`Internal Error. Round is null in roundEnded handler`);
 
     const teamOnMove = this.teams[this.currentTeamIndex];
+
     this.evaluator.setTeamOnMove(teamOnMove.id);
     const report = this._currentRound.guessingManager.getReport(this.evaluator);
+
+    this.updateLeaderboard(report);
 
     this.messagingCenter.notifyRoundEnded(this.room.id, report);
 
@@ -166,6 +178,21 @@ export class Game {
       this._currentRound = null;
       this.gameEnded();
     }
+  }
+
+  private updateLeaderboard(report: RoundReport) {
+    for (const [teamId, deltaScore] of report) {
+      if (this.leaderboard[teamId] !== undefined) {
+        this.leaderboard[teamId] += deltaScore;
+      } else {
+        console.log("report sadrzi teamid kojeg nema u leaderboard");
+      }
+    }
+
+    this.messagingCenter.notifyLeaderboardUpdated(
+      this.room.id,
+      this.leaderboard,
+    );
   }
 
   private gameEnded() {

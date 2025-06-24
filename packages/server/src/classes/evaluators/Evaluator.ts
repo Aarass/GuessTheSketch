@@ -10,7 +10,7 @@ export abstract class Evaluator {
     this.teamOnMove = id;
   }
 
-  public evaluate(
+  evaluate(
     start: Timestamp,
     hitTimestamps: Map<TeamId, Timestamp>,
   ): RoundReport {
@@ -29,14 +29,4 @@ export abstract class Evaluator {
     start: Timestamp,
     hitTimestamps: Map<TeamId, Timestamp>,
   ): RoundReport;
-}
-
-export class MockEvaluator extends Evaluator {
-  _evaluate(
-    _teamOnMove: TeamId,
-    _start: Timestamp,
-    _hitTimestamps: Map<TeamId, Timestamp>,
-  ): RoundReport {
-    return [["asd" as TeamId, 0]];
-  }
 }
