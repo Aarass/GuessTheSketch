@@ -1,6 +1,9 @@
 import {
   Leaderboard as LeaderboardType,
+  Player,
   RoundReport,
+  RoundReportWithWord,
+  Team,
 } from "@guessthesketch/common"
 import { useEffect, useState } from "react"
 import { ConnectionManager } from "../../classes/ConnectionManager"
@@ -17,14 +20,21 @@ import { selectPlayers } from "../rooms/RoomSlice"
  * myId and roomId must be set
  */
 export const Leaderboard = () => {
-  // const [leaderboard, setLeaderboard] = useState<LeaderboardType | undefined>()
-  const [report, setReport] = useState<RoundReport | null>(null)
+  const [report, setReport] = useState<RoundReportWithWord | null>(null)
   const leaderboard = useAppSelector(selectLeaderboard)
   const teamsConfig = useAppSelector(selectTeamsConfig)
-  const players = useAppSelector(selectPlayers)
+  const allPlayers = useAppSelector(selectPlayers)
 
   useEffect(() => {
     ConnectionManager.getInstance().ensureGlobalIsConnected()
+
+    function onRoundEnded(report: RoundReportWithWord): void {
+      setReport(report)
+
+      setTimeout(() => {
+        setReport(null)
+      }, 3000)
+    }
 
     sockets.global!.on("round ended", onRoundEnded)
     return () => {
@@ -32,33 +42,63 @@ export const Leaderboard = () => {
     }
   }, [])
 
-  function onRoundEnded(report: RoundReport): void {
-    setReport(report)
+  function getEntries(): TeamEntry[] | null {
+    if (teamsConfig === undefined) return null
 
-    setTimeout(() => {
-      setReport(null)
-    }, 5000)
+    const res = teamsConfig.map(team => {
+      const entry: TeamEntry = {
+        teamName: team.name,
+        players: team.players.map(id => allPlayers.find(p => p.id === id)),
+        points: leaderboard ? leaderboard[team.id] : 0,
+      }
+
+      return entry
+    })
+
+    return res.sort((a, b) => a.points - b.points)
   }
 
-  function getPrettyLeaderboard() {
-    console.log("ovde", teamsConfig, leaderboard)
-    if (teamsConfig && leaderboard) {
-      return teamsConfig.map(team => {
-        return {
-          name: team.name,
-          points: leaderboard[team.id],
-          players: team.players.map(
-            id => players.find(p => p.id === id)?.name ?? "no name",
-          ),
-        }
-      })
-    }
-  }
+  const entries = getEntries()
+
+  const entriesDisplayed = entries
+    ? entries.map(entry => <TeamEntryDisplay entry={entry} />)
+    : null
+
+  const reportDisplayed = report ? <ReportOverlay report={report} /> : null
 
   return (
     <div>
-      <pre>{JSON.stringify(getPrettyLeaderboard() ?? {}, null, 2)}</pre>
-      {report ? <ReportOverlay report={report} /> : null}
+      <div>{entriesDisplayed}</div>
+      {reportDisplayed}
+    </div>
+  )
+}
+
+interface TeamEntry {
+  points: number
+  teamName: string
+  players: (Player | undefined)[]
+}
+
+function TeamEntryDisplay({ entry }: { entry: TeamEntry }) {
+  return (
+    <div>
+      <div className="px-4">
+        <div className="flex gap-5">
+          <span>{entry.teamName}</span>
+          <span>{entry.points} pts</span>
+        </div>
+        <div className="flex flex-col items-end">
+          {entry.players.map(player => {
+            return player ? (
+              <p className="my-1">{player.name}</p>
+            ) : (
+              <p>No name</p>
+            )
+          })}
+        </div>
+      </div>
+      <hr />
     </div>
   )
 }

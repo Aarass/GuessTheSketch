@@ -24,41 +24,26 @@ export function Lobby() {
 
   const [config, setConfig] = useState(initialConfig)
 
-  const onGameStarted = (config: ProcessedGameConfig) => {
-    dispatch(setConfigAction(config))
-    navigate("/game")
-  }
-
-  const onGameNotStarted = (error: string) => {
-    alert(error)
-  }
-
   useEffect(() => {
     ConnectionManager.getInstance().ensureGlobalIsConnected()
 
     sockets.global!.on("game started", onGameStarted)
     sockets.global!.on("game not started", onGameNotStarted)
 
-    if (isFirstTime.current) {
-      // Ovo radim zbog reactovo strict moda
-      // Ovo odlaze slanje ready eventa, do sledeceg tick-a, sto bi,
-      // nadam se, trebalo da bude dovoljno da se listeneri ponovo
-      // prikace.
-      // Nisam siguran koliko ovo stavrno moze da bude problem, ali
-      // ako ni ovo resenje nije dovoljno, moze da se proba
-      // da se saceka malo duze od jednog ticka
-      setTimeout(() => {
-        sockets.global!.emit("ready")
-      }, 0)
-
-      isFirstTime.current = false
-    }
-
     return () => {
       sockets.global?.off("game started", onGameStarted)
       sockets.global?.off("game not started", onGameNotStarted)
     }
   }, [])
+
+  function onGameStarted(config: ProcessedGameConfig) {
+    dispatch(setConfigAction(config))
+    navigate("/game")
+  }
+
+  function onGameNotStarted(error: string) {
+    alert(error)
+  }
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center">
@@ -114,7 +99,7 @@ function Players() {
 const initialConfig = `{
     "rounds": {
       "cycles": 3,
-      "duration": 25000
+      "duration": 120000
     },
     "teams": [
       {

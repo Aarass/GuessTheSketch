@@ -37,6 +37,8 @@ export class ConnectionManager {
       sockets.global.on("round started", onRoundStarted)
       sockets.global.on("round ended", onRoundEnded)
       sockets.global.on("leaderboard", onLeaderboard)
+
+      sockets.global.emit("ready")
     }
   }
 
@@ -107,7 +109,7 @@ function onRoundStarted(teamOnMove: TeamId) {
   store.dispatch(setTeamOnMove(teamOnMove))
 }
 
-function onRoundEnded(roundReport: RoundReport) {
+function onRoundEnded() {
   store.dispatch(setTeamOnMove(null))
   GameState.getInstance().reset()
 }

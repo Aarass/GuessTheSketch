@@ -7,17 +7,16 @@ import type {
   Team,
   TeamId,
 } from "@guessthesketch/common";
+import type { GameId } from "@guessthesketch/common/types/ids";
+import { err, ok, type Result } from "neverthrow";
 import { v4 as uuid } from "uuid";
+import type { AppContext } from "./AppContext";
 import { Evaluator } from "./evaluators/Evaluator";
+import { SimpleEvaluator } from "./evaluators/SimpleEvaluator";
 import type { MessagingCenter } from "./MessagingCenter";
 import type { Room } from "./Room";
 import { Round } from "./Round";
-import type { AppContext } from "./AppContext";
 import { RoundFactory } from "./RoundFactory";
-import { err, ok, type Result } from "neverthrow";
-import type { GameId } from "@guessthesketch/common/types/ids";
-import { MockEvaluator } from "./evaluators/MockEvaluator";
-import { SimpleEvaluator } from "./evaluators/SimpleEvaluator";
 
 export class Game {
   public id: GameId = uuid() as GameId;
@@ -156,6 +155,11 @@ export class Game {
     const teamOnMove = this.teams[this.currentTeamIndex];
 
     this.messagingCenter.notifyRoundStarted(this.room.id, teamOnMove);
+    this.messagingCenter.notifyRoundsCount(
+      this.room.id,
+      this.startedRounds,
+      this.maxRounds,
+    );
   }
 
   private roundEnded() {
@@ -167,13 +171,19 @@ export class Game {
 
     this.evaluator.setTeamOnMove(teamOnMove.id);
     const report = this._currentRound.guessingManager.getReport(this.evaluator);
+    const word = this._currentRound.guessingManager.getWord(false);
 
     this.updateLeaderboard(report);
 
-    this.messagingCenter.notifyRoundEnded(this.room.id, report);
+    this.messagingCenter.notifyRoundEnded(this.room.id, {
+      word: word ?? "error",
+      report,
+    });
 
     if (this.startedRounds !== this.maxRounds) {
-      void this.startNewRound();
+      setTimeout(() => {
+        void this.startNewRound();
+      }, 5000);
     } else {
       this._currentRound = null;
       this.gameEnded();
@@ -200,10 +210,12 @@ export class Game {
 
     this.active = false;
 
-    this.messagingCenter.notifyGameEnded(
-      this.room.id,
-      this.teams.map((t) => t.id),
-    );
+    setTimeout(() => {
+      this.messagingCenter.notifyGameEnded(
+        this.room.id,
+        this.teams.map((t) => t.id),
+      );
+    }, 5000);
   }
 
   public findPlayersTeam(playerId: PlayerId): Team | null {

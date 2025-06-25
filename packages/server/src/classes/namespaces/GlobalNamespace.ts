@@ -8,6 +8,7 @@ import {
   type ProcessedGameConfig,
   type RoomId,
   type RoundReport,
+  type RoundReportWithWord,
   type TeamId,
 } from "@guessthesketch/common";
 import {
@@ -36,7 +37,15 @@ export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
     this.namespace.to(room).emit("round started", teamOnMoveId);
   }
 
-  public notifyRoundEnded(room: RoomId, report: RoundReport) {
+  public notifyRoundsCount(
+    room: RoomId,
+    startedRounds: number,
+    maxRounds: number,
+  ) {
+    this.namespace.to(room).emit("rounds count", startedRounds, maxRounds);
+  }
+
+  public notifyRoundEnded(room: RoomId, report: RoundReportWithWord) {
     this.namespace.to(room).emit("round ended", report);
   }
 

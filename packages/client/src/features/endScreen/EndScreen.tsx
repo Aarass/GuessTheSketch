@@ -25,6 +25,7 @@ export function EndScreen() {
   return (
     <div className="flex flex-col h-full w-full items-center justify-center">
       <button
+        className="mb-4"
         onClick={() => {
           navigate("/lobby")
         }}

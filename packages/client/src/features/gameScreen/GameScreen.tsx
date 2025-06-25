@@ -11,6 +11,8 @@ import { selectIsMyTeamOnMove } from "./GameScreenSlice"
 import { Tools } from "./Tools"
 import { Word } from "./wordToGuess/Word"
 import { sockets } from "../../global"
+import { Clock } from "./clock/Clock"
+import { RoundsCount } from "./rounds/RoundsCount"
 
 /**
  * myId must be set when mounting this component
@@ -55,17 +57,22 @@ export const GameScreen = () => {
 
   return (
     <div className="flex flex-col h-full w-full items-center justify-center">
-      <DebugButtons />
       {canCreateSocketConnection ? (
-        <div className="flex">
-          <Leaderboard></Leaderboard>
-          <div className="flex flex-col items-center">
+        <>
+          <div className="w-full flex gap-20 justify-center items-center">
+            <Clock />
             <Word />
-            <Canvas />
-            {isMyTeamOnMove ? <Tools /> : null}
+            <RoundsCount />
           </div>
-          <Chat></Chat>
-        </div>
+          <div className="flex gap-4 mt-8">
+            <Leaderboard></Leaderboard>
+            <div className="flex flex-col items-center">
+              <Canvas />
+            </div>
+            <Chat />
+          </div>
+          {isMyTeamOnMove ? <Tools /> : null}
+        </>
       ) : null}
     </div>
   )
@@ -96,3 +103,14 @@ function DebugButtons() {
     </div>
   )
 }
+
+// <div className="w-full flex justify-between">
+//   <div className="relative">
+//     <div className="absolute flex gap-8 mx-40">
+//       <Clock />
+//       <RoundsCount />
+//     </div>
+//   </div>
+//   <Word />
+//   <div className="" />
+// </div>

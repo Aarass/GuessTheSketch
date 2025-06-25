@@ -4,9 +4,15 @@ import type {
   ProcessedGameConfig,
   RoomId,
   RoundReport,
+  RoundReportWithWord,
   Team,
   TeamId,
 } from "@guessthesketch/common";
+import type {
+  GameId,
+  PlayerId,
+  RoundId,
+} from "@guessthesketch/common/types/ids";
 import { Server as SocketIOServer } from "socket.io";
 import type { AppContext } from "./AppContext";
 import { ChatNamespace } from "./namespaces/ChatNamespace";
@@ -14,7 +20,6 @@ import { ControlsNamespace } from "./namespaces/ControlsNamespace";
 import { DrawingsNamespace } from "./namespaces/DrawingNamespace";
 import { GlobalNamespace } from "./namespaces/GlobalNamespace";
 import type { PersistanceService } from "./services/PersitanceService";
-import type { GameId, RoundId } from "@guessthesketch/common/types/ids";
 
 // ----------------
 // --- Mediator ---
@@ -33,13 +38,12 @@ export class MessagingCenter {
     };
   }
 
-  public notifyLeaderboardUpdated(room: RoomId, leaderboard: Leaderboard) {
-    this.namespaces.global.notifyLeaderboardUpdated(room, leaderboard);
+  public notifyCorrectGuess(room: RoomId, playerId: PlayerId, guess: string) {
+    this.namespaces.chat.notifyCorrectGuess(room, playerId, guess);
   }
 
-  public notifyPlayerGuessedCorrectly() {
-    //TODO
-    console.log("Method not implemented.");
+  public notifyLeaderboardUpdated(room: RoomId, leaderboard: Leaderboard) {
+    this.namespaces.global.notifyLeaderboardUpdated(room, leaderboard);
   }
 
   public notifyGameStarted(room: RoomId, config: ProcessedGameConfig) {
@@ -57,7 +61,15 @@ export class MessagingCenter {
     this.namespaces.chat.notifyRoundStarted(room, teamOnMove);
   }
 
-  public notifyRoundEnded(room: RoomId, report: RoundReport) {
+  public notifyRoundsCount(
+    room: RoomId,
+    startedRounds: number,
+    maxRounds: number,
+  ) {
+    this.namespaces.global.notifyRoundsCount(room, startedRounds, maxRounds);
+  }
+
+  public notifyRoundEnded(room: RoomId, report: RoundReportWithWord) {
     this.namespaces.global.notifyRoundEnded(room, report);
     this.namespaces.chat.notifyRoundEnded(room);
   }

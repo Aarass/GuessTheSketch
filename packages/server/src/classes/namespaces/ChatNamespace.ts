@@ -17,6 +17,14 @@ import { NamespaceClass } from "./Base";
 import { GlobalState } from "../states/GlobalState";
 
 export class ChatNamespace extends NamespaceClass<ChatNamespaceType> {
+  // Zato ovo radim posebno za svakog igraca na onConnect tj. u registerHandlers.
+  // Ipak, mislim da postoji minimalna sansa da ovo bude korisno:
+  // Ako se pokrene novi game u istoj sobi, a konekcije onstanu zive, onConnect se nece desiti,
+  // pa ce onda ovo ovde imati posla. Dakle, sve zavisi od implementacije na frontendu. Ipak,
+  // najbolje je da pokrijemo sve slucajeve i ne oslanjamo se na frontend.
+  //// ----------------------------------
+  /**/
+
   registerHandlers(
     socket: GuardedSocket<ExtractSocketType<ChatNamespaceType>>,
   ) {
@@ -83,6 +91,11 @@ export class ChatNamespace extends NamespaceClass<ChatNamespaceType> {
     // this.namespace.to(room).emit("round-ended");
   }
 
+  public notifyCorrectGuess(room: RoomId, playerId: PlayerId, guess: string) {
+    this.namespace.to(room).emit("correct guess", playerId);
+    this.namespace.to(this.getUnrestrictedRoomName(room)).emit("word", guess);
+  }
+
   // public notifyMessage(room: RoomId, message: ChatMessage) {
   //   this.namespace.to(`drawing-${room}`).emit("chat message", message);
   // }
@@ -119,7 +132,7 @@ export class ChatNamespace extends NamespaceClass<ChatNamespaceType> {
               console.log("correct");
               this.addTeamToUnrestrictedRoom(room.id, playersTeam.id);
 
-              this.messagingCenter.notifyPlayerGuessedCorrectly();
+              this.messagingCenter.notifyCorrectGuess(room.id, userId, message);
             } else {
               console.log("sending safe");
               this.sendSafeMessage(room.id, newMessage);

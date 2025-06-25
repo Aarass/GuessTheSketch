@@ -6,6 +6,7 @@ import type {
   PlayerId,
   ProcessedGameConfig,
   RoundReport,
+  RoundReportWithWord,
   TeamId,
 } from "..";
 
@@ -30,7 +31,8 @@ interface ServerToClientEvents {
   "game config": (config: ProcessedGameConfig) => void;
   "game ended": () => void;
   "round started": (teamOnMove: TeamId) => void;
-  "round ended": (report: RoundReport) => void;
+  "rounds count": (startedRounds: number, maxRounds: number) => void;
+  "round ended": (report: RoundReportWithWord) => void;
   leaderboard: (leaderboard: Leaderboard) => void;
 }
 

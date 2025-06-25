@@ -1,31 +1,29 @@
-import { useEffect, useRef, useState, PropsWithChildren } from "react"
+import { PropsWithChildren, useEffect, useRef, useState } from "react"
 import {
-  LuCircleX,
-  LuPen,
-  LuRectangleHorizontal,
   LuCircle,
+  LuCircleX,
   LuPaintBucket,
+  LuPen,
   LuPipette,
+  LuRectangleHorizontal,
   LuUndo2,
-  LuTrash2,
 } from "react-icons/lu"
 import { TbLine } from "react-icons/tb"
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
-import { ConnectionManager } from "../../classes/ConnectionManager"
-import { RGBtoHexString, HSVtoRGB } from "../../utils/colors"
-import { selectColor, setColor, selectSize, setSize } from "./GameScreenSlice"
-import { DeleteAllCommand } from "../../classes/commands/concrete/deleteAll"
+import { Command } from "../../classes/commands/command"
 import { DeselectTool } from "../../classes/commands/concrete/deselectTool"
 import { SelectToolCommand } from "../../classes/commands/concrete/selectTool"
 import { UndoCommand } from "../../classes/commands/concrete/undo"
+import { ConnectionManager } from "../../classes/ConnectionManager"
 import { CircleTool } from "../../classes/tools/concrete/Circle"
-import { PenTool } from "../../classes/tools/concrete/Pen"
 import { FloodFillTool } from "../../classes/tools/concrete/FloodFill"
 import { LineTool } from "../../classes/tools/concrete/Line"
+import { PenTool } from "../../classes/tools/concrete/Pen"
 import { PipetteTool } from "../../classes/tools/concrete/Pipete"
 import { RectTool } from "../../classes/tools/concrete/Rect"
+import { HSVtoRGB, RGBtoHexString } from "../../utils/colors"
 import { sketch } from "./Canvas"
-import { Command } from "../../classes/commands/command"
+import { selectColor, selectSize, setColor, setSize } from "./GameScreenSlice"
 
 /**
  * myId and roomId must be set
@@ -162,7 +160,7 @@ export const SelectTool = () => {
       [new SelectToolCommand(FloodFillTool, sketch), <LuPaintBucket />],
       [new SelectToolCommand(PipetteTool, sketch), <LuPipette />],
       [new UndoCommand(), <LuUndo2 />],
-      [new DeleteAllCommand(), <LuTrash2 />],
+      // [new DeleteAllCommand(), <LuTrash2 />],
     ])
   }, [sketch])
 

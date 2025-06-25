@@ -30,6 +30,11 @@ export interface Player {
 
 export type RoundReport = [TeamId, DeltaScore][];
 
+export type RoundReportWithWord = {
+  word: string;
+  report: RoundReport;
+};
+
 export interface JoinRoomResult {
   roomId: RoomId;
   ownerId: PlayerId;
