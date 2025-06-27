@@ -1,4 +1,8 @@
-import { GameConfig, ProcessedGameConfig } from "@guessthesketch/common"
+import {
+  GameConfig,
+  PlayerId,
+  ProcessedGameConfig,
+} from "@guessthesketch/common"
 import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router"
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
@@ -96,27 +100,75 @@ function Players() {
   )
 }
 
-const initialConfig = `{
-    "rounds": {
-      "cycles": 3,
-      "duration": 120000
+const tmp: GameConfig = {
+  rounds: {
+    cycles: 3,
+    duration: 120000,
+  },
+  teams: [
+    {
+      name: "team",
+      players: ["" as PlayerId],
     },
-    "teams": [
-      {
-        "name": "Tim A",
-        "players": ["id1"]
+    {
+      name: "team",
+      players: ["" as PlayerId],
+    },
+  ],
+  tools: {
+    pen: {
+      count: 2,
+      timeoutable: {
+        useTime: 2000,
+        cooldownTime: 5000,
       },
-      {
-        "name": "Tim B",
-        "players": ["id2"]
-      }
-    ],
-    "tools": {
-      "pen": {
-        "count": 2
+    },
+    line: {
+      count: 1,
+    },
+    rect: {
+      count: 1,
+      consumable: {
+        maxUses: 4,
       },
-      "eraser": {
-        "count": 1
-      }
-    }
-  }`
+    },
+    circle: {
+      count: 1,
+      consumable: {
+        maxUses: 4,
+      },
+    },
+    bucket: {
+      count: 1,
+    },
+    eraser: {
+      count: 1,
+    },
+  },
+}
+
+const initialConfig = JSON.stringify(tmp, null, 2)
+// const initialConfig = `{
+//     "rounds": {
+//       "cycles": 3,
+//       "duration": 120000
+//     },
+//     "teams": [
+//       {
+//         "name": "Tim A",
+//         "players": ["id1"]
+//       },
+//       {
+//         "name": "Tim B",
+//         "players": ["id2"]
+//       }
+//     ],
+//     "tools": {
+//       "pen": {
+//         "count": 2
+//       },
+//       "eraser": {
+//         "count": 1
+//       }
+//     }
+//   }`

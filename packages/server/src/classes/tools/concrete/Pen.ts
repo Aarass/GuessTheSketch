@@ -1,6 +1,5 @@
 import type {
   Drawing,
-  DrawingId,
   ToolType,
   UnvalidatedNewDrawingWithType,
 } from "@guessthesketch/common";
@@ -14,7 +13,6 @@ export class Pen extends Tool {
 
   override getDrawing(drawing: UnvalidatedNewDrawingWithType): Drawing {
     return {
-      id: "" as DrawingId,
       ...drawing,
     } as Drawing;
   }

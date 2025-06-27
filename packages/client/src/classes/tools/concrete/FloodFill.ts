@@ -3,7 +3,7 @@ import { DrawingAutoFillIn } from "../../../utils/autoFillin"
 import { Tool } from "../Tool"
 
 export class FloodFillTool extends Tool {
-  public type: ToolType = "pen"
+  public type: ToolType = "bucket"
 
   onMouseReleased(event: MouseEvent): void {
     let drawing: NewDrawing = {

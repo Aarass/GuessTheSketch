@@ -10,12 +10,20 @@ import { UserService } from "./classes/services/UserService";
 import { WordService } from "./classes/services/WordService";
 import { ToolRegistry } from "./classes/ToolRegistry";
 import { Eraser } from "./classes/tools/concrete/Eraser";
+import { Line } from "./classes/tools/concrete/Line";
 import { Pen } from "./classes/tools/concrete/Pen";
+import { Rect } from "./classes/tools/concrete/Rect";
+import { Circle } from "./classes/tools/concrete/Circle";
 import { createUserRepository } from "./repositories/UserRepository";
 import { createMockWordRepository } from "./repositories/WordRepository";
+import { Bucket } from "./classes/tools/concrete/Bucket";
 
 const toolRegistry = ToolRegistry.getInstance();
 toolRegistry.registerTool(Pen.toolType, Pen);
+toolRegistry.registerTool(Line.toolType, Line);
+toolRegistry.registerTool(Rect.toolType, Rect);
+toolRegistry.registerTool(Circle.toolType, Circle);
+toolRegistry.registerTool(Bucket.toolType, Bucket);
 toolRegistry.registerTool(Eraser.toolType, Eraser);
 
 const userRepository = createUserRepository();

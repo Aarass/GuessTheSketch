@@ -5,9 +5,9 @@ import type {
 } from "@guessthesketch/common";
 import { Tool } from "../Tool";
 
-export class Eraser extends Tool {
-  static readonly toolType: ToolType = "eraser";
-  readonly toolType = Eraser.toolType;
+export class Circle extends Tool {
+  static readonly toolType: ToolType = "circle";
+  readonly toolType = Circle.toolType;
 
   override init() {}
 

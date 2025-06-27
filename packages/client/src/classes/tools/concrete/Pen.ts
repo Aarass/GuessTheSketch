@@ -1,12 +1,11 @@
 import {
-  ToolType,
-  Point,
-  Drawing,
-  NewDrawing,
   DrawingInFly,
+  NewDrawing,
+  Point,
+  ToolType,
 } from "@guessthesketch/common"
-import { Tool } from "../Tool"
 import { DrawingAutoFillIn } from "../../../utils/autoFillin"
+import { Tool } from "../Tool"
 
 export class PenTool extends Tool {
   public type: ToolType = "pen"

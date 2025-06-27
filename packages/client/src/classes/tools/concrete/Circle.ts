@@ -1,14 +1,14 @@
 import {
-  ToolType,
-  Point,
-  NewDrawing,
   DrawingInFly,
+  NewDrawing,
+  Point,
+  ToolType,
 } from "@guessthesketch/common"
 import { DrawingAutoFillIn } from "../../../utils/autoFillin"
 import { Tool } from "../Tool"
 
 export class CircleTool extends Tool {
-  public type: ToolType = "pen"
+  public type: ToolType = "circle"
 
   startingPoint: Point = {
     x: Infinity,

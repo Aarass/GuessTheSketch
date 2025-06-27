@@ -4,7 +4,7 @@ import { setColor } from "../../../features/gameScreen/GameScreenSlice"
 import { Tool } from "../Tool"
 
 export class PipetteTool extends Tool {
-  public type: ToolType = "pen"
+  public type: ToolType = "" as ToolType
 
   onMouseReleased(event: MouseEvent): void {
     const res = this.sketch.get(this.sketch.mouseX, this.sketch.mouseY)

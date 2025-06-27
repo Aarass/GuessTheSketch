@@ -12,6 +12,7 @@ export class ToolBuilder {
     let tool = ToolBuilder.getBaseTool(type, manager);
 
     const config = this.toolConfigs[type];
+    console.log(config);
 
     if (config.consumable !== undefined) {
       tool = new ConsumableTool(tool, config.consumable.maxUses);

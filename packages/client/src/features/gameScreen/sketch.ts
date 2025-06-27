@@ -8,7 +8,7 @@ import p5 from "p5"
 import { colorsAreEqual, HexStringToRGB } from "../../utils/colors"
 import { GameState } from "./GameState"
 
-const bg = 0 // TODO
+const bg = 255 // TODO
 const gameState = GameState.getInstance()
 
 /**
