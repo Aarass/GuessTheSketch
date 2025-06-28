@@ -1,3 +1,4 @@
+import p5 from "p5"
 import {
   PropsWithChildren,
   useContext,
@@ -28,13 +29,12 @@ import { PipetteTool } from "../../classes/tools/concrete/Pipete"
 import { RectTool } from "../../classes/tools/concrete/Rect"
 import { HSVtoRGB, RGBtoHexString } from "../../utils/colors"
 import { Context } from "../context/Context"
-import { sketch } from "./Canvas"
 import { selectColor, selectSize, setColor, setSize } from "./GameScreenSlice"
 
 /**
  * myId and roomId must be set
  */
-export function Tools() {
+export function Tools({ sketch }: { sketch: p5 }) {
   const context = useContext(Context)
 
   if (context === undefined) {
@@ -52,7 +52,7 @@ export function Tools() {
   return (
     <div className="mt-4 flex flex-row items-center justify-items-center">
       <div className="mr-4 flex flex-col items-center justify-items-center">
-        <SelectTool></SelectTool>
+        <SelectTool sketch={sketch}></SelectTool>
         <SelectColor></SelectColor>
       </div>
       <SelectSize></SelectSize>
@@ -64,6 +64,7 @@ export const SelectColor = () => {
   const dispatch = useAppDispatch()
   const color = useAppSelector(selectColor)
   const pickerRef = useRef<HTMLImageElement>(null)
+  const monoPickerRef = useRef<HTMLDivElement>(null)
 
   function calcColor(event: MouseEvent) {
     const picker = pickerRef.current!
@@ -153,7 +154,7 @@ export const SelectColor = () => {
   )
 }
 
-export const SelectTool = () => {
+export const SelectTool = ({ sketch }: { sketch: p5 }) => {
   const [buttons, setButtons] = useState([] as [Command, JSX.Element][])
 
   const context = useContext(Context)

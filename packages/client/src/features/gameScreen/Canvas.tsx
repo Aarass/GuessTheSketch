@@ -6,14 +6,12 @@ import { backend, sockets } from "../../global"
 import { Context } from "../context/Context"
 import { initSketch } from "./sketch"
 
-// TODO
-// ne exportovati vec proslediti
-export let sketch: p5 | null = null
-
 /**
  * myId and roomId must be set
  */
-export function Canvas() {
+export function Canvas(props: {
+  setSketch: React.Dispatch<React.SetStateAction<p5 | null>>
+}) {
   const hasCreatedSketch = useRef<boolean>(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -29,7 +27,7 @@ export function Canvas() {
     if (!canvasRef.current) return
 
     if (!hasCreatedSketch.current) {
-      sketch = new p5(initSketch(canvasRef.current, state))
+      props.setSketch(new p5(initSketch(canvasRef.current, state)))
 
       hasCreatedSketch.current = true
     }

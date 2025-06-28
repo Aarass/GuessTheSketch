@@ -1,4 +1,5 @@
-import { useContext, useEffect, useRef } from "react"
+import p5 from "p5"
+import { useContext, useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router"
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
 import { sockets } from "../../global"
@@ -26,7 +27,7 @@ export const GameScreen = () => {
 
   const roomId = useAppSelector(selectRoomId)
   const isMyTeamOnMove = useAppSelector(selectIsMyTeamOnMove)
-
+  const [sketch, setSketch] = useState<p5 | null>(null)
   const context = useContext(Context)
 
   if (context === undefined) {
@@ -58,6 +59,7 @@ export const GameScreen = () => {
   }, [])
 
   const canCreateSocketConnection = !!roomId
+  const shouldDisplayTools = sketch !== null && isMyTeamOnMove
 
   return (
     <div className="flex flex-col h-full w-full items-center justify-center">
@@ -71,11 +73,11 @@ export const GameScreen = () => {
           <div className="flex gap-4 mt-8">
             <Leaderboard></Leaderboard>
             <div className="flex flex-col items-center">
-              <Canvas />
+              <Canvas setSketch={setSketch} />
             </div>
             <Chat />
           </div>
-          {isMyTeamOnMove ? <Tools /> : null}
+          {shouldDisplayTools ? <Tools sketch={sketch} /> : null}
         </>
       ) : null}
     </div>
