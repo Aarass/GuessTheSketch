@@ -86,6 +86,20 @@ export const SelectColor = () => {
     return RGBtoHexString(HSVtoRGB(xp, s, v))
   }
 
+  function calcMonoColor(event: MouseEvent) {
+    const picker = monoPickerRef.current!
+    const rect = picker.getBoundingClientRect()
+    let y = event.clientY - rect.top
+
+    if (y < 0) y = 0
+    if (y > rect.height) y = rect.height
+
+    const yp = 1 - y / rect.height
+    const v = Math.round(yp * 255)
+
+    return RGBtoHexString({ r: v, g: v, b: v })
+  }
+
   return (
     <div
       style={{
@@ -99,23 +113,28 @@ export const SelectColor = () => {
         }}
       >
         <div
+          ref={monoPickerRef}
           style={{
             width: 25,
-            height: 25,
-            backgroundColor: "white",
+            height: 50,
+            // backgroundColor: "white",
+          }}
+          className="bg-linear-to-t from-black to-white"
+          onMouseDown={event => {
+            dispatch(setColor(calcMonoColor(event.nativeEvent)))
+            const onMove = (event: MouseEvent) => {
+              dispatch(setColor(calcMonoColor(event)))
+            }
+
+            const onUp = () => {
+              document.removeEventListener("mousemove", onMove)
+              document.removeEventListener("mouseup", onUp)
+            }
+            document.addEventListener("mousemove", onMove)
+            document.addEventListener("mouseup", onUp)
           }}
           onClick={() => {
             dispatch(setColor("#FFFFFF"))
-          }}
-        ></div>
-        <div
-          style={{
-            width: 25,
-            height: 25,
-            backgroundColor: "black",
-          }}
-          onClick={() => {
-            dispatch(setColor("#000000"))
           }}
         ></div>
       </div>
