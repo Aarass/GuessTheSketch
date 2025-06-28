@@ -1,4 +1,10 @@
-import { PropsWithChildren, useEffect, useRef, useState } from "react"
+import {
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react"
 import {
   LuCircle,
   LuCircleX,
@@ -14,7 +20,6 @@ import { Command } from "../../classes/commands/command"
 import { DeselectTool } from "../../classes/commands/concrete/deselectTool"
 import { SelectToolCommand } from "../../classes/commands/concrete/selectTool"
 import { UndoCommand } from "../../classes/commands/concrete/undo"
-import { ConnectionManager } from "../../classes/ConnectionManager"
 import { CircleTool } from "../../classes/tools/concrete/Circle"
 import { FloodFillTool } from "../../classes/tools/concrete/FloodFill"
 import { LineTool } from "../../classes/tools/concrete/Line"
@@ -22,16 +27,24 @@ import { PenTool } from "../../classes/tools/concrete/Pen"
 import { PipetteTool } from "../../classes/tools/concrete/Pipete"
 import { RectTool } from "../../classes/tools/concrete/Rect"
 import { HSVtoRGB, RGBtoHexString } from "../../utils/colors"
+import { Context } from "../context/Context"
 import { sketch } from "./Canvas"
 import { selectColor, selectSize, setColor, setSize } from "./GameScreenSlice"
-import { GameState } from "./GameState"
 
 /**
  * myId and roomId must be set
  */
 export function Tools() {
+  const context = useContext(Context)
+
+  if (context === undefined) {
+    throw new Error(`Context is undefined`)
+  }
+
+  const connManager = context.connectionManager
+
   useEffect(() => {
-    ConnectionManager.getInstance().ensureControlsIsConnected()
+    connManager.ensureControlsIsConnected()
 
     // TODO attach listeners for controls
   }, [])
@@ -140,24 +153,26 @@ export const SelectColor = () => {
   )
 }
 
-// TODO
-// sketch.mousePressed = () => {}
-// sketch.mouseReleased = () => {}
-// sketch.mouseClicked = () => {}
-// sketch.mouseDragged = () => {}
-
 export const SelectTool = () => {
   const [buttons, setButtons] = useState([] as [Command, JSX.Element][])
 
-  const state = GameState.getInstance()
+  const context = useContext(Context)
+  const state = context?.gameState
 
   useEffect(() => {
     if (sketch == null) return
 
+    if (state === undefined) {
+      throw new Error(`No state in context`)
+    }
+
     setButtons([
       [new DeselectTool(state), <LuCircleX />],
       [new SelectToolCommand(PenTool, sketch, state), <LuPen />],
-      [new SelectToolCommand(RectTool, sketch, state), <LuRectangleHorizontal />],
+      [
+        new SelectToolCommand(RectTool, sketch, state),
+        <LuRectangleHorizontal />,
+      ],
       [new SelectToolCommand(CircleTool, sketch, state), <LuCircle />],
       [new SelectToolCommand(LineTool, sketch, state), <TbLine />],
       [new SelectToolCommand(FloodFillTool, sketch, state), <LuPaintBucket />],

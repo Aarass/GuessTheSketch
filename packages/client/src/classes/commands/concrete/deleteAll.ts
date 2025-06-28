@@ -1,5 +1,5 @@
-import p5 from "p5"
-import { GameState } from "../../../features/gameScreen/GameState"
+// import p5 from "p5"
+// import { GameState } from "../../../features/gameScreen/GameState"
 import { Command } from "../command"
 
 export class DeleteAllCommand extends Command {

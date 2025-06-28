@@ -1,9 +1,9 @@
 import { Drawing } from "@guessthesketch/common"
 import p5 from "p5"
-import { useEffect, useRef } from "react"
+import { useContext, useEffect, useRef } from "react"
 import { io } from "socket.io-client"
 import { backend, sockets } from "../../global"
-import { GameState } from "./GameState"
+import { Context } from "../context/Context"
 import { initSketch } from "./sketch"
 
 // TODO
@@ -16,13 +16,20 @@ export let sketch: p5 | null = null
 export function Canvas() {
   const hasCreatedSketch = useRef<boolean>(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const state = GameState.getInstance()
+
+  const context = useContext(Context)
+
+  if (context === undefined) {
+    throw new Error(`Context is undefined`)
+  }
+
+  const state = context.gameState
 
   useEffect(() => {
     if (!canvasRef.current) return
 
     if (!hasCreatedSketch.current) {
-      sketch = new p5(initSketch(canvasRef.current))
+      sketch = new p5(initSketch(canvasRef.current, state))
 
       hasCreatedSketch.current = true
     }

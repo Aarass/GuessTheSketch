@@ -1,11 +1,18 @@
-import { useEffect, useState } from "react"
-import { ConnectionManager } from "../../../classes/ConnectionManager"
-import { sockets } from "../../../global"
+import { useContext, useEffect, useState } from "react"
 import { LuHash } from "react-icons/lu"
+import { sockets } from "../../../global"
+import { Context } from "../../context/Context"
 import { getRoundsCountRequest } from "../../restore/restoreApi"
 
 export function RoundsCount() {
   const [text, setText] = useState("")
+  const context = useContext(Context)
+
+  if (context === undefined) {
+    throw new Error(`Context is undefined`)
+  }
+
+  const connManager = context.connectionManager
 
   useEffect(() => {
     ;(async () => {
@@ -17,7 +24,7 @@ export function RoundsCount() {
   }, [])
 
   useEffect(() => {
-    ConnectionManager.getInstance().ensureGlobalIsConnected()
+    connManager.ensureGlobalIsConnected()
 
     sockets.global!.on("rounds count", onRoundsCount)
     return () => {

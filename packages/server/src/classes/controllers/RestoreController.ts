@@ -98,7 +98,9 @@ export class RestoreController extends Controller {
       return;
     }
 
-    res.send({ teamId: game.getTeamOnMove() });
+    const teamOnMove = game.getTeamOnMove();
+
+    res.send({ teamId: teamOnMove?.id ?? null });
   };
 
   private getDrawingsHandler: RequestHandler = async (req, res, next) => {

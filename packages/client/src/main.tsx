@@ -12,10 +12,16 @@ import { Lobby } from "./features/lobby/Lobby"
 import { Rooms } from "./features/rooms/Rooms"
 import "./index.css"
 import { EndScreen } from "./features/endScreen/EndScreen"
+import { Context } from "./features/context/Context"
+import { GameState } from "./features/gameScreen/GameState"
+import { ConnectionManager } from "./classes/ConnectionManager"
 
 store.dispatch(refresh())
 
 const container = document.getElementById("root")
+
+const gameState = new GameState()
+const connectionManager = ConnectionManager.getInstance()
 
 if (container) {
   const root = createRoot(container)
@@ -23,17 +29,25 @@ if (container) {
   root.render(
     <React.StrictMode>
       <Provider store={store}>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Login />} />
-            <Route element={<ProtectedRoute />}>
-              <Route path="/rooms" element={<Rooms />} />
-              <Route path="/lobby" element={<Lobby />} />
-              <Route path="/game" element={<GameScreen />} />
-              <Route path="/end" element={<EndScreen />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
+        <Context.Provider
+          value={{
+            gameState,
+            connectionManager,
+          }}
+        >
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Login />} />
+              <Route element={<ProtectedRoute />}>
+                <Route path="/rooms" element={<Rooms />} />
+                <Route path="/lobby" element={<Lobby />} />
+                <Route path="/game" element={<GameScreen />} />
+
+                <Route path="/end" element={<EndScreen />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </Context.Provider>
       </Provider>
     </React.StrictMode>,
   )

@@ -1,10 +1,10 @@
 import { ChatMessage, PlayerId } from "@guessthesketch/common"
-import { useEffect, useRef, useState } from "react"
-import { ConnectionManager } from "../../classes/ConnectionManager"
-import { sockets } from "../../global"
+import { useContext, useEffect, useRef, useState } from "react"
 import { useAppSelector } from "../../app/hooks"
-import { selectPlayers } from "../rooms/RoomSlice"
+import { sockets } from "../../global"
+import { Context } from "../context/Context"
 import { selectIsMyTeamOnMove } from "../gameScreen/GameScreenSlice"
+import { selectPlayers } from "../rooms/RoomSlice"
 /**
  * myId and roomId must be set
  */
@@ -15,12 +15,20 @@ export const Chat = () => {
   const inputRef = useRef<HTMLInputElement>(null)
   const allPlayers = useAppSelector(selectPlayers)
 
+  const context = useContext(Context)
+
+  if (context === undefined) {
+    throw new Error(`Context is undefined`)
+  }
+
+  const connManager = context.connectionManager
+
   function pushMessage(message: Message) {
     setMessages(prevMessages => [...prevMessages, message])
   }
 
   useEffect(() => {
-    ConnectionManager.getInstance().ensureGlobalIsConnected()
+    connManager.ensureGlobalIsConnected
 
     function onStart() {
       if (!isMyTeamOnMove) {
@@ -35,7 +43,7 @@ export const Chat = () => {
   }, [isMyTeamOnMove])
 
   useEffect(() => {
-    ConnectionManager.getInstance().ensureChatIsConnected()
+    connManager.ensureChatIsConnected()
 
     function onMessage(message: ChatMessage) {
       const player = allPlayers.find(p => p.id === message.user)

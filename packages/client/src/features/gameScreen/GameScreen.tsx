@@ -1,9 +1,9 @@
-import { useEffect, useRef } from "react"
+import { useContext, useEffect, useRef } from "react"
 import { useNavigate } from "react-router"
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
-import { ConnectionManager } from "../../classes/ConnectionManager"
 import { sockets } from "../../global"
 import { Chat } from "../chat/Chat"
+import { Context } from "../context/Context"
 import { Leaderboard } from "../leaderboard/Leaderboard"
 import { selectRoomId, tryRestore } from "../rooms/RoomSlice"
 import { Canvas } from "./Canvas"
@@ -14,7 +14,6 @@ import {
   tryRestoreLeaderboard,
   tryRestoreTeamOnMove,
 } from "./GameScreenSlice"
-import { GameState } from "./GameState"
 import { RoundsCount } from "./rounds/RoundsCount"
 import { Tools } from "./Tools"
 import { Word } from "./wordToGuess/Word"
@@ -28,18 +27,27 @@ export const GameScreen = () => {
   const roomId = useAppSelector(selectRoomId)
   const isMyTeamOnMove = useAppSelector(selectIsMyTeamOnMove)
 
+  const context = useContext(Context)
+
+  if (context === undefined) {
+    throw new Error(`Context is undefined`)
+  }
+
+  const state = context.gameState
+  const connManager = context.connectionManager
+
   useRestore()
 
   useEffect(() => {
     function onRoundEnded() {
-      GameState.getInstance().reset()
+      state?.reset()
     }
 
     function onGameEnded() {
       navigate("/end")
     }
 
-    ConnectionManager.getInstance().ensureGlobalIsConnected()
+    connManager.ensureGlobalIsConnected()
 
     sockets.global!.on("round ended", onRoundEnded)
     sockets.global!.on("game ended", onGameEnded)
@@ -76,10 +84,11 @@ export const GameScreen = () => {
 
 function useRestore() {
   const dispatch = useAppDispatch()
-
   const sentRestoreRequest = useRef(false)
-
   const roomId = useAppSelector(selectRoomId)
+  const context = useContext(Context)
+
+  const state = context?.gameState
 
   useEffect(() => {
     // Ako udje u ovaj if znaci da je refreshana stranica
@@ -100,7 +109,7 @@ function useRestore() {
       dispatch(tryRestoreLeaderboard())
       dispatch(tryRestoreTeamOnMove())
 
-      GameState.getInstance().tryRestoreDrawings()
+      state?.tryRestoreDrawings()
     }
   }, [roomId])
 }

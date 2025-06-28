@@ -9,14 +9,13 @@ import { colorsAreEqual, HexStringToRGB } from "../../utils/colors"
 import { GameState } from "./GameState"
 
 const bg = 255 // TODO
-const gameState = GameState.getInstance()
 
 /**
  * Osiguraj zivotom ako treba da se ova funkcija ne pozove vise
  * od jednom za isti canvas/sketch. p5.js poludi ako se to desi.
  * createCanvas je izvor problema. Nije do nas do p5.js-a je.
  */
-export const initSketch = (canvas: HTMLCanvasElement) => {
+export const initSketch = (canvas: HTMLCanvasElement, gameState: GameState) => {
   return (sketch: p5) => {
     gameState.reset()
 

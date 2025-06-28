@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react"
-import { ConnectionManager } from "../../../classes/ConnectionManager"
+import { useContext, useEffect, useState } from "react"
 import { sockets } from "../../../global"
+import { Context } from "../../context/Context"
 import { getCurrectWordRequest } from "../../restore/restoreApi"
 
 /**
@@ -8,9 +8,16 @@ import { getCurrectWordRequest } from "../../restore/restoreApi"
  */
 export function Word() {
   const [word, setWord] = useState<string | undefined | null>()
+  const context = useContext(Context)
+
+  if (context === undefined) {
+    throw new Error(`Context is undefined`)
+  }
+
+  const connManager = context.connectionManager
 
   useEffect(() => {
-    ConnectionManager.getInstance().ensureChatIsConnected()
+    connManager.ensureChatIsConnected()
 
     sockets.chat!.on("word", onWord)
 
@@ -45,8 +52,12 @@ export function Word() {
 
   return (
     <div className="flex gap-2">
-      {word?.split("").map(l => {
-        return <span className="underline">{l}</span>
+      {word?.split("").map((l, i) => {
+        return (
+          <span key={i} className="underline">
+            {l}
+          </span>
+        )
       })}
     </div>
   )

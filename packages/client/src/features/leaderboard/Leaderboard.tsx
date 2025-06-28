@@ -1,14 +1,8 @@
-import {
-  Leaderboard as LeaderboardType,
-  Player,
-  RoundReport,
-  RoundReportWithWord,
-  Team,
-} from "@guessthesketch/common"
-import { useEffect, useState } from "react"
-import { ConnectionManager } from "../../classes/ConnectionManager"
-import { sockets } from "../../global"
+import { Player, RoundReportWithWord } from "@guessthesketch/common"
+import { useContext, useEffect, useState } from "react"
 import { useAppSelector } from "../../app/hooks"
+import { sockets } from "../../global"
+import { Context } from "../context/Context"
 import {
   selectLeaderboard,
   selectTeamsConfig,
@@ -24,9 +18,16 @@ export const Leaderboard = () => {
   const leaderboard = useAppSelector(selectLeaderboard)
   const teamsConfig = useAppSelector(selectTeamsConfig)
   const allPlayers = useAppSelector(selectPlayers)
+  const context = useContext(Context)
+
+  if (context === undefined) {
+    throw new Error(`Context is undefined`)
+  }
+
+  const connManager = context.connectionManager
 
   useEffect(() => {
-    ConnectionManager.getInstance().ensureGlobalIsConnected()
+    connManager.ensureGlobalIsConnected()
 
     function onRoundEnded(report: RoundReportWithWord): void {
       setReport(report)

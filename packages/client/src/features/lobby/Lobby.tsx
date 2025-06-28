@@ -3,14 +3,14 @@ import {
   PlayerId,
   ProcessedGameConfig,
 } from "@guessthesketch/common"
-import { useEffect, useRef, useState } from "react"
+import { useContext, useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router"
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
 import { sockets } from "../../global"
 import { selectMyId } from "../auth/AuthSlice"
 import { selectPlayers, selectRoomInfo } from "../rooms/RoomSlice"
 
-import { ConnectionManager } from "../../classes/ConnectionManager"
+import { Context } from "../context/Context"
 import { setConfig as setConfigAction } from "../gameScreen/GameScreenSlice"
 import { LogoutButton } from "../global/Logout"
 
@@ -28,8 +28,16 @@ export function Lobby() {
 
   const [config, setConfig] = useState(initialConfig)
 
+  const context = useContext(Context)
+
+  if (context === undefined) {
+    throw new Error(`Context is undefined`)
+  }
+
+  const connManager = context.connectionManager
+
   useEffect(() => {
-    ConnectionManager.getInstance().ensureGlobalIsConnected()
+    connManager.ensureGlobalIsConnected()
 
     sockets.global!.on("game started", onGameStarted)
     sockets.global!.on("game not started", onGameNotStarted)

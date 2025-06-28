@@ -12,7 +12,6 @@ import {
   setLeaderboard,
   setTeamOnMove,
 } from "../features/gameScreen/GameScreenSlice"
-import { GameState } from "../features/gameScreen/GameState"
 import {
   ownerChanged,
   playerJoined,

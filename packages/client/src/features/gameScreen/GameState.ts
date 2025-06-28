@@ -55,13 +55,13 @@ export class GameState {
     } catch {}
   }
 
-  private static instance: GameState | null = null
-  static getInstance() {
-    if (this.instance == null) {
-      this.instance = new GameState()
-    }
-    return this.instance
-  }
+  // private static instance: GameState | null = null
+  // static getInstance() {
+  //   if (this.instance == null) {
+  //     this.instance = new GameState()
+  //   }
+  //   return this.instance
+  // }
 }
 
 class UnconfirmedDrawings {

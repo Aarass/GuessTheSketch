@@ -1,16 +1,24 @@
-import { useEffect, useRef, useState } from "react"
-import { AppStore } from "../../../app/store"
-import { ConnectionManager } from "../../../classes/ConnectionManager"
-import { sockets } from "../../../global"
-import { selectRoundDuration } from "../GameScreenSlice"
+import { useContext, useEffect, useRef, useState } from "react"
 import { LuAlarmClock } from "react-icons/lu"
-import { getClockRequest } from "../../restore/restoreApi"
 import { useStore } from "react-redux"
+import { AppStore } from "../../../app/store"
+import { sockets } from "../../../global"
+import { Context } from "../../context/Context"
+import { getClockRequest } from "../../restore/restoreApi"
+import { selectRoundDuration } from "../GameScreenSlice"
 
 export function Clock() {
   const store = useStore() as AppStore
   const [clock, setClock] = useState(0)
   const handle = useRef<number | undefined>()
+
+  const context = useContext(Context)
+
+  if (context === undefined) {
+    throw new Error(`Context is undefined`)
+  }
+
+  const connManager = context.connectionManager
 
   function startCountdown() {
     handle.current = window.setInterval(() => {
@@ -40,7 +48,7 @@ export function Clock() {
   }, [])
 
   useEffect(() => {
-    ConnectionManager.getInstance().ensureGlobalIsConnected()
+    connManager.ensureGlobalIsConnected()
 
     function onRoundStart() {
       const duration = selectRoundDuration(store.getState())
