@@ -2,9 +2,19 @@ import { useEffect, useState } from "react"
 import { ConnectionManager } from "../../../classes/ConnectionManager"
 import { sockets } from "../../../global"
 import { LuHash } from "react-icons/lu"
+import { getRoundsCountRequest } from "../../restore/restoreApi"
 
 export function RoundsCount() {
   const [text, setText] = useState("")
+
+  useEffect(() => {
+    ;(async () => {
+      const res = await getRoundsCountRequest()
+      const body = (await res.json()) as { started: number; max: number }
+
+      setText(`${body.started}/${body.max}`)
+    })()
+  }, [])
 
   useEffect(() => {
     ConnectionManager.getInstance().ensureGlobalIsConnected()

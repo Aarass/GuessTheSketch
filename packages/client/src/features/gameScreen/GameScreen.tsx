@@ -2,56 +2,52 @@ import { useEffect, useRef } from "react"
 import { useNavigate } from "react-router"
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
 import { ConnectionManager } from "../../classes/ConnectionManager"
+import { sockets } from "../../global"
 import { Chat } from "../chat/Chat"
-import { LogoutButton } from "../global/Logout"
 import { Leaderboard } from "../leaderboard/Leaderboard"
 import { selectRoomId, tryRestore } from "../rooms/RoomSlice"
 import { Canvas } from "./Canvas"
-import { selectIsMyTeamOnMove } from "./GameScreenSlice"
+import { Clock } from "./clock/Clock"
+import {
+  selectIsMyTeamOnMove,
+  tryRestoreConfig,
+  tryRestoreLeaderboard,
+  tryRestoreTeamOnMove,
+} from "./GameScreenSlice"
+import { GameState } from "./GameState"
+import { RoundsCount } from "./rounds/RoundsCount"
 import { Tools } from "./Tools"
 import { Word } from "./wordToGuess/Word"
-import { sockets } from "../../global"
-import { Clock } from "./clock/Clock"
-import { RoundsCount } from "./rounds/RoundsCount"
 
 /**
  * myId must be set when mounting this component
  */
 export const GameScreen = () => {
-  const dispatch = useAppDispatch()
   const navigate = useNavigate()
 
   const roomId = useAppSelector(selectRoomId)
   const isMyTeamOnMove = useAppSelector(selectIsMyTeamOnMove)
 
-  const sentRestoreRequest = useRef(false)
+  useRestore()
 
   useEffect(() => {
-    if (!roomId) {
-      // Ako udje u ovaj if znaci da je refreshana stranica
+    function onRoundEnded() {
+      GameState.getInstance().reset()
+    }
 
-      console.log("nema configa")
-
-      if (!sentRestoreRequest.current) {
-        sentRestoreRequest.current = true
-
-        dispatch(tryRestore())
-      }
-      return
+    function onGameEnded() {
+      navigate("/end")
     }
 
     ConnectionManager.getInstance().ensureGlobalIsConnected()
 
+    sockets.global!.on("round ended", onRoundEnded)
     sockets.global!.on("game ended", onGameEnded)
-
     return () => {
+      sockets.global?.off("round ended", onRoundEnded)
       sockets.global?.off("game ended", onGameEnded)
     }
-  }, [roomId])
-
-  function onGameEnded() {
-    navigate("/end")
-  }
+  }, [])
 
   const canCreateSocketConnection = !!roomId
 
@@ -78,39 +74,59 @@ export const GameScreen = () => {
   )
 }
 
-function DebugButtons() {
-  const navigate = useNavigate()
+function useRestore() {
+  const dispatch = useAppDispatch()
 
-  return (
-    <div className="flex">
-      <button
-        onClick={() => {
-          navigate("/rooms")
-        }}
-      >
-        Rooms
-      </button>
+  const sentRestoreRequest = useRef(false)
 
-      <button
-        onClick={() => {
-          navigate("/lobby")
-        }}
-      >
-        Lobby
-      </button>
+  const roomId = useAppSelector(selectRoomId)
 
-      <LogoutButton />
-    </div>
-  )
+  useEffect(() => {
+    // Ako udje u ovaj if znaci da je refreshana stranica
+    if (roomId === undefined) {
+      if (!sentRestoreRequest.current) {
+        sentRestoreRequest.current = true
+
+        dispatch(tryRestore())
+      }
+    }
+  }, [roomId])
+
+  useEffect(() => {
+    if (!roomId) return
+
+    if (sentRestoreRequest.current) {
+      dispatch(tryRestoreConfig())
+      dispatch(tryRestoreLeaderboard())
+      dispatch(tryRestoreTeamOnMove())
+
+      GameState.getInstance().tryRestoreDrawings()
+    }
+  }, [roomId])
 }
 
-// <div className="w-full flex justify-between">
-//   <div className="relative">
-//     <div className="absolute flex gap-8 mx-40">
-//       <Clock />
-//       <RoundsCount />
+// function DebugButtons() {
+//   const navigate = useNavigate()
+//
+//   return (
+//     <div className="flex">
+//       <button
+//         onClick={() => {
+//           navigate("/rooms")
+//         }}
+//       >
+//         Rooms
+//       </button>
+//
+//       <button
+//         onClick={() => {
+//           navigate("/lobby")
+//         }}
+//       >
+//         Lobby
+//       </button>
+//
+//       <LogoutButton />
 //     </div>
-//   </div>
-//   <Word />
-//   <div className="" />
-// </div>
+//   )
+// }

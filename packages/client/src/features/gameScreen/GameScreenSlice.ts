@@ -1,34 +1,34 @@
-import { createSelector, type PayloadAction } from "@reduxjs/toolkit"
 import type {
   Leaderboard,
   ProcessedGameConfig,
-  RoundReplay,
   TeamId,
 } from "@guessthesketch/common"
+import { createSelector, type PayloadAction } from "@reduxjs/toolkit"
 import { createAppSlice } from "../../app/createAppSlice"
 import { logout, selectMyId } from "../auth/AuthSlice"
-import { sockets } from "../../global"
-import { ConnectionManager } from "../../classes/ConnectionManager"
-import { refresh as restoreDrawingsRequest } from "./replayApi"
-import { GameState } from "./GameState"
+import {
+  getConfigRequest,
+  getLeaderboardRequest,
+  getTeamOnMoveRequest,
+} from "../restore/restoreApi"
 
 export interface GameScreenState {
   config: ProcessedGameConfig | undefined
+  leaderboard: Leaderboard | undefined
   teamOnMove: TeamId | undefined | null
   // TODO ovo pomeriti odavde
   // -------------------------------
   color: string
   size: number
   // -------------------------------
-  leaderboard: Leaderboard | undefined
 }
 
 const initialState: GameScreenState = {
   config: undefined,
+  leaderboard: undefined,
   teamOnMove: undefined,
   color: "#FFFFFF",
   size: 7,
-  leaderboard: undefined,
 }
 
 export const gameScreenSlice = createAppSlice({
@@ -57,39 +57,45 @@ export const gameScreenSlice = createAppSlice({
       },
     ),
 
-    tryRestore: create.asyncThunk(
-      async (_, { dispatch }) => {
-        ConnectionManager.getInstance().ensureGlobalIsConnected()
+    tryRestoreConfig: create.asyncThunk(
+      async () => {
+        const res = await getConfigRequest()
+        const config = (await res.json()) as ProcessedGameConfig
 
-        const { config, teamOnMove } = await sockets
-          .global!.timeout(1000)
-          .emitWithAck("restore")
-
-        if (teamOnMove) {
-          dispatch(restoreDrawings())
-        }
-
-        return [config, teamOnMove] as const
+        return config
       },
       {
         fulfilled: (state, action) => {
-          const [config, teamOnMove] = action.payload
-
-          state.config = config
-          state.teamOnMove = teamOnMove
+          state.config = action.payload
         },
       },
     ),
-    restoreDrawings: create.asyncThunk(
+    tryRestoreLeaderboard: create.asyncThunk(
       async () => {
-        const res = await restoreDrawingsRequest()
-        const replay = (await res.json()) as RoundReplay
+        const res = await getLeaderboardRequest()
+        const leaderboard = (await res.json()) as Leaderboard
 
-        return replay
+        return leaderboard
       },
       {
-        fulfilled: (_, action) => {
-          GameState.getInstance().prependDrawings(action.payload)
+        fulfilled: (state, action) => {
+          state.leaderboard = action.payload
+        },
+      },
+    ),
+    tryRestoreTeamOnMove: create.asyncThunk(
+      async () => {
+        const res = await getTeamOnMoveRequest()
+        const body = (await res.json()) as { teamId: TeamId | null }
+
+        return body.teamId
+      },
+      {
+        fulfilled: (state, action) => {
+          const teamId = action.payload
+          if (teamId !== null) {
+            state.teamOnMove = teamId
+          }
         },
       },
     ),
@@ -116,8 +122,9 @@ export const {
   setSize,
   setTeamOnMove,
   setConfig,
-  tryRestore,
-  restoreDrawings,
+  tryRestoreConfig,
+  tryRestoreLeaderboard,
+  tryRestoreTeamOnMove,
   setLeaderboard,
 } = gameScreenSlice.actions
 

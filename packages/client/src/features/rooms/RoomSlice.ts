@@ -1,17 +1,15 @@
 import { Player, PlayerId, RoomId } from "@guessthesketch/common"
 import { PayloadAction } from "@reduxjs/toolkit"
 import { createAppSlice } from "../../app/createAppSlice"
-import { tryRestore as tryRestoreFurther } from "../gameScreen/GameScreenSlice"
-import { sockets } from "../../global"
 import { logout } from "../auth/AuthSlice"
 import {
   createRoom as createRoomRequest,
   joinRoom as joinRoomRequest,
-  tryRefresh as tryRefreshRequest,
+  tryRefreshRoom as tryRefreshRoomRequest,
 } from "./roomsApi"
 
 const initialState = {
-  roomId: null as RoomId | null,
+  roomId: undefined as RoomId | null | undefined,
   ownerId: null as PlayerId | null,
   players: [] as Player[],
 }
@@ -47,11 +45,8 @@ export const roomSlice = createAppSlice({
       },
     ),
     tryRestore: create.asyncThunk(
-      async (_, { dispatch }) => {
-        const { ownerId, roomId } = await tryRefreshRequest()
-
-        dispatch(tryRestoreFurther())
-
+      async () => {
+        const { ownerId, roomId } = await tryRefreshRoomRequest()
         return [roomId, ownerId] as const
       },
       {
@@ -60,6 +55,9 @@ export const roomSlice = createAppSlice({
 
           state.ownerId = ownerId
           state.roomId = roomId
+        },
+        rejected: state => {
+          state.roomId = null
         },
       },
     ),

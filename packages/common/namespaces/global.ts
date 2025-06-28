@@ -13,12 +13,6 @@ import type {
 interface ClientToServerEvents {
   ready: () => void;
   "start game": (config: GameConfig) => void;
-  restore: (
-    callback: (payload: {
-      config: GameConfig;
-      teamOnMove: TeamId | null;
-    }) => void,
-  ) => void;
 }
 
 interface ServerToClientEvents {

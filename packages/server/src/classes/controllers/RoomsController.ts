@@ -4,9 +4,10 @@ import { Room } from "../Room";
 import type { JoinRoomResult, RoomId } from "@guessthesketch/common";
 import { Controller } from "./Controller";
 import type { RequestHandler } from "express";
+import createHttpError from "http-errors";
 
 export class RoomsController extends Controller {
-  constructor() {
+  constructor(private state: GlobalState) {
     super();
 
     this.router.post("/rooms", authenticate, this.createRoomHandler);
@@ -14,49 +15,55 @@ export class RoomsController extends Controller {
     this.router.post("/rooms/refresh", authenticate, this.refreshHandler);
   }
 
-  // eslint-disable-next-line @typescript-eslint/require-await
-  private createRoomHandler: RequestHandler = async (req, res) => {
+  private createRoomHandler: RequestHandler = (req, res) => {
     const ownerId = req.session.userId;
     const room = new Room(this.ctx, ownerId);
-    GlobalState.getInstance().addRoom(room);
+
+    this.state.addRoom(room);
 
     res.send({ roomId: room.id });
   };
 
-  // eslint-disable-next-line @typescript-eslint/require-await
-  private joinRoomHandler: RequestHandler = async (req, res) => {
-    const roomId = req.params["id"];
-    const room = GlobalState.getInstance().getRoomById(roomId as RoomId);
+  private joinRoomHandler: RequestHandler = async (req, res, next) => {
+    const userId = req.session.userId;
+    const user = await this.ctx.userService.getUserById(userId);
 
-    if (room) {
-      const result: JoinRoomResult = {
-        roomId: room.id,
-        ownerId: room.ownerId,
-      };
-
-      req.session.roomId = roomId as RoomId;
-      res.send(result);
-
-      console.log("User joined room via http");
-    } else {
-      console.log("No room found");
-      res.sendStatus(400);
+    if (user === null) {
+      next(createHttpError(400, "User is null"));
+      return;
     }
+
+    const roomId = req.params["id"];
+    const room = this.state.getRoomById(roomId as RoomId);
+
+    if (room === null) {
+      next(createHttpError(400, "No room found"));
+      return;
+    }
+
+    const result: JoinRoomResult = {
+      roomId: room.id,
+      ownerId: room.ownerId,
+    };
+
+    room.addPlayer(userId, user.username);
+
+    req.session.roomId = roomId as RoomId;
+    res.send(result);
+
+    console.log("User joined room via http");
   };
 
-  // eslint-disable-next-line @typescript-eslint/require-await
   private refreshHandler: RequestHandler = async (req, res) => {
-    console.warn("refreshHandler u room");
     const userId = req.session.userId;
     const roomId = req.session.roomId;
-    req.session.save();
 
     if (!roomId) {
       res.sendStatus(400);
       return;
     }
 
-    const room = GlobalState.getInstance().getRoomById(roomId);
+    const room = this.state.getRoomById(roomId);
     if (!room) {
       res.sendStatus(400);
       return;
@@ -70,10 +77,9 @@ export class RoomsController extends Controller {
 
     room.addPlayer(userId, user.username);
 
-    const result: JoinRoomResult = {
+    res.send({
       roomId: room.id,
       ownerId: room.ownerId,
-    };
-    res.send(result);
+    } satisfies JoinRoomResult);
   };
 }

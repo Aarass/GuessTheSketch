@@ -17,6 +17,10 @@ import { Circle } from "./classes/tools/concrete/Circle";
 import { createUserRepository } from "./repositories/UserRepository";
 import { createMockWordRepository } from "./repositories/WordRepository";
 import { Bucket } from "./classes/tools/concrete/Bucket";
+import { GlobalState } from "./classes/states/GlobalState";
+import { RestoreController } from "./classes/controllers/RestoreController";
+
+const state = GlobalState.getInstance();
 
 const toolRegistry = ToolRegistry.getInstance();
 toolRegistry.registerTool(Pen.toolType, Pen);
@@ -37,9 +41,10 @@ const persistanceService = new PersistanceService();
 
 const controllers = [
   new AuthController(),
-  new RoomsController(),
+  new RoomsController(state),
   new WordsController(),
-  new ReplayController(),
+  new ReplayController(state),
+  new RestoreController(state),
 ];
 
 const ctx = new AppContext(

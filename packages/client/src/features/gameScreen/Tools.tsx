@@ -24,6 +24,7 @@ import { RectTool } from "../../classes/tools/concrete/Rect"
 import { HSVtoRGB, RGBtoHexString } from "../../utils/colors"
 import { sketch } from "./Canvas"
 import { selectColor, selectSize, setColor, setSize } from "./GameScreenSlice"
+import { GameState } from "./GameState"
 
 /**
  * myId and roomId must be set
@@ -148,18 +149,20 @@ export const SelectColor = () => {
 export const SelectTool = () => {
   const [buttons, setButtons] = useState([] as [Command, JSX.Element][])
 
+  const state = GameState.getInstance()
+
   useEffect(() => {
     if (sketch == null) return
 
     setButtons([
-      [new DeselectTool(), <LuCircleX />],
-      [new SelectToolCommand(PenTool, sketch), <LuPen />],
-      [new SelectToolCommand(RectTool, sketch), <LuRectangleHorizontal />],
-      [new SelectToolCommand(CircleTool, sketch), <LuCircle />],
-      [new SelectToolCommand(LineTool, sketch), <TbLine />],
-      [new SelectToolCommand(FloodFillTool, sketch), <LuPaintBucket />],
-      [new SelectToolCommand(PipetteTool, sketch), <LuPipette />],
-      [new UndoCommand(), <LuUndo2 />],
+      [new DeselectTool(state), <LuCircleX />],
+      [new SelectToolCommand(PenTool, sketch, state), <LuPen />],
+      [new SelectToolCommand(RectTool, sketch, state), <LuRectangleHorizontal />],
+      [new SelectToolCommand(CircleTool, sketch, state), <LuCircle />],
+      [new SelectToolCommand(LineTool, sketch, state), <TbLine />],
+      [new SelectToolCommand(FloodFillTool, sketch, state), <LuPaintBucket />],
+      [new SelectToolCommand(PipetteTool, sketch, state), <LuPipette />],
+      [new UndoCommand(state), <LuUndo2 />],
       // [new DeleteAllCommand(), <LuTrash2 />],
     ])
   }, [sketch])

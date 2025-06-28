@@ -18,7 +18,7 @@ export abstract class Tool {
 
   constructor(
     protected sketch: p5,
-    protected gameState = GameState.getInstance(),
+    protected gameState: GameState,
   ) {}
 
   showTmpDrawing(drawing: DrawingInFly) {

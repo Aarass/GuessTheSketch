@@ -3,14 +3,16 @@ import { authenticate } from "../../middlewares/express/authenticate";
 import { GlobalState } from "../states/GlobalState";
 import { Controller } from "./Controller";
 
+// TODO
+// u sred sam refactoringa, ne znam da li je ovo okej, da li ovaj handler treba da bude tu
 export class ReplayController extends Controller {
-  constructor() {
+  constructor(private state: GlobalState) {
     super();
 
-    this.router.get("/replay/refresh", authenticate, this.refreshHandler);
+    this.router.get("/replay/round", authenticate, this.roundReplayHandler);
   }
 
-  private refreshHandler: RequestHandler = async (req, res) => {
+  private roundReplayHandler: RequestHandler = async (req, res) => {
     const roomId = req.session.roomId;
 
     if (!roomId) {
@@ -18,7 +20,7 @@ export class ReplayController extends Controller {
       return;
     }
 
-    const room = GlobalState.getInstance().getRoomById(roomId);
+    const room = this.state.getRoomById(roomId);
 
     if (!room) {
       res.sendStatus(400);

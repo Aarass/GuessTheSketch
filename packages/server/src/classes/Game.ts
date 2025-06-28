@@ -36,6 +36,7 @@ export class Game {
     return this._currentRound;
   }
   private startedRounds = 0;
+  private startedRoundTimestamp: number | null = null;
   private endRoundTimer: Timer | null = null;
 
   private leaderboard: Leaderboard;
@@ -145,6 +146,8 @@ export class Game {
     this._currentRound = this.roundFactory.createRound();
     await this._currentRound.start();
 
+    this.startedRoundTimestamp = Date.now();
+
     this.endRoundTimer = setTimeout(() => {
       this.roundEnded();
     }, this.roundDuration);
@@ -153,8 +156,12 @@ export class Game {
     console.log("Round started");
 
     const teamOnMove = this.teams[this.currentTeamIndex];
+    const guessingManager = this._currentRound.guessingManager;
 
-    this.messagingCenter.notifyRoundStarted(this.room.id, teamOnMove);
+    this.messagingCenter.notifyRoundStarted(this.room.id, teamOnMove, {
+      unmasked: guessingManager.getWord(false)!,
+      masked: guessingManager.getWord(true)!,
+    });
     this.messagingCenter.notifyRoundsCount(
       this.room.id,
       this.startedRounds,
@@ -225,6 +232,32 @@ export class Game {
       }
     }
     return null;
+  }
+
+  public getLeaderboard() {
+    return this.leaderboard;
+  }
+
+  public getTimeLeft() {
+    if (this.currentRound === null) {
+      return null;
+    }
+
+    if (this.startedRoundTimestamp === null) {
+      throw new Error(`This should not happen`);
+    }
+
+    const elapsed = Date.now() - this.startedRoundTimestamp;
+    const left = this.roundDuration - elapsed;
+
+    return left;
+  }
+
+  public getRoundsCount() {
+    return {
+      started: this.startedRounds,
+      max: this.maxRounds,
+    };
   }
 
   // TODO

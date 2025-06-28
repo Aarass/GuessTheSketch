@@ -56,9 +56,13 @@ export class MessagingCenter {
     this.namespaces.chat.notifyGameEnded(room, teamIds);
   }
 
-  public notifyRoundStarted(room: RoomId, teamOnMove: Team) {
+  public notifyRoundStarted(
+    room: RoomId,
+    teamOnMove: Team,
+    word: { masked: string; unmasked: string },
+  ) {
     this.namespaces.global.notifyRoundStarted(room, teamOnMove.id);
-    this.namespaces.chat.notifyRoundStarted(room, teamOnMove);
+    this.namespaces.chat.notifyRoundStarted(room, teamOnMove, word);
   }
 
   public notifyRoundsCount(

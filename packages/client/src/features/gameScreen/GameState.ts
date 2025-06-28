@@ -1,5 +1,11 @@
-import { Drawing, DrawingInFly, NewDrawing } from "@guessthesketch/common"
+import {
+  Drawing,
+  DrawingInFly,
+  NewDrawing,
+  RoundReplay,
+} from "@guessthesketch/common"
 import { Tool } from "../../classes/tools/Tool"
+import { getDrawingsRequest } from "../restore/restoreApi"
 
 export class GameState {
   currentTool: Tool | null = null
@@ -39,6 +45,14 @@ export class GameState {
     this.unconfirmedDrawings = new UnconfirmedDrawings()
     this.drawingInFly = null
     this.deleteFlag = true
+  }
+
+  async tryRestoreDrawings() {
+    try {
+      const res = await getDrawingsRequest()
+      const replay = (await res.json()) as RoundReplay
+      this.prependDrawings(replay)
+    } catch {}
   }
 
   private static instance: GameState | null = null

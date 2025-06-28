@@ -7,14 +7,10 @@ import {
   type PlayerId,
   type ProcessedGameConfig,
   type RoomId,
-  type RoundReport,
   type RoundReportWithWord,
   type TeamId,
 } from "@guessthesketch/common";
-import {
-  runWithContextUpToGame,
-  runWithContextUpToRoom,
-} from "../../utility/extractor";
+import { runWithContextUpToRoom } from "../../utility/extractor";
 import type { GuardedSocket } from "../../utility/guarding";
 import type { ExtractSocketType } from "../../utility/socketioTyping";
 import type { Room } from "../Room";
@@ -28,7 +24,6 @@ export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
     this.onConnectionHandler(socket).catch(console.error);
 
     socket.on("ready", this.getOnReadyHandler(socket));
-    socket.on("restore", this.getOnRestoreHandler(socket));
     socket.on("start game", this.getOnStartGameHandler(socket));
     socket.on("disconnect", this.getOnDisconnectHandler(socket));
   }
@@ -81,8 +76,6 @@ export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
         return;
       }
 
-      room.addPlayer(userId, user.username);
-
       socket.to(room.id).emit("player joined room", {
         id: userId,
         name: user.username,
@@ -102,26 +95,6 @@ export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
       runWithContextUpToRoom(socket, (_, room) => {
         const allPlayers = room.getAllPlayers();
         socket.emit("sync players", allPlayers);
-      });
-    };
-  }
-
-  private getOnRestoreHandler(
-    socket: GuardedSocket<ExtractSocketType<GlobalNamespaceType>>,
-  ) {
-    return async (
-      callback: (payload: {
-        config: ProcessedGameConfig;
-        teamOnMove: TeamId | null;
-      }) => void,
-    ) => {
-      console.warn(`=========== In Restore ===========`);
-
-      runWithContextUpToGame(socket, (_, _room, game) => {
-        const config = game.getProcessedConfig();
-        const teamOnMove = game.getTeamOnMove();
-
-        callback({ config, teamOnMove: teamOnMove?.id ?? null });
       });
     };
   }

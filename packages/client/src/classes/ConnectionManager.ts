@@ -3,7 +3,6 @@ import {
   Player,
   PlayerId,
   ProcessedGameConfig,
-  RoundReport,
   TeamId,
 } from "@guessthesketch/common"
 import { io } from "socket.io-client"
@@ -13,6 +12,7 @@ import {
   setLeaderboard,
   setTeamOnMove,
 } from "../features/gameScreen/GameScreenSlice"
+import { GameState } from "../features/gameScreen/GameState"
 import {
   ownerChanged,
   playerJoined,
@@ -20,7 +20,6 @@ import {
   syncPlayers,
 } from "../features/rooms/RoomSlice"
 import { backend, sockets } from "../global"
-import { GameState } from "../features/gameScreen/GameState"
 
 export class ConnectionManager {
   public ensureGlobalIsConnected() {
@@ -111,7 +110,6 @@ function onRoundStarted(teamOnMove: TeamId) {
 
 function onRoundEnded() {
   store.dispatch(setTeamOnMove(null))
-  GameState.getInstance().reset()
 }
 
 function onLeaderboard(leaderboard: Leaderboard) {

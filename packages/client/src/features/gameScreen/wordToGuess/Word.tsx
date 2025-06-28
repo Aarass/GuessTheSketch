@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { ConnectionManager } from "../../../classes/ConnectionManager"
 import { sockets } from "../../../global"
-import { MakeGetCurrentWordRequest } from "./WordApi"
+import { getCurrectWordRequest } from "../../restore/restoreApi"
 
 /**
  * myId and roomId must be set
@@ -36,7 +36,8 @@ export function Word() {
   }
 
   async function getCurrentWord() {
-    const res = await MakeGetCurrentWordRequest()
+    const res = await getCurrectWordRequest()
+
     const body = (await res.json()) as { word: string | null }
 
     return body.word

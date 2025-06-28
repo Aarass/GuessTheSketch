@@ -14,17 +14,8 @@ import {
 import type { GuardedSocket } from "../../utility/guarding";
 import type { ExtractSocketType } from "../../utility/socketioTyping";
 import { NamespaceClass } from "./Base";
-import { GlobalState } from "../states/GlobalState";
 
 export class ChatNamespace extends NamespaceClass<ChatNamespaceType> {
-  // Zato ovo radim posebno za svakog igraca na onConnect tj. u registerHandlers.
-  // Ipak, mislim da postoji minimalna sansa da ovo bude korisno:
-  // Ako se pokrene novi game u istoj sobi, a konekcije onstanu zive, onConnect se nece desiti,
-  // pa ce onda ovo ovde imati posla. Dakle, sve zavisi od implementacije na frontendu. Ipak,
-  // najbolje je da pokrijemo sve slucajeve i ne oslanjamo se na frontend.
-  //// ----------------------------------
-  /**/
-
   registerHandlers(
     socket: GuardedSocket<ExtractSocketType<ChatNamespaceType>>,
   ) {
@@ -67,24 +58,21 @@ export class ChatNamespace extends NamespaceClass<ChatNamespaceType> {
     this.clearTeamRooms(room, teamIds);
   }
 
-  public notifyRoundStarted(room: RoomId, teamOnMove: Team) {
+  public notifyRoundStarted(
+    room: RoomId,
+    teamOnMove: Team,
+    word: { masked: string; unmasked: string },
+  ) {
     this.clearUnrestrictedRoom(room);
     this.addTeamToUnrestrictedRoom(room, teamOnMove.id);
 
-    const ur = this.getUnrestrictedRoomName(room);
-    const guessingManager =
-      GlobalState.getInstance().getRoomById(room)?.currentGame?.currentRound!
-        .guessingManager;
+    const unrestrictedRoomName = this.getUnrestrictedRoomName(room);
 
-    if (!guessingManager) {
-      return;
-    }
-
-    this.namespace.to(ur).emit("word", guessingManager.getWord(false)!);
+    this.namespace.to(unrestrictedRoomName).emit("word", word.unmasked);
     this.namespace
       .to(room)
-      .except(ur)
-      .emit("word", guessingManager.getWord(true)!);
+      .except(unrestrictedRoomName)
+      .emit("word", word.masked);
   }
 
   public notifyRoundEnded(_room: RoomId) {

@@ -3,11 +3,12 @@ import { sockets } from "../../../global"
 import { Command } from "../command"
 
 export class UndoCommand extends Command {
+  constructor(private gameState: GameState) {
+    super()
+  }
   override async execute() {
-    const gameState = GameState.getInstance()
-
     const work = async () => {
-      const drawingToDelete = gameState.confirmedDrawings.at(-1)
+      const drawingToDelete = this.gameState.confirmedDrawings.at(-1)
       if (!drawingToDelete) return
 
       // TODO opet mozda nesto optimistic
@@ -19,10 +20,10 @@ export class UndoCommand extends Command {
       }
     }
 
-    if (gameState.unconfirmedDrawings.getAll().length === 0) {
+    if (this.gameState.unconfirmedDrawings.getAll().length === 0) {
       work()
     } else {
-      gameState.unconfirmedDrawings.onEmptyOnce(work)
+      this.gameState.unconfirmedDrawings.onEmptyOnce(work)
     }
   }
 
