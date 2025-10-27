@@ -6,7 +6,7 @@ import {
 import { Round } from "./Round";
 import { ToolBuilder } from "./tools/ToolBuilder";
 import type { AppContext } from "./AppContext";
-import { ToolState } from "./states/ToolState";
+import { createToolState, ToolState } from "./states/ToolState";
 
 type ToolStates = Record<ToolType, ToolState>;
 
@@ -22,7 +22,7 @@ export class RoundFactory {
   createRound(): Round {
     const toolStates: Partial<ToolStates> = {};
     for (const type of toolTypes) {
-      toolStates[type] = new ToolState(this.config[type]);
+      toolStates[type] = createToolState(this.config[type]);
     }
 
     return new Round(

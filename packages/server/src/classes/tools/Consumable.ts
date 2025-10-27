@@ -5,6 +5,8 @@ import type {
 } from "@guessthesketch/common";
 import { err, type Result } from "neverthrow";
 import { Tool } from "./Tool";
+import { ConsumableStateComponent } from "../states/ToolState";
+import { assert } from "../../utility/dbg";
 
 // -----------------
 // --- Decorator ---
@@ -29,10 +31,17 @@ export class ConsumableTool extends Tool {
     drawing: UnvalidatedNewDrawingWithType,
   ): Result<Drawing, string> {
     const toolState = this.manager.getToolState(this.toolType);
+    const comp = toolState.findComponent(ConsumableStateComponent);
 
-    if (toolState.timesUsed >= this.maxUses) {
+    assert(comp);
+
+    if (comp.state.timesUsed >= this.maxUses) {
       return err(`Tool consumed`);
     }
+
+    comp.set((s) => ({
+      timesUsed: s.timesUsed + 1,
+    }));
 
     return this.wrappee.use(drawing);
   }

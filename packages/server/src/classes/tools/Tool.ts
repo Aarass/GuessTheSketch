@@ -22,9 +22,6 @@ export abstract class Tool {
   // --- Template method ---
   // -----------------------
   use(drawing: UnvalidatedNewDrawingWithType): Result<Drawing, string> {
-    const toolState = this.manager.getToolState(this.toolType);
-    toolState.timesUsed++;
-
     return ok({
       ...this.getDrawing(drawing),
       id: uuid() as DrawingId,
