@@ -1,4 +1,4 @@
-import type { ToolConfig } from "@guessthesketch/common";
+import type { ToolStateComponent } from "./tools/ToolStateComponent";
 
 export class ToolState {
   constructor(
@@ -23,66 +23,4 @@ export class ToolState {
       ...this.components.map((c) => c.getState()),
     );
   }
-}
-
-export abstract class ToolStateComponent {
-  abstract getState(): object;
-}
-
-interface ConsumableState {
-  timesUsed: number;
-}
-
-export class ConsumableStateComponent extends ToolStateComponent {
-  constructor(
-    public state: ConsumableState = {
-      timesUsed: 0,
-    },
-  ) {
-    super();
-  }
-
-  set(cb: (_: ConsumableState) => ConsumableState): void {
-    this.state = cb(this.state);
-  }
-
-  getState(): object {
-    return this.state;
-  }
-}
-
-interface TimeoutableState {
-  cooldowns: number[];
-}
-
-export class TimeoutableStateComponent extends ToolStateComponent {
-  constructor(
-    public state: TimeoutableState = {
-      cooldowns: [],
-    },
-  ) {
-    super();
-  }
-
-  set(cb: (_: TimeoutableState) => TimeoutableState): void {
-    this.state = cb(this.state);
-  }
-
-  getState(): object {
-    return this.state;
-  }
-}
-
-export function createToolState(config: ToolConfig) {
-  const components = [];
-
-  if (config.consumable) {
-    components.push(new ConsumableStateComponent());
-  }
-
-  if (config.timeoutable) {
-    components.push(new TimeoutableStateComponent());
-  }
-
-  return new ToolState(config.count, components);
 }

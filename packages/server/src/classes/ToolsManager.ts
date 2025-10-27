@@ -9,14 +9,18 @@ import { err, ok, Ok, Result } from "neverthrow";
 import { ToolState } from "./states/ToolState";
 import { Tool } from "./tools/Tool";
 import type { ToolBuilder } from "./tools/ToolBuilder";
+import type { ToolStatesBuilder } from "./states/tools/ToolStatesBuilder";
 
 export class ToolsManager {
   private inventory: Map<PlayerId, Tool> = new Map();
+  private toolStates: Record<ToolType, ToolState>;
 
   constructor(
     private toolBuilder: ToolBuilder,
-    private toolStates: Record<ToolType, ToolState>,
-  ) {}
+    toolStatesBuilder: ToolStatesBuilder,
+  ) {
+    this.toolStates = toolStatesBuilder.build();
+  }
 
   private attachTool(tool: Tool, playerId: PlayerId): Ok<void, never> {
     this.inventory.set(playerId, tool);

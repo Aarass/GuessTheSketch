@@ -5,8 +5,8 @@ import type {
 } from "@guessthesketch/common";
 import { err, type Result } from "neverthrow";
 import { Tool } from "./Tool";
-import { ConsumableStateComponent } from "../states/ToolState";
 import { assert } from "../../utility/dbg";
+import { ConsumableStateComponent } from "../states/tools/ConsumableState";
 
 // -----------------
 // --- Decorator ---

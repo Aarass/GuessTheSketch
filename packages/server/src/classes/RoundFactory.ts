@@ -1,34 +1,28 @@
-import {
-  toolTypes,
-  type ToolConfigs,
-  type ToolType,
-} from "@guessthesketch/common";
-import { Round } from "./Round";
-import { ToolBuilder } from "./tools/ToolBuilder";
+import { type ToolConfigs } from "@guessthesketch/common";
 import type { AppContext } from "./AppContext";
-import { createToolState, ToolState } from "./states/ToolState";
+import { Round } from "./Round";
+import { ToolStatesBuilder } from "./states/tools/ToolStatesBuilder";
+import { ToolBuilder } from "./tools/ToolBuilder";
 
-type ToolStates = Record<ToolType, ToolState>;
+// type ToolStates = Record<ToolType, ToolState>;
 
 export class RoundFactory {
   private cachedToolBuilder;
+  private cachedToolStatesBuilder;
+
   constructor(
-    private config: ToolConfigs,
+    config: ToolConfigs,
     private ctx: AppContext,
   ) {
     this.cachedToolBuilder = new ToolBuilder(config);
+    this.cachedToolStatesBuilder = new ToolStatesBuilder(config);
   }
 
   createRound(): Round {
-    const toolStates: Partial<ToolStates> = {};
-    for (const type of toolTypes) {
-      toolStates[type] = createToolState(this.config[type]);
-    }
-
     return new Round(
       this.ctx,
       this.cachedToolBuilder,
-      toolStates as ToolStates,
+      this.cachedToolStatesBuilder,
     );
   }
 }
