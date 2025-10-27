@@ -48,7 +48,7 @@ export class Game {
     private messagingCenter: MessagingCenter,
     private evaluator: Evaluator = new SimpleEvaluator(),
   ) {
-    this.roundFactory = new RoundFactory(config.tools, ctx);
+    this.roundFactory = new RoundFactory(config.tools, ctx, messagingCenter);
 
     this.teams = config.teams.map((teamConfig) => {
       return {

@@ -16,7 +16,8 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
   registerHandlers(
     socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
   ) {
-    this.blockOutOfTurnUsers(socket);
+    this.addPlayerToPlayerRoom(socket);
+    this.addBlockOutOfTurnUsersMiddleware(socket);
 
     socket.on("select tool", this.getOnSelectToolHandler(socket));
     socket.on("use tool", this.getOnUseToolHandler(socket));
@@ -49,7 +50,13 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
     this.namespace.to(room.id).emit("player deselected tool", userId, toolType);
   }
 
-  private blockOutOfTurnUsers(
+  public notifyToolDeactivated(playerId: PlayerId) {
+    this.namespace
+      .in(this.getPlayerRoomName(playerId))
+      .emit("tool deactivated");
+  }
+
+  private addBlockOutOfTurnUsersMiddleware(
     socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
   ) {
     socket.use((_event, next) => {
@@ -177,5 +184,15 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
         }
       });
     };
+  }
+
+  private addPlayerToPlayerRoom(
+    socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
+  ) {
+    void socket.join(this.getPlayerRoomName(socket.request.session.userId));
+  }
+
+  private getPlayerRoomName(playerId: PlayerId) {
+    return `user:${playerId}`;
   }
 }

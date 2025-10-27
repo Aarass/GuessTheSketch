@@ -83,6 +83,8 @@ export abstract class Tool {
     this.sketch.mousePressed = empty
     this.sketch.mouseClicked = empty
     this.sketch.mouseDragged = empty
+
+    this.gameState.drawingInFly = null
   }
 
   private helper(fn: (event: MouseEvent) => void) {

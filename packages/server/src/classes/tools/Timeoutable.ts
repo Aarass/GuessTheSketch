@@ -24,8 +24,14 @@ export class TimeoutableTool extends Tool {
   override init() {
     this.wrappee.init();
     setTimeout(() => {
-      const manager = this.manager;
-      manager.detachTool(this);
+      const playerId = this.manager.getToolsPlayer(this);
+
+      if (playerId) {
+        this.manager.detachTool(this);
+        this.manager.notifyToolDeactivated(playerId);
+      } else {
+        console.error("no playerId after detaching the tool");
+      }
 
       console.log("Released timeoutable tool");
 

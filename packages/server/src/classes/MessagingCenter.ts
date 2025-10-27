@@ -87,4 +87,8 @@ export class MessagingCenter {
     this.namespaces.drawings.notifyNewDrawing(room, drawing);
     this.persistanceService.notifyNewDrawing(room, game, round, drawing);
   }
+
+  public notifyToolDeactivated(playerId: PlayerId) {
+    this.namespaces.controls.notifyToolDeactivated(playerId);
+  }
 }

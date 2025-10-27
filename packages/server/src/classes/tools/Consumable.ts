@@ -39,8 +39,8 @@ export class ConsumableTool extends Tool {
       return err(`Tool consumed`);
     }
 
-    comp.set((s) => ({
-      timesUsed: s.timesUsed + 1,
+    comp.set((state) => ({
+      timesUsed: state.timesUsed + 1,
     }));
 
     return this.wrappee.use(drawing);

@@ -5,11 +5,12 @@ import {
   type ToolType,
   type UnvalidatedNewDrawingWithType,
 } from "@guessthesketch/common";
-import { err, ok, Ok, Result } from "neverthrow";
+import { Err, err, ok, Ok, Result } from "neverthrow";
 import { ToolState } from "./states/ToolState";
 import { Tool } from "./tools/Tool";
 import type { ToolBuilder } from "./tools/ToolBuilder";
 import type { ToolStatesBuilder } from "./states/tools/ToolStatesBuilder";
+import type { MessagingCenter } from "./MessagingCenter";
 
 export class ToolsManager {
   private inventory: Map<PlayerId, Tool> = new Map();
@@ -18,6 +19,7 @@ export class ToolsManager {
   constructor(
     private toolBuilder: ToolBuilder,
     toolStatesBuilder: ToolStatesBuilder,
+    private messagingCenter: MessagingCenter,
   ) {
     this.toolStates = toolStatesBuilder.build();
   }
@@ -116,7 +118,15 @@ export class ToolsManager {
     return this.inventory.get(playerId);
   }
 
+  public getToolsPlayer(tool: Tool): PlayerId | undefined {
+    return this.inventory.entries().find((entry) => entry[1] === tool)?.[0];
+  }
+
   public getToolState(toolType: ToolType): ToolState {
     return this.toolStates[toolType];
+  }
+
+  public notifyToolDeactivated(playerId: PlayerId) {
+    this.messagingCenter.notifyToolDeactivated(playerId);
   }
 }

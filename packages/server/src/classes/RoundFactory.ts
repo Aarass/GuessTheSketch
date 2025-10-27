@@ -3,6 +3,7 @@ import type { AppContext } from "./AppContext";
 import { Round } from "./Round";
 import { ToolStatesBuilder } from "./states/tools/ToolStatesBuilder";
 import { ToolBuilder } from "./tools/ToolBuilder";
+import type { MessagingCenter } from "./MessagingCenter";
 
 // type ToolStates = Record<ToolType, ToolState>;
 
@@ -13,6 +14,7 @@ export class RoundFactory {
   constructor(
     config: ToolConfigs,
     private ctx: AppContext,
+    private messagingCenter: MessagingCenter,
   ) {
     this.cachedToolBuilder = new ToolBuilder(config);
     this.cachedToolStatesBuilder = new ToolStatesBuilder(config);
@@ -23,6 +25,7 @@ export class RoundFactory {
       this.ctx,
       this.cachedToolBuilder,
       this.cachedToolStatesBuilder,
+      this.messagingCenter,
     );
   }
 }
