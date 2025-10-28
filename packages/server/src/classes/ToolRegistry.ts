@@ -33,10 +33,7 @@ export class ToolRegistry {
   }
 }
 
-type ToolConstructor = new (
-  manager: ToolsManager,
-  messagingCenter: MessagingCenter,
-) => Tool;
+type ToolConstructor = new (manager: ToolsManager) => Tool;
 
 type RegistryMap = Partial<{
   [key in ToolType]: ToolConstructor;

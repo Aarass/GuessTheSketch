@@ -80,14 +80,39 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
       toolType: ToolType,
       callback: (payload: { success: boolean }) => void,
     ) => {
-      runWithContextUpToRound(socket, (userId, room, _game, round) => {
+      runWithContextUpToRound(socket, (userId, _room, _game, round) => {
         console.log(`User ${userId} about to select tool`);
 
-        const result = round.toolsManager.selectTool(toolType, userId);
-        callback({ success: result.isOk() });
-        if (result.isOk()) {
-          this.notifyPlayerSelectedTool(room, userId, toolType);
+        // const result = round.toolsManager.selectTool(toolType, userId);
+
+        const prevTool = round.toolsManager.getPlayersTool(userId);
+
+        if (prevTool) {
+          console.warn(`User had some tool already selected`);
+          callback({ success: false });
+          return;
         }
+
+        const tool = round.toolBuilder.build(toolType, round.toolsManager);
+
+        if (tool.checkIfEnoughResources()) {
+          tool.takeResources();
+          tool.init();
+
+          round.toolsManager.attachTool(tool, userId);
+          callback({ success: true });
+          return;
+        } else {
+          console.warn(`No enough resources`);
+          callback({ success: false });
+          return;
+        }
+
+        // Ovo mislim da je ona stara ideja da obavestim ostale igrace da je korisnik selektovao tool.
+        // Mislim da mi vise nije potrebno, sada kada saljem svima tool state a korisniku koji je zahtevao select, saljem rezultat preko callbacka
+        // if (result.isOk()) {
+        //   this.notifyPlayerSelectedTool(room, userId, toolType);
+        // }
       });
     };
   }
@@ -96,28 +121,36 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
     socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
   ) {
     return (
-      drawing: UnvalidatedNewDrawing,
+      _drawing: UnvalidatedNewDrawing,
       callback: (payload: { success: boolean }) => void,
     ) => {
       runWithContextUpToRound(socket, (userId, room, game, round) => {
         console.log(`User ${userId} about to use tool`);
 
-        if (!drawing.type) {
+        if (!_drawing.type) {
           console.error("Validation error");
           return;
         }
+        const drawing = _drawing as UnvalidatedNewDrawingWithType;
 
-        const result = round.toolsManager.useTool(
-          userId,
-          drawing as UnvalidatedNewDrawingWithType,
-        );
+        const tool = round.toolsManager.getPlayersTool(userId);
+
+        if (tool === undefined) {
+          console.warn(`User tried to use tool, but has no selected tool`);
+          callback({ success: false });
+          return;
+        }
+
+        const result = tool.use(drawing);
 
         callback({ success: result.isOk() });
 
         if (result.isOk()) {
-          const [tool, drawing] = result.value;
+          const drawing = result.value;
 
-          this.notifyPlayerUsedTool(room, userId, tool.toolType);
+          // Ista prica
+          // this.notifyPlayerUsedTool(room, userId, tool.toolType);
+
           this.messagingCenter.notifyNewDrawing(
             room.id,
             game.id,
@@ -136,14 +169,21 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
       id: DrawingId,
       callback: (payload: { success: boolean }) => void,
     ) => {
-      runWithContextUpToRound(socket, (userId, room, game, round) => {
-        const result = round.toolsManager.useCommand(userId, {
-          id: "" as DrawingId,
+      runWithContextUpToRound(socket, (_userId, room, game, round) => {
+        // const result = round.toolsManager.useCommand(userId, {
+        const tool = round.toolBuilder.build("eraser", round.toolsManager);
+
+        const result = tool.use({
           type: "eraser",
           toDelete: id,
         });
 
+        // TODO
+        // mislim da je potrebno dodati check za resurse
+        // i potrebno je videti da li je potrebno kreirati neki escape hatch zbog npr. timeoutable eraser lupam. mozda samo zabraniti tu kombinaciju
+
         callback({ success: result.isOk() });
+
         if (result.isOk()) {
           this.messagingCenter.notifyNewDrawing(
             room.id,

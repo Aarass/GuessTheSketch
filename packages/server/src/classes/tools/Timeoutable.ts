@@ -18,7 +18,7 @@ export class TimeoutableTool extends Tool {
     private useTime: number,
     private cooldownTime: number,
   ) {
-    super(wrappee.manager, wrappee.messagingCenter);
+    super(wrappee.manager);
 
     this.toolType = this.wrappee.toolType;
   }
@@ -30,7 +30,7 @@ export class TimeoutableTool extends Tool {
 
       if (playerId) {
         this.manager.detachTool(this);
-        this.messagingCenter.notifyToolDeactivated(playerId);
+        // this.messagingCenter.notifyToolDeactivated(playerId);
       } else {
         console.error("no playerId after detaching the tool");
       }

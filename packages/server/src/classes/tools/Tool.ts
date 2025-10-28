@@ -9,15 +9,11 @@ import { v4 as uuid } from "uuid";
 import type { ToolsManager } from "../ToolsManager";
 import { BaseStateComponent } from "../states/tools/BaseState";
 import { assert } from "../../utility/dbg";
-import type { MessagingCenter } from "../MessagingCenter";
 
 export abstract class Tool {
   abstract readonly toolType: ToolType;
 
-  constructor(
-    public manager: ToolsManager,
-    public messagingCenter: MessagingCenter,
-  ) {}
+  constructor(public manager: ToolsManager) {}
 
   /**
    * Init is called once a tool is attached and ready.

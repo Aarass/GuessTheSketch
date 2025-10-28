@@ -1,10 +1,9 @@
 import type { ToolConfigs, ToolType } from "@guessthesketch/common";
-import type { ToolsManager } from "../ToolsManager";
 import { ToolRegistry } from "../ToolRegistry";
+import type { ToolsManager } from "../ToolsManager";
 import { ConsumableTool } from "./Consumable";
 import { TimeoutableTool } from "./Timeoutable";
 import { Tool } from "./Tool";
-import type { MessagingCenter } from "../MessagingCenter";
 
 export class ToolBuilder {
   constructor(private toolConfigs: ToolConfigs) {}
@@ -12,9 +11,9 @@ export class ToolBuilder {
   build(
     type: ToolType,
     manager: ToolsManager,
-    messagingCenter: MessagingCenter,
+    // messagingCenter: MessagingCenter,
   ): Tool {
-    let tool = ToolBuilder.getBaseTool(type, manager, messagingCenter);
+    let tool = ToolBuilder.getBaseTool(type, manager);
 
     const config = this.toolConfigs[type];
     console.log(config);
@@ -34,12 +33,8 @@ export class ToolBuilder {
     return tool;
   }
 
-  private static getBaseTool(
-    type: ToolType,
-    manager: ToolsManager,
-    messagingCenter: MessagingCenter,
-  ) {
+  private static getBaseTool(type: ToolType, manager: ToolsManager) {
     const constructor = ToolRegistry.getInstance().getToolConstructor(type);
-    return new constructor(manager, messagingCenter);
+    return new constructor(manager);
   }
 }

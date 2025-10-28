@@ -18,7 +18,7 @@ export class Round {
   constructor(
     roomId: RoomId,
     ctx: AppContext,
-    toolBuilder: ToolBuilder,
+    public toolBuilder: ToolBuilder,
     toolStatesBuilder: ToolStatesBuilder,
     messagingCenter: MessagingCenter,
   ) {
@@ -27,7 +27,7 @@ export class Round {
     const states = toolStatesBuilder.build();
     bootstrapCommunication(roomId, states, messagingCenter);
 
-    this.toolsManager = new ToolsManager(toolBuilder, states, messagingCenter);
+    this.toolsManager = new ToolsManager(states);
   }
 
   public async start() {

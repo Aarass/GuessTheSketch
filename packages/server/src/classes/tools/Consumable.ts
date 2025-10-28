@@ -18,7 +18,7 @@ export class ConsumableTool extends Tool {
     private wrappee: Tool,
     private maxUses: number,
   ) {
-    super(wrappee.manager, wrappee.messagingCenter);
+    super(wrappee.manager);
 
     this.toolType = this.wrappee.toolType;
   }
