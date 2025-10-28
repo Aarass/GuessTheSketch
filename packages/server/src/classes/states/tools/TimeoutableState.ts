@@ -4,20 +4,12 @@ interface TimeoutableState {
   cooldowns: number[];
 }
 
-export class TimeoutableStateComponent extends ToolStateComponent {
+export class TimeoutableStateComponent extends ToolStateComponent<TimeoutableState> {
   constructor(
-    public state: TimeoutableState = {
+    state: TimeoutableState = {
       cooldowns: [],
     },
   ) {
-    super();
-  }
-
-  set(cb: (_: TimeoutableState) => TimeoutableState): void {
-    this.state = cb(this.state);
-  }
-
-  getState(): object {
-    return this.state;
+    super(state);
   }
 }

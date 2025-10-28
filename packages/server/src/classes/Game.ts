@@ -143,7 +143,7 @@ export class Game {
   private async startNewRound() {
     this.currentTeamIndex = (this.currentTeamIndex + 1) % this.teams.length;
 
-    this._currentRound = this.roundFactory.createRound();
+    this._currentRound = this.roundFactory.createRound(this.room.id);
     await this._currentRound.start();
 
     this.startedRoundTimestamp = Date.now();

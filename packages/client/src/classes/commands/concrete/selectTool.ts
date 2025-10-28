@@ -3,7 +3,7 @@ import { GameState } from "../../../features/gameScreen/GameState"
 import { sockets } from "../../../global"
 import { Tool } from "../../tools/Tool"
 import { Command } from "../command"
-import { DeselectTool } from "./deselectTool"
+import { DeselectToolCommand } from "./deselectTool"
 
 export class SelectToolCommand extends Command {
   private deselectTool
@@ -15,7 +15,7 @@ export class SelectToolCommand extends Command {
   ) {
     super()
 
-    this.deselectTool = new DeselectTool(gameState)
+    this.deselectTool = new DeselectToolCommand(gameState)
   }
 
   override async execute() {

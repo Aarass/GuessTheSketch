@@ -18,7 +18,7 @@ export class ConsumableTool extends Tool {
     private wrappee: Tool,
     private maxUses: number,
   ) {
-    super(wrappee.manager);
+    super(wrappee.manager, wrappee.messagingCenter);
 
     this.toolType = this.wrappee.toolType;
   }
@@ -35,7 +35,7 @@ export class ConsumableTool extends Tool {
 
     assert(comp);
 
-    if (comp.state.timesUsed >= this.maxUses) {
+    if (comp.getState().timesUsed >= this.maxUses) {
       return err(`Tool consumed`);
     }
 

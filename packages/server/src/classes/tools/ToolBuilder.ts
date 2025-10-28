@@ -4,12 +4,17 @@ import { ToolRegistry } from "../ToolRegistry";
 import { ConsumableTool } from "./Consumable";
 import { TimeoutableTool } from "./Timeoutable";
 import { Tool } from "./Tool";
+import type { MessagingCenter } from "../MessagingCenter";
 
 export class ToolBuilder {
   constructor(private toolConfigs: ToolConfigs) {}
 
-  build(type: ToolType, manager: ToolsManager): Tool {
-    let tool = ToolBuilder.getBaseTool(type, manager);
+  build(
+    type: ToolType,
+    manager: ToolsManager,
+    messagingCenter: MessagingCenter,
+  ): Tool {
+    let tool = ToolBuilder.getBaseTool(type, manager, messagingCenter);
 
     const config = this.toolConfigs[type];
     console.log(config);
@@ -29,8 +34,12 @@ export class ToolBuilder {
     return tool;
   }
 
-  private static getBaseTool(type: ToolType, manager: ToolsManager) {
+  private static getBaseTool(
+    type: ToolType,
+    manager: ToolsManager,
+    messagingCenter: MessagingCenter,
+  ) {
     const constructor = ToolRegistry.getInstance().getToolConstructor(type);
-    return new constructor(manager);
+    return new constructor(manager, messagingCenter);
   }
 }

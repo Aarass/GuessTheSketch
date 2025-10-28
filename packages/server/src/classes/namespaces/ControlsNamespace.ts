@@ -2,6 +2,7 @@ import {
   type ControlsNamespace as ControlsNamespaceType,
   type DrawingId,
   type PlayerId,
+  type RoomId,
   type ToolType,
   type UnvalidatedNewDrawing,
   type UnvalidatedNewDrawingWithType,
@@ -54,6 +55,10 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
     this.namespace
       .in(this.getPlayerRoomName(playerId))
       .emit("tool deactivated");
+  }
+
+  public notifyToolStateChange(roomId: RoomId, type: ToolType, state: object) {
+    this.namespace.to(roomId).emit("tool state change", type, state);
   }
 
   private addBlockOutOfTurnUsersMiddleware(

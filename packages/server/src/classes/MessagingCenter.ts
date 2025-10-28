@@ -7,6 +7,7 @@ import type {
   RoundReportWithWord,
   Team,
   TeamId,
+  ToolType,
 } from "@guessthesketch/common";
 import type {
   GameId,
@@ -90,5 +91,9 @@ export class MessagingCenter {
 
   public notifyToolDeactivated(playerId: PlayerId) {
     this.namespaces.controls.notifyToolDeactivated(playerId);
+  }
+
+  public notifyToolStateChange(roomId: RoomId, type: ToolType, state: object) {
+    this.namespaces.controls.notifyToolStateChange(roomId, type, state);
   }
 }

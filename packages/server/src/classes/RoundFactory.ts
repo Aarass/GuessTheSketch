@@ -1,11 +1,9 @@
-import { type ToolConfigs } from "@guessthesketch/common";
+import { type RoomId, type ToolConfigs } from "@guessthesketch/common";
 import type { AppContext } from "./AppContext";
+import type { MessagingCenter } from "./MessagingCenter";
 import { Round } from "./Round";
 import { ToolStatesBuilder } from "./states/tools/ToolStatesBuilder";
 import { ToolBuilder } from "./tools/ToolBuilder";
-import type { MessagingCenter } from "./MessagingCenter";
-
-// type ToolStates = Record<ToolType, ToolState>;
 
 export class RoundFactory {
   private cachedToolBuilder;
@@ -20,8 +18,9 @@ export class RoundFactory {
     this.cachedToolStatesBuilder = new ToolStatesBuilder(config);
   }
 
-  createRound(): Round {
+  createRound(roomId: RoomId): Round {
     return new Round(
+      roomId,
       this.ctx,
       this.cachedToolBuilder,
       this.cachedToolStatesBuilder,

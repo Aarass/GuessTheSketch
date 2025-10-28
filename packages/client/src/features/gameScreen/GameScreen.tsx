@@ -48,21 +48,13 @@ export const GameScreen = () => {
       navigate("/end")
     }
 
-    function onToolDeactivated() {
-      state.currentTool?.deactivate()
-      state.currentTool = null
-    }
-
     connManager.ensureGlobalIsConnected()
-    connManager.ensureControlsIsConnected()
 
     sockets.global!.on("round ended", onRoundEnded)
     sockets.global!.on("game ended", onGameEnded)
-    sockets.controls!.on("tool deactivated", onToolDeactivated)
     return () => {
       sockets.global?.off("round ended", onRoundEnded)
       sockets.global?.off("game ended", onGameEnded)
-      sockets.controls?.off("tool deactivated", onToolDeactivated)
     }
   }, [])
 

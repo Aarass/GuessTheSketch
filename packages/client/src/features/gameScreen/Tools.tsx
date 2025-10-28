@@ -18,7 +18,7 @@ import {
 import { TbLine } from "react-icons/tb"
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
 import { Command } from "../../classes/commands/command"
-import { DeselectTool } from "../../classes/commands/concrete/deselectTool"
+import { DeselectToolCommand } from "../../classes/commands/concrete/deselectTool"
 import { SelectToolCommand } from "../../classes/commands/concrete/selectTool"
 import { UndoCommand } from "../../classes/commands/concrete/undo"
 import { CircleTool } from "../../classes/tools/concrete/Circle"
@@ -30,6 +30,9 @@ import { RectTool } from "../../classes/tools/concrete/Rect"
 import { HSVtoRGB, RGBtoHexString } from "../../utils/colors"
 import { Context } from "../context/Context"
 import { selectColor, selectSize, setColor, setSize } from "./GameScreenSlice"
+import { sockets } from "../../global"
+import { ToolType, toolTypes } from "@guessthesketch/common"
+import { Bundle } from "typescript"
 
 /**
  * myId and roomId must be set
@@ -41,21 +44,37 @@ export function Tools({ sketch }: { sketch: p5 }) {
     throw new Error(`Context is undefined`)
   }
 
+  const state = context.gameState
   const connManager = context.connectionManager
 
   useEffect(() => {
+    function onToolDeactivated() {
+      state.currentTool?.deactivate()
+      state.currentTool = null
+    }
+
+    function onStateChange(type: ToolType, state: object) {
+      console.log(type, state)
+    }
+
     connManager.ensureControlsIsConnected()
 
+    sockets.controls!.on("tool deactivated", onToolDeactivated)
+    sockets.controls!.on("tool state change", onStateChange)
+    return () => {
+      sockets.controls?.off("tool deactivated", onToolDeactivated)
+      sockets.controls?.off("tool state change", onStateChange)
+    }
     // TODO attach listeners for controls
   }, [])
 
   return (
-    <div className="mt-4 flex flex-row items-center justify-items-center">
+    <div className="mt-4 flex flex-row items-center justify-items-center gap-x-10">
+      <SelectTool sketch={sketch}></SelectTool>
       <div className="mr-4 flex flex-col items-center justify-items-center">
-        <SelectTool sketch={sketch}></SelectTool>
         <SelectColor></SelectColor>
+        <SelectSize></SelectSize>
       </div>
-      <SelectSize></SelectSize>
     </div>
   )
 }
@@ -173,8 +192,14 @@ export const SelectColor = () => {
   )
 }
 
+type ToolButtonBundle = {
+  command: Command
+  icon: JSX.Element
+  stateToTrack: ToolType | null
+}
+
 export const SelectTool = ({ sketch }: { sketch: p5 }) => {
-  const [buttons, setButtons] = useState([] as [Command, JSX.Element][])
+  const [bundles, setBundles] = useState([] as ToolButtonBundle[])
 
   const context = useContext(Context)
   const state = context?.gameState
@@ -186,43 +211,98 @@ export const SelectTool = ({ sketch }: { sketch: p5 }) => {
       throw new Error(`No state in context`)
     }
 
-    setButtons([
-      [new DeselectTool(state), <LuCircleX />],
-      [new SelectToolCommand(PenTool, sketch, state), <LuPen />],
-      [
-        new SelectToolCommand(RectTool, sketch, state),
-        <LuRectangleHorizontal />,
-      ],
-      [new SelectToolCommand(CircleTool, sketch, state), <LuCircle />],
-      [new SelectToolCommand(LineTool, sketch, state), <TbLine />],
-      [new SelectToolCommand(FloodFillTool, sketch, state), <LuPaintBucket />],
-      [new SelectToolCommand(PipetteTool, sketch, state), <LuPipette />],
-      [new UndoCommand(state), <LuUndo2 />],
+    setBundles([
+      {
+        command: new DeselectToolCommand(state),
+        icon: <LuCircleX />,
+        stateToTrack: null,
+      },
+      {
+        command: new SelectToolCommand(PenTool, sketch, state),
+        icon: <LuPen />,
+        stateToTrack: "pen",
+      },
+      {
+        command: new SelectToolCommand(RectTool, sketch, state),
+        icon: <LuRectangleHorizontal />,
+        stateToTrack: "rect",
+      },
+
+      {
+        command: new SelectToolCommand(CircleTool, sketch, state),
+        icon: <LuCircle />,
+        stateToTrack: "circle",
+      },
+      {
+        command: new SelectToolCommand(LineTool, sketch, state),
+        icon: <TbLine />,
+        stateToTrack: "line",
+      },
+      {
+        command: new SelectToolCommand(FloodFillTool, sketch, state),
+        icon: <LuPaintBucket />,
+        stateToTrack: "bucket",
+      },
+      {
+        command: new SelectToolCommand(PipetteTool, sketch, state),
+        icon: <LuPipette />,
+        stateToTrack: null,
+      },
+      {
+        command: new UndoCommand(state),
+        icon: <LuUndo2 />,
+        stateToTrack: "eraser",
+      },
       // [new DeleteAllCommand(), <LuTrash2 />],
     ])
   }, [sketch])
 
   return (
     <div>
-      {buttons.map(button => (
-        <SelectToolButton key={button[0].getName()} command={button[0]}>
-          {button[1]}
+      {bundles.map(bundle => (
+        <SelectToolButton key={bundle.command.getName()} bundle={bundle}>
+          <div className="p-4 bg-amber-700">{bundle.icon}</div>
         </SelectToolButton>
       ))}
     </div>
   )
 }
 
-const SelectToolButton = (props: PropsWithChildren & { command: Command }) => {
+const SelectToolButton = (
+  props: PropsWithChildren & {
+    bundle: ToolButtonBundle
+  },
+) => {
+  const context = useContext(Context)!
+  const connManager = context.connectionManager
+
+  const [state, setState] = useState(null as object | null)
+
+  useEffect(() => {
+    function onStateChange(type: ToolType, state: object) {
+      if (type !== props.bundle.stateToTrack) return
+
+      setState(state)
+    }
+
+    connManager.ensureControlsIsConnected()
+
+    sockets.controls!.on("tool state change", onStateChange)
+    return () => {
+      sockets.controls?.off("tool state change", onStateChange)
+    }
+  }, [])
+
   return (
     <button
       className="cursor-pointer rounded-full border-none bg-transparent text-[20px] text-white"
       onClick={e => {
-        props.command.execute()
+        props.bundle.command.execute()
         e.stopPropagation()
       }}
     >
       {props.children}
+      {state ? <div>{JSON.stringify(state)}</div> : null}
     </button>
   )
 }
@@ -234,15 +314,17 @@ export const SelectSize = () => {
   return (
     <div>
       <input
-        style={{
-          writingMode: "vertical-lr",
-          direction: "rtl",
-          height: "70px",
-        }}
+        style={
+          {
+            // writingMode: "vertical-lr",
+            // direction: "rtl",
+            // height: "70px",
+          }
+        }
         type="range"
         max={42}
         min={2}
-        step={5}
+        step={2}
         value={size}
         onChange={event => {
           const value = parseInt(event.target.value)

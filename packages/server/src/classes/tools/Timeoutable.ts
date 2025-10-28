@@ -4,6 +4,8 @@ import type {
   UnvalidatedNewDrawingWithType,
 } from "@guessthesketch/common";
 import { Tool } from "./Tool";
+import { TimeoutableStateComponent } from "../states/tools/TimeoutableState";
+import { assert } from "../../utility/dbg";
 
 // -----------------
 // --- Decorator ---
@@ -16,7 +18,7 @@ export class TimeoutableTool extends Tool {
     private useTime: number,
     private cooldownTime: number,
   ) {
-    super(wrappee.manager);
+    super(wrappee.manager, wrappee.messagingCenter);
 
     this.toolType = this.wrappee.toolType;
   }
@@ -28,10 +30,17 @@ export class TimeoutableTool extends Tool {
 
       if (playerId) {
         this.manager.detachTool(this);
-        this.manager.notifyToolDeactivated(playerId);
+        this.messagingCenter.notifyToolDeactivated(playerId);
       } else {
         console.error("no playerId after detaching the tool");
       }
+
+      const toolState = this.manager.getToolState(this.toolType);
+      const comp = toolState.findComponent(TimeoutableStateComponent);
+
+      assert(comp);
+
+      comp;
 
       console.log("Released timeoutable tool");
 

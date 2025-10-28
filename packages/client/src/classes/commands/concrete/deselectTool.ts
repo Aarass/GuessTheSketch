@@ -2,7 +2,7 @@ import { GameState } from "../../../features/gameScreen/GameState"
 import { sockets } from "../../../global"
 import { Command } from "../command"
 
-export class DeselectTool extends Command {
+export class DeselectToolCommand extends Command {
   constructor(private gameState: GameState) {
     super()
   }

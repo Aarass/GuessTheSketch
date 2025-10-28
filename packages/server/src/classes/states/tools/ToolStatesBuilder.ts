@@ -4,6 +4,7 @@ import {
   type ToolType,
 } from "@guessthesketch/common";
 import { ToolState } from "../ToolState";
+import { BaseStateComponent } from "./BaseState";
 import { ConsumableStateComponent } from "./ConsumableState";
 import { TimeoutableStateComponent } from "./TimeoutableState";
 
@@ -16,8 +17,15 @@ export class ToolStatesBuilder {
     const toolStates: Partial<ToolStates> = {};
 
     for (const type of toolTypes) {
-      const components = [];
       const config = this.config[type];
+
+      const components = [];
+
+      components.push(
+        new BaseStateComponent({
+          toolsLeft: config.count,
+        }),
+      );
 
       if (config.consumable) {
         components.push(new ConsumableStateComponent());
@@ -27,7 +35,7 @@ export class ToolStatesBuilder {
         components.push(new TimeoutableStateComponent());
       }
 
-      toolStates[type] = new ToolState(config.count, components);
+      toolStates[type] = ToolState.ctor(components);
     }
 
     return toolStates as ToolStates;

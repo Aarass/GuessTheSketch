@@ -7,11 +7,17 @@ import type {
 import { ok, type Result } from "neverthrow";
 import { v4 as uuid } from "uuid";
 import type { ToolsManager } from "../ToolsManager";
+import { BaseStateComponent } from "../states/tools/BaseState";
+import { assert } from "../../utility/dbg";
+import type { MessagingCenter } from "../MessagingCenter";
 
 export abstract class Tool {
   abstract readonly toolType: ToolType;
 
-  constructor(public manager: ToolsManager) {}
+  constructor(
+    public manager: ToolsManager,
+    public messagingCenter: MessagingCenter,
+  ) {}
 
   /**
    * Init is called once a tool is attached and ready.
@@ -30,17 +36,33 @@ export abstract class Tool {
 
   checkIfEnoughResources(): boolean {
     const toolState = this.manager.getToolState(this.toolType);
-    return toolState.toolsLeft > 0;
+
+    const comp = toolState.findComponent(BaseStateComponent);
+    assert(comp);
+
+    return comp.getState().toolsLeft > 0;
   }
 
   takeResources() {
     const toolState = this.manager.getToolState(this.toolType);
-    toolState.toolsLeft--;
+
+    const comp = toolState.findComponent(BaseStateComponent);
+    assert(comp);
+
+    comp.set((state) => ({
+      toolsLeft: state.toolsLeft - 1,
+    }));
   }
 
   releaseResources() {
     const toolState = this.manager.getToolState(this.toolType);
-    toolState.toolsLeft++;
+
+    const comp = toolState.findComponent(BaseStateComponent);
+    assert(comp);
+
+    comp.set((state) => ({
+      toolsLeft: state.toolsLeft + 1,
+    }));
   }
 
   abstract getDrawing(drawing: UnvalidatedNewDrawingWithType): Drawing;

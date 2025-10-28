@@ -29,6 +29,7 @@ interface ServerToClientEvents {
   "player used tool": (playerId: PlayerId, toolType: ToolType) => void;
   "player deselected tool": (playerId: PlayerId, toolType: ToolType) => void;
   "tool deactivated": () => void;
+  "tool state change": (toolType: ToolType, state: object) => void;
 }
 
 export type ControlsSocket = Socket<ClientToServerEvents, ServerToClientEvents>;

@@ -5,24 +5,20 @@ import {
   type ToolType,
   type UnvalidatedNewDrawingWithType,
 } from "@guessthesketch/common";
-import { Err, err, ok, Ok, Result } from "neverthrow";
+import { err, ok, Ok, Result } from "neverthrow";
+import type { MessagingCenter } from "./MessagingCenter";
 import { ToolState } from "./states/ToolState";
 import { Tool } from "./tools/Tool";
 import type { ToolBuilder } from "./tools/ToolBuilder";
-import type { ToolStatesBuilder } from "./states/tools/ToolStatesBuilder";
-import type { MessagingCenter } from "./MessagingCenter";
 
 export class ToolsManager {
   private inventory: Map<PlayerId, Tool> = new Map();
-  private toolStates: Record<ToolType, ToolState>;
 
   constructor(
     private toolBuilder: ToolBuilder,
-    toolStatesBuilder: ToolStatesBuilder,
+    private toolStates: Record<ToolType, ToolState>,
     private messagingCenter: MessagingCenter,
-  ) {
-    this.toolStates = toolStatesBuilder.build();
-  }
+  ) {}
 
   private attachTool(tool: Tool, playerId: PlayerId): Ok<void, never> {
     this.inventory.set(playerId, tool);
@@ -59,7 +55,7 @@ export class ToolsManager {
       return err(`User had some tool already selected`);
     }
 
-    const tool = this.toolBuilder.build(toolType, this);
+    const tool = this.toolBuilder.build(toolType, this, this.messagingCenter);
 
     if (tool.checkIfEnoughResources()) {
       tool.takeResources();
@@ -96,7 +92,11 @@ export class ToolsManager {
     _playerId: PlayerId,
     command: Eraser,
   ): Result<Drawing, string> {
-    const tool = this.toolBuilder.build(command.type, this);
+    const tool = this.toolBuilder.build(
+      command.type,
+      this,
+      this.messagingCenter,
+    );
 
     return tool.use(command);
   }
@@ -124,9 +124,5 @@ export class ToolsManager {
 
   public getToolState(toolType: ToolType): ToolState {
     return this.toolStates[toolType];
-  }
-
-  public notifyToolDeactivated(playerId: PlayerId) {
-    this.messagingCenter.notifyToolDeactivated(playerId);
   }
 }
