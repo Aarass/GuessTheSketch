@@ -7,10 +7,13 @@ import {
   type UnvalidatedNewDrawing,
   type UnvalidatedNewDrawingWithType,
 } from "@guessthesketch/common";
+import { err, ok, type Result } from "neverthrow";
 import { runWithContextUpToRound } from "../../utility/extractor";
 import type { GuardedSocket } from "../../utility/guarding";
 import type { ExtractSocketType } from "../../utility/socketioTyping";
 import type { Room } from "../Room";
+import type { Round } from "../Round";
+import type { Tool } from "../tools/Tool";
 import { NamespaceClass } from "./Base";
 
 export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
@@ -203,7 +206,7 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
       runWithContextUpToRound(socket, (userId, room, _game, round) => {
         console.log(`User ${userId} about to deselect tool`);
 
-        const result = round.toolsManager.deselectTool(userId);
+        const result = this.deselectTool(round, userId);
 
         callback({ success: result.isOk() });
         if (result.isOk()) {
@@ -220,7 +223,7 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
   ) {
     return () => {
       runWithContextUpToRound(socket, (userId, room, _game, round) => {
-        const result = round.toolsManager.deselectTool(userId);
+        const result = this.deselectTool(round, userId);
 
         if (result.isOk()) {
           const tool = result.value;
@@ -229,6 +232,19 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
         }
       });
     };
+  }
+
+  private deselectTool(round: Round, playerId: PlayerId): Result<Tool, string> {
+    const tool = round.toolsManager.getPlayersTool(playerId);
+
+    if (tool === undefined) {
+      return err(`Nothing to deselect`);
+    }
+
+    round.toolsManager.detachTool(playerId);
+    tool.releaseResources();
+
+    return ok(tool);
   }
 
   private addPlayerToPlayerRoom(

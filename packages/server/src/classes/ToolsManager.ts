@@ -1,8 +1,7 @@
 import { type PlayerId } from "@guessthesketch/common";
-import { err, ok, Ok, Result } from "neverthrow";
+import { ok, Ok } from "neverthrow";
 import { Tool } from "./tools/Tool";
 
-// TODO - Dangerous
 export class ToolsManager {
   private inventory: Map<PlayerId, Tool> = new Map();
 
@@ -33,24 +32,11 @@ export class ToolsManager {
     return ok();
   }
 
-  public deselectTool(playerId: PlayerId): Result<Tool, string> {
-    const tool = this.getPlayersTool(playerId);
-
-    if (tool === undefined) {
-      return err(`Nothing to deselect`);
-    }
-
-    this.detachTool(playerId);
-    tool.releaseResources();
-
-    return ok(tool);
-  }
-
   public getPlayersTool(playerId: PlayerId): Tool | undefined {
     return this.inventory.get(playerId);
   }
 
-  public getToolsPlayer(tool: Tool): PlayerId | undefined {
+  public getToolsOwner(tool: Tool): PlayerId | undefined {
     return this.inventory
       .entries()
       .find((entry) => entry[1].id === tool.id)?.[0];
