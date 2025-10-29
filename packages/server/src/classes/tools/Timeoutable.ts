@@ -26,17 +26,83 @@ export class TimeoutableTool extends Tool {
 
   override init() {
     this.wrappee.init();
+
+    const comp = this.state.findComponent(TimeoutableStateComponent);
+    assert(comp);
+
+    comp.set((s) => {
+      const newTimers = [...s.timers];
+      newTimers.push({
+        toolId: this.id,
+        leftUseTime: this.useTime / 1000,
+        leftCooldownTime: -1,
+      });
+
+      return {
+        timers: newTimers,
+      };
+    });
+
+    const useCountdown = setInterval(() => {
+      comp.set((state) => {
+        return {
+          timers: state.timers.map((timer) => {
+            return timer.toolId !== this.id
+              ? timer
+              : {
+                  ...timer,
+                  leftUseTime: timer.leftUseTime - 1,
+                };
+          }),
+        };
+      });
+    }, 1000);
+
     setTimeout(() => {
+      clearInterval(useCountdown);
       this.emit(new ToolDeactivatedEvent());
 
-      const comp = this.state.findComponent(TimeoutableStateComponent);
-      assert(comp);
-      // TODO state change
+      // Postavi pocetni cooldown
+      comp.set((state) => {
+        return {
+          timers: state.timers.map((timer) => {
+            return timer.toolId !== this.id
+              ? timer
+              : {
+                  ...timer,
+                  leftUseTime: 0,
+                  leftCooldownTime: this.cooldownTime / 1000,
+                };
+          }),
+        };
+      });
+
+      // Otpocni odbrojavanje
+      const cooldownCountdown = setInterval(() => {
+        comp.set((state) => {
+          return {
+            timers: state.timers.map((timer) => {
+              return timer.toolId !== this.id
+                ? timer
+                : {
+                    ...timer,
+                    leftCooldownTime: timer.leftCooldownTime - 1,
+                  };
+            }),
+          };
+        });
+      }, 1000);
 
       console.log("Released timeoutable tool");
 
+      // Otpocni pravi cooldown
       setTimeout(() => {
+        clearInterval(cooldownCountdown);
         this.releaseResources();
+
+        comp.set((state) => ({
+          timers: state.timers.filter((timer) => timer.toolId === this.id),
+        }));
       }, this.cooldownTime);
     }, this.useTime);
   }

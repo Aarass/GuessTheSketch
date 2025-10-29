@@ -1,15 +1,11 @@
 import { ToolStateComponent } from "./ToolStateComponent";
 
 interface ConsumableState {
-  timesUsed: number;
+  usesLeft: number;
 }
 
 export class ConsumableStateComponent extends ToolStateComponent<ConsumableState> {
-  constructor(
-    state: ConsumableState = {
-      timesUsed: 0,
-    },
-  ) {
+  constructor(state: ConsumableState) {
     super(state);
   }
 }

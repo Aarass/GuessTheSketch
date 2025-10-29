@@ -1,6 +1,6 @@
 type OnChange = () => any;
 
-export abstract class ToolStateComponent<T = unknown> {
+export abstract class ToolStateComponent<T extends object = object> {
   private notifyChange!: OnChange;
 
   constructor(protected state: T) {}
@@ -12,6 +12,10 @@ export abstract class ToolStateComponent<T = unknown> {
 
   public getState(): T {
     return this.state;
+  }
+
+  public getUserReadyState(): object {
+    return this.getState();
   }
 
   public setOnChangeCB(cb: OnChange) {

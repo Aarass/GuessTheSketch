@@ -4,9 +4,9 @@ import type {
   UnvalidatedNewDrawingWithType,
 } from "@guessthesketch/common";
 import { err, type Result } from "neverthrow";
-import { Tool } from "./Tool";
 import { assert } from "../../utility/dbg";
 import { ConsumableStateComponent } from "../states/tools/ConsumableState";
+import { Tool } from "./Tool";
 
 // -----------------
 // --- Decorator ---
@@ -14,10 +14,7 @@ import { ConsumableStateComponent } from "../states/tools/ConsumableState";
 export class ConsumableTool extends Tool {
   toolType: ToolType;
 
-  constructor(
-    private wrappee: Tool,
-    private maxUses: number,
-  ) {
+  constructor(private wrappee: Tool) {
     super(wrappee.state, wrappee.id);
 
     this.toolType = this.wrappee.toolType;
@@ -33,12 +30,12 @@ export class ConsumableTool extends Tool {
     const comp = this.state.findComponent(ConsumableStateComponent);
     assert(comp);
 
-    if (comp.getState().timesUsed >= this.maxUses) {
+    if (comp.getState().usesLeft === 0) {
       return err(`Tool consumed`);
     }
 
     comp.set((state) => ({
-      timesUsed: state.timesUsed + 1,
+      usesLeft: state.usesLeft - 1,
     }));
 
     return this.wrappee.use(drawing);

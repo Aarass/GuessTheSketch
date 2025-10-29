@@ -48,7 +48,11 @@ export class ToolStatesBuilder {
       );
 
       if (config.consumable) {
-        components.push(new ConsumableStateComponent());
+        components.push(
+          new ConsumableStateComponent({
+            usesLeft: config.consumable.maxUses,
+          }),
+        );
       }
 
       if (config.timeoutable) {

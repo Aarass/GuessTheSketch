@@ -21,7 +21,7 @@ export class ToolBuilder {
     console.log(config);
 
     if (config.consumable !== undefined) {
-      tool = new ConsumableTool(tool, config.consumable.maxUses);
+      tool = new ConsumableTool(tool);
     }
 
     if (config.timeoutable !== undefined) {
