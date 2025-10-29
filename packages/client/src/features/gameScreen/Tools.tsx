@@ -1,3 +1,5 @@
+import { ToolType } from "@guessthesketch/common"
+import { ToolId } from "@guessthesketch/common/types/ids"
 import p5 from "p5"
 import {
   PropsWithChildren,
@@ -27,12 +29,10 @@ import { LineTool } from "../../classes/tools/concrete/Line"
 import { PenTool } from "../../classes/tools/concrete/Pen"
 import { PipetteTool } from "../../classes/tools/concrete/Pipete"
 import { RectTool } from "../../classes/tools/concrete/Rect"
+import { sockets } from "../../global"
 import { HSVtoRGB, RGBtoHexString } from "../../utils/colors"
 import { Context } from "../context/Context"
 import { selectColor, selectSize, setColor, setSize } from "./GameScreenSlice"
-import { sockets } from "../../global"
-import { ToolType, toolTypes } from "@guessthesketch/common"
-import { Bundle } from "typescript"
 
 /**
  * myId and roomId must be set
@@ -53,19 +53,12 @@ export function Tools({ sketch }: { sketch: p5 }) {
       state.currentTool = null
     }
 
-    function onStateChange(type: ToolType, state: object) {
-      console.log(type, state)
-    }
-
     connManager.ensureControlsIsConnected()
 
     sockets.controls!.on("tool deactivated", onToolDeactivated)
-    sockets.controls!.on("tool state change", onStateChange)
     return () => {
       sockets.controls?.off("tool deactivated", onToolDeactivated)
-      sockets.controls?.off("tool state change", onStateChange)
     }
-    // TODO attach listeners for controls
   }, [])
 
   return (
@@ -295,16 +288,66 @@ const SelectToolButton = (
 
   return (
     <button
-      className="cursor-pointer rounded-full border-none bg-transparent text-[20px] text-white"
+      className="relative cursor-pointer rounded-full border-none bg-transparent text-[20px] text-white"
       onClick={e => {
         props.bundle.command.execute()
         e.stopPropagation()
       }}
     >
       {props.children}
-      {state ? <div>{JSON.stringify(state)}</div> : null}
+      <div className="absolute top-full w-xs -translate-x-[50%]">
+        <StateDisplay state={state} />
+      </div>
     </button>
   )
+}
+
+function StateDisplay(props: { state: object | null }) {
+  const context = useContext(Context)
+  const gameState = context?.gameState!
+
+  const state = props.state
+  if (state === null) return null
+
+  return Object.entries(state).map(([key, value]) => {
+    if (key === "toolsLeft") {
+      return (
+        <div key={key}>
+          <p>Left tools: {value}</p>
+        </div>
+      )
+    } else if (key === "usesLeft") {
+      return (
+        <div key={key}>
+          <p>Left uses: {value}</p>
+        </div>
+      )
+    } else if (key === "timers") {
+      const val = value as {
+        toolId: ToolId
+        leftUseTime: number
+        leftCooldownTime: number
+      }[]
+
+      const cooldowns = val
+        .map(v => v.leftCooldownTime)
+        .filter(t => t !== -1)
+        .sort((a, b) => a - b)
+        .reduce((prev, t) => prev + t + ", ", "")
+        .slice(0, -2)
+
+      const current = gameState.currentToolId
+        ? val.find(x => x.toolId === gameState.currentToolId)
+        : null
+
+      return (
+        <div key={key}>
+          {current ? <p>Left time: {current.leftUseTime}</p> : null}
+          <p>Cooldowns: {cooldowns}</p>
+        </div>
+      )
+    }
+  })
 }
 
 export const SelectSize = () => {

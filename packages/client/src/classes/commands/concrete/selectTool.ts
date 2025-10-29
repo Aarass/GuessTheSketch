@@ -26,14 +26,16 @@ export class SelectToolCommand extends Command {
     if (sockets.controls) {
       const tool = new this.ToolConstructor(this.sketch, this.gameState)
 
-      const { success } = await sockets.controls.emitWithAck(
+      const { success, toolId } = await sockets.controls.emitWithAck(
         "select tool",
         tool.type,
       )
 
       if (success) {
-        tool.activate()
         this.gameState.currentTool = tool
+        this.gameState.currentToolId = toolId
+
+        tool.activate()
       }
     } else {
       throw new Error("Controls namespace is null")

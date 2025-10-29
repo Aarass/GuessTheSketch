@@ -17,6 +17,7 @@ import type { Tool } from "../tools/Tool";
 import { NamespaceClass } from "./Base";
 import { ToolEventType } from "../tools/events/ToolEvent";
 import { ToolEventListener } from "../tools/events/ToolEventListener";
+import type { ToolId } from "@guessthesketch/common/types/ids";
 
 export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
   registerHandlers(
@@ -83,7 +84,9 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
   ) {
     return (
       toolType: ToolType,
-      callback: (payload: { success: boolean }) => void,
+      callback: (
+        payload: { success: false } | { success: true; toolId: ToolId },
+      ) => void,
     ) => {
       runWithContextUpToRound(socket, (userId, _room, _game, round) => {
         console.log(`User ${userId} about to select tool`);
@@ -111,7 +114,7 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
           tool.init();
 
           round.toolsManager.attachTool(tool, userId);
-          callback({ success: true });
+          callback({ success: true, toolId: tool.id });
           return;
         } else {
           console.warn(`No enough resources`);

@@ -6,9 +6,11 @@ import {
 } from "@guessthesketch/common"
 import { Tool } from "../../classes/tools/Tool"
 import { getDrawingsRequest } from "../restore/restoreApi"
+import { ToolId } from "@guessthesketch/common/types/ids"
 
 export class GameState {
   currentTool: Tool | null = null
+  currentToolId: ToolId | null = null
   confirmedDrawings: Drawing[] = []
   unconfirmedDrawings = new UnconfirmedDrawings()
   drawingInFly: DrawingInFly | null = null

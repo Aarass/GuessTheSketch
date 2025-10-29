@@ -1,11 +1,14 @@
 import { Namespace, Socket } from "socket.io";
 import type { DrawingId, NewDrawing, PlayerId, ToolType } from "..";
+import type { ToolId } from "../types/ids";
 
 interface ClientToServerEvents {
   // "select tool": (toolType: ToolType) => void;
   "select tool": (
     toolType: ToolType,
-    callback: (payload: { success: boolean }) => void,
+    callback: (
+      payload: { success: false } | { success: true; toolId: ToolId },
+    ) => void,
   ) => void;
 
   // "use tool": (drawing: NewDrawing) => void;
