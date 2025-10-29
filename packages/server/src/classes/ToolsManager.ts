@@ -17,15 +17,11 @@ export class ToolsManager {
   public detachTool(playerId: PlayerId): Ok<void, never>;
   public detachTool(tool: Tool): Ok<void, never>; // eslint-disable-line @typescript-eslint/unified-signatures
 
-  /**
-   * **Dangerous**
-   * @warning **Unsafe**. Should not be used. Will be removed asap
-   */
   public detachTool(param: PlayerId | Tool) {
     if (typeof param === "object") {
       const entry = this.inventory
         .entries()
-        .find((entry) => entry[1] === param);
+        .find((entry) => entry[1].id === param.id);
 
       if (entry) {
         this.inventory.delete(entry[0]);
@@ -54,11 +50,9 @@ export class ToolsManager {
     return this.inventory.get(playerId);
   }
 
-  /**
-   * **Dangerous**
-   * @warning **Unsafe**. Should not be used. Will be removed asap
-   */
   public getToolsPlayer(tool: Tool): PlayerId | undefined {
-    return this.inventory.entries().find((entry) => entry[1] === tool)?.[0];
+    return this.inventory
+      .entries()
+      .find((entry) => entry[1].id === tool.id)?.[0];
   }
 }
