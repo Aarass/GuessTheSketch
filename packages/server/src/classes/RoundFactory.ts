@@ -6,28 +6,20 @@ import { ToolStatesBuilder } from "./states/tools/ToolStatesBuilder";
 import { ToolBuilder } from "./tools/ToolBuilder";
 
 export class RoundFactory {
-  private cachedToolBuilder;
-  private cachedToolStatesBuilder;
+  private statesBuilder: ToolStatesBuilder;
 
   constructor(
-    config: ToolConfigs,
+    private config: ToolConfigs,
     private ctx: AppContext,
   ) {
-    this.cachedToolBuilder = new ToolBuilder(config);
-    this.cachedToolStatesBuilder = new ToolStatesBuilder(config);
+    this.statesBuilder = new ToolStatesBuilder(this.config);
   }
 
-  /**
-   * Ne pozivati ako prethodna runda nije zavrsena
-   */
   createRound(roomId: RoomId, messagingCenter: MessagingCenter): Round {
-    const states = this.cachedToolStatesBuilder.build();
+    const states = this.statesBuilder.build();
     states.setupNotifications(roomId, messagingCenter);
 
-    // Ovo je potencijalno opasno. Ako kreiras novi round dok stari jos postoji, stari ce se prebaciti na nove state-ove.
-    // Moze lako da se fiksa ali mi se ne da
-    this.cachedToolBuilder.setStates(states);
-
-    return new Round(this.ctx, this.cachedToolBuilder);
+    const toolBuilder = new ToolBuilder(this.config, states);
+    return new Round(this.ctx, toolBuilder);
   }
 }

@@ -15,8 +15,8 @@ export abstract class Tool {
   abstract readonly toolType: ToolType;
 
   constructor(
-    /** Mora da bude public zbog decorator pattern-a */ public state: ToolState,
-    public id: ToolId,
+    /** Mora da bude public zbog decorator pattern-a */ public readonly state: ToolState,
+    public readonly id: ToolId,
   ) {}
 
   /**
