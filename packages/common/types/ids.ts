@@ -14,3 +14,6 @@ export type GameId = z.infer<typeof GameIdSchema>;
 
 export const RoundIdSchema = z.string().brand<"RoundId">();
 export type RoundId = z.infer<typeof RoundIdSchema>;
+
+export const ToolIdSchema = z.string().brand<"ToolId">();
+export type ToolId = z.infer<typeof ToolIdSchema>;

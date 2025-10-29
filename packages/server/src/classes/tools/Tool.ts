@@ -9,12 +9,14 @@ import { v4 as uuid } from "uuid";
 import { assert } from "../../utility/dbg";
 import type { ToolState } from "../states/ToolState";
 import { BaseStateComponent } from "../states/tools/BaseState";
+import type { ToolId } from "@guessthesketch/common/types/ids";
 
 export abstract class Tool {
   abstract readonly toolType: ToolType;
 
   constructor(
     /** Mora da bude public zbog decorator pattern-a */ public state: ToolState,
+    public id: ToolId,
   ) {}
 
   /**

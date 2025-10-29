@@ -18,7 +18,7 @@ export class ConsumableTool extends Tool {
     private wrappee: Tool,
     private maxUses: number,
   ) {
-    super(wrappee.state);
+    super(wrappee.state, wrappee.id);
 
     this.toolType = this.wrappee.toolType;
   }

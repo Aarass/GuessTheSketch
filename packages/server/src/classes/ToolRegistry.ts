@@ -1,6 +1,7 @@
 import type { ToolType } from "@guessthesketch/common";
 import type { Tool } from "./tools/Tool";
 import type { ToolState } from "./states/ToolState";
+import type { ToolId } from "@guessthesketch/common/types/ids";
 
 export class ToolRegistry {
   private map: RegistryMap = {};
@@ -32,7 +33,7 @@ export class ToolRegistry {
   }
 }
 
-type ToolConstructor = new (state: ToolState) => Tool;
+type ToolConstructor = new (state: ToolState, id: ToolId) => Tool;
 
 type RegistryMap = Partial<{
   [key in ToolType]: ToolConstructor;

@@ -18,7 +18,7 @@ export class TimeoutableTool extends Tool {
     private useTime: number,
     private cooldownTime: number,
   ) {
-    super(wrappee.state);
+    super(wrappee.state, wrappee.id);
 
     this.toolType = this.wrappee.toolType;
   }

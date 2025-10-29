@@ -2,7 +2,6 @@ import type { RoundId } from "@guessthesketch/common/types/ids";
 import { v4 as uuid } from "uuid";
 import type { AppContext } from "./AppContext";
 import { GuessingManager } from "./GuessingManager";
-import type { ToolStatesBuilder } from "./states/tools/ToolStatesBuilder";
 import { ToolBuilder } from "./tools/ToolBuilder";
 import { ToolsManager } from "./ToolsManager";
 

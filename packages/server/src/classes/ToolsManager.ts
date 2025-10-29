@@ -1,6 +1,5 @@
-import { type PlayerId, type ToolType } from "@guessthesketch/common";
+import { type PlayerId } from "@guessthesketch/common";
 import { err, ok, Ok, Result } from "neverthrow";
-import { ToolState } from "./states/ToolState";
 import { Tool } from "./tools/Tool";
 
 // TODO - Dangerous
@@ -61,17 +60,5 @@ export class ToolsManager {
    */
   public getToolsPlayer(tool: Tool): PlayerId | undefined {
     return this.inventory.entries().find((entry) => entry[1] === tool)?.[0];
-  }
-
-  // TODO
-  // TODO
-  // TODO
-  // TODO
-  public getToolState(toolType: ToolType): ToolState {
-    // TODO
-    // TODO
-    // TODO
-    // TODO
-    return {} as ToolState;
   }
 }
