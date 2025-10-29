@@ -7,7 +7,7 @@ import { Tool } from "./tools/Tool";
 export class ToolsManager {
   private inventory: Map<PlayerId, Tool> = new Map();
 
-  constructor(private toolStates: Record<ToolType, ToolState>) {}
+  constructor() {}
 
   public attachTool(tool: Tool, playerId: PlayerId): Ok<void, never> {
     this.inventory.set(playerId, tool);
@@ -63,7 +63,15 @@ export class ToolsManager {
     return this.inventory.entries().find((entry) => entry[1] === tool)?.[0];
   }
 
+  // TODO
+  // TODO
+  // TODO
+  // TODO
   public getToolState(toolType: ToolType): ToolState {
-    return this.toolStates[toolType];
+    // TODO
+    // TODO
+    // TODO
+    // TODO
+    return {} as ToolState;
   }
 }

@@ -18,7 +18,7 @@ export class TimeoutableTool extends Tool {
     private useTime: number,
     private cooldownTime: number,
   ) {
-    super(wrappee.manager);
+    super(wrappee.state);
 
     this.toolType = this.wrappee.toolType;
   }
@@ -26,21 +26,17 @@ export class TimeoutableTool extends Tool {
   override init() {
     this.wrappee.init();
     setTimeout(() => {
-      const playerId = this.manager.getToolsPlayer(this);
+      // const playerId = this.manager.getToolsPlayer(this);
+      //
+      // if (playerId) {
+      //   this.manager.detachTool(this);
+      //   // this.messagingCenter.notifyToolDeactivated(playerId);
+      // } else {
+      //   console.error("no playerId after detaching the tool");
+      // }
 
-      if (playerId) {
-        this.manager.detachTool(this);
-        // this.messagingCenter.notifyToolDeactivated(playerId);
-      } else {
-        console.error("no playerId after detaching the tool");
-      }
-
-      const toolState = this.manager.getToolState(this.toolType);
-      const comp = toolState.findComponent(TimeoutableStateComponent);
-
+      const comp = this.state.findComponent(TimeoutableStateComponent);
       assert(comp);
-
-      comp;
 
       console.log("Released timeoutable tool");
 

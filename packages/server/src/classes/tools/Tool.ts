@@ -6,14 +6,16 @@ import type {
 } from "@guessthesketch/common";
 import { ok, type Result } from "neverthrow";
 import { v4 as uuid } from "uuid";
-import type { ToolsManager } from "../ToolsManager";
-import { BaseStateComponent } from "../states/tools/BaseState";
 import { assert } from "../../utility/dbg";
+import type { ToolState } from "../states/ToolState";
+import { BaseStateComponent } from "../states/tools/BaseState";
 
 export abstract class Tool {
   abstract readonly toolType: ToolType;
 
-  constructor(public manager: ToolsManager) {}
+  constructor(
+    /** Mora da bude public zbog decorator pattern-a */ public state: ToolState,
+  ) {}
 
   /**
    * Init is called once a tool is attached and ready.
@@ -31,18 +33,14 @@ export abstract class Tool {
   }
 
   checkIfEnoughResources(): boolean {
-    const toolState = this.manager.getToolState(this.toolType);
-
-    const comp = toolState.findComponent(BaseStateComponent);
+    const comp = this.state.findComponent(BaseStateComponent);
     assert(comp);
 
     return comp.getState().toolsLeft > 0;
   }
 
   takeResources() {
-    const toolState = this.manager.getToolState(this.toolType);
-
-    const comp = toolState.findComponent(BaseStateComponent);
+    const comp = this.state.findComponent(BaseStateComponent);
     assert(comp);
 
     comp.set((state) => ({
@@ -51,9 +49,7 @@ export abstract class Tool {
   }
 
   releaseResources() {
-    const toolState = this.manager.getToolState(this.toolType);
-
-    const comp = toolState.findComponent(BaseStateComponent);
+    const comp = this.state.findComponent(BaseStateComponent);
     assert(comp);
 
     comp.set((state) => ({

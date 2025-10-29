@@ -18,7 +18,7 @@ export class ConsumableTool extends Tool {
     private wrappee: Tool,
     private maxUses: number,
   ) {
-    super(wrappee.manager);
+    super(wrappee.state);
 
     this.toolType = this.wrappee.toolType;
   }
@@ -30,9 +30,7 @@ export class ConsumableTool extends Tool {
   override use(
     drawing: UnvalidatedNewDrawingWithType,
   ): Result<Drawing, string> {
-    const toolState = this.manager.getToolState(this.toolType);
-    const comp = toolState.findComponent(ConsumableStateComponent);
-
+    const comp = this.state.findComponent(ConsumableStateComponent);
     assert(comp);
 
     if (comp.getState().timesUsed >= this.maxUses) {

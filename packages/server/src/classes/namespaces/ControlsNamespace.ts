@@ -93,7 +93,7 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
           return;
         }
 
-        const tool = round.toolBuilder.build(toolType, round.toolsManager);
+        const tool = round.toolBuilder.build(toolType);
 
         if (tool.checkIfEnoughResources()) {
           tool.takeResources();
@@ -171,7 +171,7 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
     ) => {
       runWithContextUpToRound(socket, (_userId, room, game, round) => {
         // const result = round.toolsManager.useCommand(userId, {
-        const tool = round.toolBuilder.build("eraser", round.toolsManager);
+        const tool = round.toolBuilder.build("eraser");
 
         const result = tool.use({
           type: "eraser",

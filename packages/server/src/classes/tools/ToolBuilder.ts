@@ -1,19 +1,23 @@
 import type { ToolConfigs, ToolType } from "@guessthesketch/common";
+import type { ToolStates } from "../states/tools/ToolStatesBuilder";
+import type { ToolState } from "../states/ToolState";
 import { ToolRegistry } from "../ToolRegistry";
-import type { ToolsManager } from "../ToolsManager";
 import { ConsumableTool } from "./Consumable";
 import { TimeoutableTool } from "./Timeoutable";
 import { Tool } from "./Tool";
 
 export class ToolBuilder {
+  private states?: ToolStates;
+
   constructor(private toolConfigs: ToolConfigs) {}
 
-  build(
-    type: ToolType,
-    manager: ToolsManager,
-    // messagingCenter: MessagingCenter,
-  ): Tool {
-    let tool = ToolBuilder.getBaseTool(type, manager);
+  setStates(states: ToolStates) {
+    this.states = states;
+  }
+
+  build(type: ToolType): Tool {
+    if (this.states === undefined) throw "Internal error";
+    let tool = ToolBuilder.getBaseTool(type, this.states.states[type]);
 
     const config = this.toolConfigs[type];
     console.log(config);
@@ -33,8 +37,8 @@ export class ToolBuilder {
     return tool;
   }
 
-  private static getBaseTool(type: ToolType, manager: ToolsManager) {
+  private static getBaseTool(type: ToolType, state: ToolState) {
     const constructor = ToolRegistry.getInstance().getToolConstructor(type);
-    return new constructor(manager);
+    return new constructor(state);
   }
 }

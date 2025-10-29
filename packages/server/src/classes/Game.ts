@@ -48,7 +48,7 @@ export class Game {
     private messagingCenter: MessagingCenter,
     private evaluator: Evaluator = new SimpleEvaluator(),
   ) {
-    this.roundFactory = new RoundFactory(config.tools, ctx, messagingCenter);
+    this.roundFactory = new RoundFactory(config.tools, ctx);
 
     this.teams = config.teams.map((teamConfig) => {
       return {
@@ -143,7 +143,10 @@ export class Game {
   private async startNewRound() {
     this.currentTeamIndex = (this.currentTeamIndex + 1) % this.teams.length;
 
-    this._currentRound = this.roundFactory.createRound(this.room.id);
+    this._currentRound = this.roundFactory.createRound(
+      this.room.id,
+      this.messagingCenter,
+    );
     await this._currentRound.start();
 
     this.startedRoundTimestamp = Date.now();

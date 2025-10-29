@@ -12,19 +12,22 @@ export class RoundFactory {
   constructor(
     config: ToolConfigs,
     private ctx: AppContext,
-    private messagingCenter: MessagingCenter,
   ) {
     this.cachedToolBuilder = new ToolBuilder(config);
     this.cachedToolStatesBuilder = new ToolStatesBuilder(config);
   }
 
-  createRound(roomId: RoomId): Round {
-    return new Round(
-      roomId,
-      this.ctx,
-      this.cachedToolBuilder,
-      this.cachedToolStatesBuilder,
-      this.messagingCenter,
-    );
+  /**
+   * Ne pozivati ako prethodna runda nije zavrsena
+   */
+  createRound(roomId: RoomId, messagingCenter: MessagingCenter): Round {
+    const states = this.cachedToolStatesBuilder.build();
+    states.setupNotifications(roomId, messagingCenter);
+
+    // Ovo je potencijalno opasno. Ako kreiras novi round dok stari jos postoji, stari ce se prebaciti na nove state-ove.
+    // Moze lako da se fiksa ali mi se ne da
+    this.cachedToolBuilder.setStates(states);
+
+    return new Round(this.ctx, this.cachedToolBuilder);
   }
 }
