@@ -10,13 +10,12 @@ export class Round {
 
   public guessingManager;
   public toolsManager;
+  public toolBuilder;
 
-  constructor(
-    ctx: AppContext,
-    public toolBuilder: ToolBuilder,
-  ) {
+  constructor(ctx: AppContext, toolBuilder: ToolBuilder) {
     this.guessingManager = new GuessingManager(ctx);
     this.toolsManager = new ToolsManager();
+    this.toolBuilder = toolBuilder;
   }
 
   public async start() {

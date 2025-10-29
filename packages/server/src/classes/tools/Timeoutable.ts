@@ -6,6 +6,7 @@ import type {
 import { Tool } from "./Tool";
 import { TimeoutableStateComponent } from "../states/tools/TimeoutableState";
 import { assert } from "../../utility/dbg";
+import { ToolDeactivatedEvent } from "./events/ToolEvent";
 
 // -----------------
 // --- Decorator ---
@@ -26,17 +27,11 @@ export class TimeoutableTool extends Tool {
   override init() {
     this.wrappee.init();
     setTimeout(() => {
-      // const playerId = this.manager.getToolsPlayer(this);
-      //
-      // if (playerId) {
-      //   this.manager.detachTool(this);
-      //   // this.messagingCenter.notifyToolDeactivated(playerId);
-      // } else {
-      //   console.error("no playerId after detaching the tool");
-      // }
+      this.emit(new ToolDeactivatedEvent());
 
       const comp = this.state.findComponent(TimeoutableStateComponent);
       assert(comp);
+      // TODO state change
 
       console.log("Released timeoutable tool");
 

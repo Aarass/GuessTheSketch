@@ -4,20 +4,23 @@ import type {
   ToolType,
   UnvalidatedNewDrawingWithType,
 } from "@guessthesketch/common";
+import type { ToolId } from "@guessthesketch/common/types/ids";
 import { ok, type Result } from "neverthrow";
 import { v4 as uuid } from "uuid";
 import { assert } from "../../utility/dbg";
 import type { ToolState } from "../states/ToolState";
 import { BaseStateComponent } from "../states/tools/BaseState";
-import type { ToolId } from "@guessthesketch/common/types/ids";
+import { ToolEventEmmiter } from "./events/ToolEventEmmiter";
 
-export abstract class Tool {
+export abstract class Tool extends ToolEventEmmiter {
   abstract readonly toolType: ToolType;
 
   constructor(
     /** Mora da bude public zbog decorator pattern-a */ public readonly state: ToolState,
     public readonly id: ToolId,
-  ) {}
+  ) {
+    super();
+  }
 
   /**
    * Init is called once a tool is attached and ready.

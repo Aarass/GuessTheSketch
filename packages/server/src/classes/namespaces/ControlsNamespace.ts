@@ -15,6 +15,8 @@ import type { Room } from "../Room";
 import type { Round } from "../Round";
 import type { Tool } from "../tools/Tool";
 import { NamespaceClass } from "./Base";
+import { ToolEventType } from "../tools/events/ToolEvent";
+import { ToolEventListener } from "../tools/events/ToolEventListener";
 
 export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
   registerHandlers(
@@ -99,6 +101,14 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
         const tool = round.toolBuilder.build(toolType);
 
         if (tool.checkIfEnoughResources()) {
+          tool.registerListener(
+            new ToolEventListener(
+              new WeakRef(tool),
+              round.toolsManager,
+              this.messagingCenter,
+            ),
+          );
+
           tool.takeResources();
           tool.init();
 
