@@ -27,6 +27,8 @@ export abstract class Tool extends ToolEventEmmiter {
    */
   abstract init(): void;
 
+  cancelWork(): void {}
+
   // -----------------------
   // --- Template method ---
   // -----------------------

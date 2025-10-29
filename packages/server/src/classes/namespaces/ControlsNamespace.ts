@@ -88,8 +88,6 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
       runWithContextUpToRound(socket, (userId, _room, _game, round) => {
         console.log(`User ${userId} about to select tool`);
 
-        // const result = round.toolsManager.selectTool(toolType, userId);
-
         const prevTool = round.toolsManager.getPlayersTool(userId);
 
         if (prevTool) {
@@ -252,6 +250,7 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
     }
 
     round.toolsManager.detachTool(playerId);
+    tool.cancelWork();
     tool.releaseResources();
 
     return ok(tool);

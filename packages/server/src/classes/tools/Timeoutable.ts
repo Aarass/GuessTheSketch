@@ -14,6 +14,9 @@ import { ToolDeactivatedEvent } from "./events/ToolEvent";
 export class TimeoutableTool extends Tool {
   toolType: ToolType;
 
+  useCountdown: NodeJS.Timeout | null = null;
+  useTimeout: NodeJS.Timeout | null = null;
+
   constructor(
     private wrappee: Tool,
     private useTime: number,
@@ -30,6 +33,7 @@ export class TimeoutableTool extends Tool {
     const comp = this.state.findComponent(TimeoutableStateComponent);
     assert(comp);
 
+    // Postavi pocetno preostalo vreme koriscenja
     comp.set((s) => {
       const newTimers = [...s.timers];
       newTimers.push({
@@ -43,7 +47,8 @@ export class TimeoutableTool extends Tool {
       };
     });
 
-    const useCountdown = setInterval(() => {
+    // Otpocni odbrojavanje
+    this.useCountdown = setInterval(() => {
       comp.set((state) => {
         return {
           timers: state.timers.map((timer) => {
@@ -58,11 +63,35 @@ export class TimeoutableTool extends Tool {
       });
     }, 1000);
 
-    setTimeout(() => {
-      clearInterval(useCountdown);
+    // Otpocni pravi timeout
+    this.useTimeout = setTimeout(() => {
+      clearInterval(this.useCountdown!);
       this.emit(new ToolDeactivatedEvent());
 
-      // Postavi pocetni cooldown
+      this.startCooldown();
+    }, this.useTime);
+  }
+
+  startCooldown() {
+    const comp = this.state.findComponent(TimeoutableStateComponent);
+    assert(comp);
+    // Postavi pocetni cooldown
+    comp.set((state) => {
+      return {
+        timers: state.timers.map((timer) => {
+          return timer.toolId !== this.id
+            ? timer
+            : {
+                ...timer,
+                leftUseTime: 0,
+                leftCooldownTime: this.cooldownTime / 1000,
+              };
+        }),
+      };
+    });
+
+    // Otpocni odbrojavanje
+    const cooldownCountdown = setInterval(() => {
       comp.set((state) => {
         return {
           timers: state.timers.map((timer) => {
@@ -70,41 +99,33 @@ export class TimeoutableTool extends Tool {
               ? timer
               : {
                   ...timer,
-                  leftUseTime: 0,
-                  leftCooldownTime: this.cooldownTime / 1000,
+                  leftCooldownTime: timer.leftCooldownTime - 1,
                 };
           }),
         };
       });
+    }, 1000);
 
-      // Otpocni odbrojavanje
-      const cooldownCountdown = setInterval(() => {
-        comp.set((state) => {
-          return {
-            timers: state.timers.map((timer) => {
-              return timer.toolId !== this.id
-                ? timer
-                : {
-                    ...timer,
-                    leftCooldownTime: timer.leftCooldownTime - 1,
-                  };
-            }),
-          };
-        });
-      }, 1000);
+    // Otpocni pravi cooldown
+    setTimeout(() => {
+      clearInterval(cooldownCountdown);
+      this.wrappee.releaseResources();
 
-      console.log("Released timeoutable tool");
+      comp.set((state) => ({
+        timers: state.timers.filter((timer) => timer.toolId !== this.id),
+      }));
+    }, this.cooldownTime);
+  }
 
-      // Otpocni pravi cooldown
-      setTimeout(() => {
-        clearInterval(cooldownCountdown);
-        this.releaseResources();
+  override cancelWork(): void {
+    if (this.useCountdown) {
+      clearInterval(this.useCountdown);
+    }
 
-        comp.set((state) => ({
-          timers: state.timers.filter((timer) => timer.toolId === this.id),
-        }));
-      }, this.cooldownTime);
-    }, this.useTime);
+    if (this.useTimeout) {
+      clearInterval(this.useTimeout);
+      this.startCooldown();
+    }
   }
 
   override getDrawing(drawing: UnvalidatedNewDrawingWithType): Drawing {
@@ -115,8 +136,5 @@ export class TimeoutableTool extends Tool {
     return this.wrappee.use(drawing);
   }
 
-  override releaseResources() {
-    this.wrappee.releaseResources();
-    console.log("Released resources of timeoutable tool");
-  }
+  override releaseResources() {}
 }
