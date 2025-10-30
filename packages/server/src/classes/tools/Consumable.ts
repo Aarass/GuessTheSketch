@@ -40,6 +40,7 @@ export class ConsumableTool extends Tool {
     }));
 
     if (comp.getState().usesLeft === 0) {
+      this.wrappee.releaseResources();
       this.emit(new ToolDeactivatedEvent());
     }
 
@@ -48,5 +49,16 @@ export class ConsumableTool extends Tool {
 
   override getDrawing(drawing: UnvalidatedNewDrawingWithType): Drawing {
     return this.wrappee.getDrawing(drawing);
+  }
+
+  override checkIfEnoughResources(): boolean {
+    const comp = this.state.findComponent(ConsumableStateComponent);
+    assert(comp);
+
+    if (comp.getState().usesLeft === 0) {
+      return false;
+    }
+
+    return this.wrappee.checkIfEnoughResources();
   }
 }
