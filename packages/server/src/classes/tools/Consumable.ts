@@ -7,6 +7,7 @@ import { err, type Result } from "neverthrow";
 import { assert } from "../../utility/dbg";
 import { ConsumableStateComponent } from "../states/tools/ConsumableState";
 import { Tool } from "./Tool";
+import { ToolDeactivatedEvent } from "./events/ToolEvent";
 
 // -----------------
 // --- Decorator ---
@@ -37,6 +38,10 @@ export class ConsumableTool extends Tool {
     comp.set((state) => ({
       usesLeft: state.usesLeft - 1,
     }));
+
+    if (comp.getState().usesLeft === 0) {
+      this.emit(new ToolDeactivatedEvent());
+    }
 
     return this.wrappee.use(drawing);
   }
