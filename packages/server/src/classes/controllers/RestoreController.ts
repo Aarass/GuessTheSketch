@@ -1,12 +1,12 @@
 import type { RequestHandler } from "express";
-import { authenticate } from "../../middlewares/express/authenticate";
-import { GlobalState } from "../states/GlobalState";
-import { Controller } from "./Controller";
 import createHttpError from "http-errors";
+import { authenticate } from "../../middlewares/express/authenticate";
+import { Controller } from "./Controller";
+import type { AppContext } from "../AppContext";
 
 export class RestoreController extends Controller {
-  constructor(private state: GlobalState) {
-    super();
+  constructor(ctx: AppContext) {
+    super(ctx);
 
     this.router.get("/restore/config", authenticate, this.getConfigHandler);
     this.router.get(
@@ -37,7 +37,7 @@ export class RestoreController extends Controller {
       return;
     }
 
-    const room = this.state.getRoomById(roomId);
+    const room = this.ctx.roomsService.getRoomById(roomId);
 
     if (!room) {
       next(createHttpError(400, "No room found with id in your session data"));
@@ -61,7 +61,7 @@ export class RestoreController extends Controller {
       return;
     }
 
-    const room = this.state.getRoomById(roomId);
+    const room = this.ctx.roomsService.getRoomById(roomId);
 
     if (!room) {
       next(createHttpError(400, "No room found with id in your session data"));
@@ -85,7 +85,7 @@ export class RestoreController extends Controller {
       return;
     }
 
-    const room = this.state.getRoomById(roomId);
+    const room = this.ctx.roomsService.getRoomById(roomId);
 
     if (!room) {
       next(createHttpError(400, "No room found with id in your session data"));
@@ -111,7 +111,7 @@ export class RestoreController extends Controller {
       return;
     }
 
-    const room = this.state.getRoomById(roomId);
+    const room = this.ctx.roomsService.getRoomById(roomId);
 
     if (!room) {
       next(createHttpError(400, "No room found with id in your session data"));
@@ -149,7 +149,7 @@ export class RestoreController extends Controller {
       return;
     }
 
-    const room = this.state.getRoomById(roomId);
+    const room = this.ctx.roomsService.getRoomById(roomId);
 
     if (!room) {
       next(createHttpError(400, "No room found with id in your session data"));
@@ -192,7 +192,7 @@ export class RestoreController extends Controller {
       return;
     }
 
-    const room = this.state.getRoomById(roomId);
+    const room = this.ctx.roomsService.getRoomById(roomId);
 
     if (!room) {
       next(createHttpError(400, "No room found with id in your session data"));
@@ -220,7 +220,7 @@ export class RestoreController extends Controller {
       return;
     }
 
-    const room = this.state.getRoomById(roomId);
+    const room = this.ctx.roomsService.getRoomById(roomId);
 
     if (!room) {
       next(createHttpError(400, "No room found with id in your session data"));

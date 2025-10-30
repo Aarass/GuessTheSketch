@@ -8,6 +8,7 @@ import type { RequestHandler } from "express";
 import type { Session, SessionData } from "express-session";
 import createHttpError from "http-errors";
 import { Controller } from "./Controller";
+import type { AppContext } from "../AppContext";
 
 declare module "express-session" {
   interface SessionData {
@@ -23,8 +24,8 @@ declare module "http" {
 }
 
 export class AuthController extends Controller {
-  constructor() {
-    super();
+  constructor(ctx: AppContext) {
+    super(ctx);
 
     this.router.post("/login", this.loginHandler);
     this.router.post("/refresh", this.refreshHandler);

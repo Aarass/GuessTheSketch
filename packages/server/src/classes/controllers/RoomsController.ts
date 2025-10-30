@@ -1,14 +1,14 @@
-import { GlobalState } from "../states/GlobalState";
-import { authenticate } from "../../middlewares/express/authenticate";
-import { Room } from "../Room";
 import type { JoinRoomResult, RoomId } from "@guessthesketch/common";
-import { Controller } from "./Controller";
 import type { RequestHandler } from "express";
 import createHttpError from "http-errors";
+import { authenticate } from "../../middlewares/express/authenticate";
+import { Room } from "../Room";
+import { Controller } from "./Controller";
+import type { AppContext } from "../AppContext";
 
 export class RoomsController extends Controller {
-  constructor(private state: GlobalState) {
-    super();
+  constructor(ctx: AppContext) {
+    super(ctx);
 
     this.router.post("/rooms", authenticate, this.createRoomHandler);
     this.router.post("/rooms/:id/join", authenticate, this.joinRoomHandler);
@@ -19,7 +19,7 @@ export class RoomsController extends Controller {
     const ownerId = req.session.userId;
     const room = new Room(this.ctx, ownerId);
 
-    this.state.addRoom(room);
+    this.ctx.roomsService.addRoom(room);
 
     res.send({ roomId: room.id });
   };
@@ -34,7 +34,7 @@ export class RoomsController extends Controller {
     }
 
     const roomId = req.params["id"];
-    const room = this.state.getRoomById(roomId as RoomId);
+    const room = this.ctx.roomsService.getRoomById(roomId as RoomId);
 
     if (room === null) {
       next(createHttpError(400, "No room found"));
@@ -63,7 +63,7 @@ export class RoomsController extends Controller {
       return;
     }
 
-    const room = this.state.getRoomById(roomId);
+    const room = this.ctx.roomsService.getRoomById(roomId);
     if (!room) {
       res.sendStatus(400);
       return;

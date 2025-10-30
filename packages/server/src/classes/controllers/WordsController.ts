@@ -2,10 +2,11 @@ import { AddWordDtoSchema } from "@guessthesketch/common";
 import type { RequestHandler } from "express";
 import createHttpError from "http-errors";
 import { Controller } from "./Controller";
+import type { AppContext } from "../AppContext";
 
 export class WordsController extends Controller {
-  constructor() {
-    super();
+  constructor(ctx: AppContext) {
+    super(ctx);
 
     this.router.post("/words", this.addWordHandler);
     this.router.get("/words", this.getAllWordsHandler);

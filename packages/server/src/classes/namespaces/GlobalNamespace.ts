@@ -10,11 +10,9 @@ import {
   type RoundReportWithWord,
   type TeamId,
 } from "@guessthesketch/common";
-import { runWithContextUpToRoom } from "../../utility/extractor";
 import type { GuardedSocket } from "../../utility/guarding";
 import type { ExtractSocketType } from "../../utility/socketioTyping";
 import type { Room } from "../Room";
-import { GlobalState } from "../states/GlobalState";
 import { NamespaceClass } from "./Base";
 
 export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
@@ -67,7 +65,7 @@ export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
   private async onConnectionHandler(
     socket: GuardedSocket<ExtractSocketType<GlobalNamespaceType>>,
   ) {
-    await runWithContextUpToRoom(socket, async (userId, room) => {
+    await this.runWithContextUpToRoom(socket, async (userId, room) => {
       const user = await this.ctx.userService.getUserById(userId);
 
       if (user === null) {
@@ -92,7 +90,7 @@ export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
     socket: GuardedSocket<ExtractSocketType<GlobalNamespaceType>>,
   ) {
     return async () => {
-      runWithContextUpToRoom(socket, (_, room) => {
+      this.runWithContextUpToRoom(socket, (_, room) => {
         const allPlayers = room.getAllPlayers();
         socket.emit("sync players", allPlayers);
       });
@@ -103,7 +101,7 @@ export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
     socket: GuardedSocket<ExtractSocketType<GlobalNamespaceType>>,
   ): (config: GameConfig) => void {
     return (_config: GameConfig) => {
-      runWithContextUpToRoom(socket, (userId, room) => {
+      this.runWithContextUpToRoom(socket, (userId, room) => {
         if (room.ownerId !== userId) {
           console.log(`You are not the owner of the room`);
           return;
@@ -127,7 +125,7 @@ export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
     socket: GuardedSocket<ExtractSocketType<GlobalNamespaceType>>,
   ) {
     return () => {
-      runWithContextUpToRoom(socket, (userId, room) => {
+      this.runWithContextUpToRoom(socket, (userId, room) => {
         const result = room.removePlayer(userId);
 
         if (result.isOk()) {
@@ -140,7 +138,7 @@ export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
         }
 
         if (room.getPlayersCount() === 0) {
-          GlobalState.getInstance().removeRoom(room.id);
+          this.ctx.roomsService.removeRoom(room.id);
         }
       });
     };

@@ -20,17 +20,14 @@ import { ChatNamespace } from "./namespaces/ChatNamespace";
 import { ControlsNamespace } from "./namespaces/ControlsNamespace";
 import { DrawingsNamespace } from "./namespaces/DrawingNamespace";
 import { GlobalNamespace } from "./namespaces/GlobalNamespace";
-import type { PersistanceService } from "./services/PersitanceService";
 
 // ----------------
 // --- Mediator ---
 // ----------------
 export class MessagingCenter {
   private namespaces;
-  private persistanceService: PersistanceService;
 
   constructor(server: SocketIOServer, ctx: AppContext) {
-    this.persistanceService = ctx.persistanceService;
     this.namespaces = {
       global: new GlobalNamespace("", server, this, ctx),
       drawings: new DrawingsNamespace("drawings", server, this, ctx),
@@ -79,14 +76,8 @@ export class MessagingCenter {
     this.namespaces.chat.notifyRoundEnded(room);
   }
 
-  public notifyNewDrawing(
-    room: RoomId,
-    game: GameId,
-    round: RoundId,
-    drawing: Drawing,
-  ) {
+  public notifyNewDrawing(room: RoomId, drawing: Drawing) {
     this.namespaces.drawings.notifyNewDrawing(room, drawing);
-    this.persistanceService.notifyNewDrawing(room, game, round, drawing);
   }
 
   public notifyToolDeactivated(playerId: PlayerId) {

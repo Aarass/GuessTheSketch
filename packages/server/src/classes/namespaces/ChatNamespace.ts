@@ -7,10 +7,6 @@ import type {
   Team,
   TeamId,
 } from "@guessthesketch/common";
-import {
-  runWithContextUpToGame,
-  runWithContextUpToRound,
-} from "../../utility/extractor";
 import type { GuardedSocket } from "../../utility/guarding";
 import type { ExtractSocketType } from "../../utility/socketioTyping";
 import { NamespaceClass } from "./Base";
@@ -29,7 +25,7 @@ export class ChatNamespace extends NamespaceClass<ChatNamespaceType> {
   ) {
     this.addPlayerToPlayerRoom(socket);
 
-    runWithContextUpToGame(socket, (userId, room, game) => {
+    this.runWithContextUpToGame(socket, (userId, room, game) => {
       const team = game.findPlayersTeam(userId);
 
       if (team) {
@@ -93,7 +89,7 @@ export class ChatNamespace extends NamespaceClass<ChatNamespaceType> {
   ) {
     return (message: string) => {
       console.log("primio msg", message);
-      runWithContextUpToRound(socket, (userId, room, game, round) => {
+      this.runWithContextUpToRound(socket, (userId, room, game, round) => {
         const newMessage: ChatMessage = {
           user: userId,
           message: message,

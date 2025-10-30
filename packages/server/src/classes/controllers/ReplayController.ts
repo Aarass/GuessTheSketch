@@ -1,13 +1,13 @@
 import type { RequestHandler } from "express";
 import { authenticate } from "../../middlewares/express/authenticate";
-import { GlobalState } from "../states/GlobalState";
 import { Controller } from "./Controller";
+import type { AppContext } from "../AppContext";
 
 // TODO
 // u sred sam refactoringa, ne znam da li je ovo okej, da li ovaj handler treba da bude tu
 export class ReplayController extends Controller {
-  constructor(private state: GlobalState) {
-    super();
+  constructor(ctx: AppContext) {
+    super(ctx);
 
     this.router.get("/replay/round", authenticate, this.roundReplayHandler);
   }
@@ -20,7 +20,7 @@ export class ReplayController extends Controller {
       return;
     }
 
-    const room = this.state.getRoomById(roomId);
+    const room = this.ctx.roomsService.getRoomById(roomId);
 
     if (!room) {
       res.sendStatus(400);

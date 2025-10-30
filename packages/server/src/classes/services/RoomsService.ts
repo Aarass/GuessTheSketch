@@ -1,7 +1,21 @@
 import type { RoomId } from "@guessthesketch/common";
 import type { Room } from "../Room";
 
-export class GlobalState {
+// -----------------
+// --- Singleton ---
+// -----------------
+export class RoomsService {
+  private static instance: RoomsService | null = null;
+
+  private constructor(private rooms = new Map<RoomId, Room>()) {}
+
+  static getInstance() {
+    if (this.instance == null) {
+      this.instance = new RoomsService();
+    }
+    return this.instance;
+  }
+
   addRoom(roomState: Room) {
     this.rooms.set(roomState.id, roomState);
   }
@@ -16,19 +30,5 @@ export class GlobalState {
 
   getAllRooms() {
     return this.rooms.values();
-  }
-
-  // -----------------
-  // --- Singleton ---
-  // -----------------
-  private static instance: GlobalState | null = null;
-
-  private constructor(private rooms = new Map<RoomId, Room>()) {}
-
-  static getInstance() {
-    if (this.instance == null) {
-      this.instance = new GlobalState();
-    }
-    return this.instance;
   }
 }

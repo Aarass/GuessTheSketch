@@ -7,17 +7,15 @@ import {
   type UnvalidatedNewDrawing,
   type UnvalidatedNewDrawingWithType,
 } from "@guessthesketch/common";
+import type { ToolId } from "@guessthesketch/common/types/ids";
 import { err, ok, type Result } from "neverthrow";
-import { runWithContextUpToRound } from "../../utility/extractor";
 import type { GuardedSocket } from "../../utility/guarding";
 import type { ExtractSocketType } from "../../utility/socketioTyping";
 import type { Room } from "../Room";
 import type { Round } from "../Round";
+import { ToolEventListener } from "../tools/events/ToolEventListener";
 import type { Tool } from "../tools/Tool";
 import { NamespaceClass } from "./Base";
-import { ToolEventType } from "../tools/events/ToolEvent";
-import { ToolEventListener } from "../tools/events/ToolEventListener";
-import type { ToolId } from "@guessthesketch/common/types/ids";
 
 export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
   registerHandlers(
@@ -71,7 +69,7 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
     socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
   ) {
     socket.use((_event, next) => {
-      runWithContextUpToRound(socket, (userId, _room, game) => {
+      this.runWithContextUpToRound(socket, (userId, _room, game) => {
         if (game.isPlayerOnMove(userId)) {
           next();
         }
@@ -88,7 +86,7 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
         payload: { success: false } | { success: true; toolId: ToolId },
       ) => void,
     ) => {
-      runWithContextUpToRound(socket, (userId, _room, _game, round) => {
+      this.runWithContextUpToRound(socket, (userId, _room, _game, round) => {
         console.log(`User ${userId} about to select tool`);
 
         const prevTool = round.toolsManager.getPlayersTool(userId);
@@ -138,7 +136,7 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
       _drawing: UnvalidatedNewDrawing,
       callback: (payload: { success: boolean }) => void,
     ) => {
-      runWithContextUpToRound(socket, (userId, room, game, round) => {
+      this.runWithContextUpToRound(socket, (userId, room, game, round) => {
         console.log(`User ${userId} about to use tool`);
 
         if (!_drawing.type) {
@@ -165,7 +163,8 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
           // Ista prica
           // this.notifyPlayerUsedTool(room, userId, tool.toolType);
 
-          this.messagingCenter.notifyNewDrawing(
+          this.messagingCenter.notifyNewDrawing(room.id, drawing);
+          this.ctx.persistanceService.notifyNewDrawing(
             room.id,
             game.id,
             round.id,
@@ -183,7 +182,7 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
       id: DrawingId,
       callback: (payload: { success: boolean }) => void,
     ) => {
-      runWithContextUpToRound(socket, (_userId, room, game, round) => {
+      this.runWithContextUpToRound(socket, (_userId, room, game, round) => {
         // const result = round.toolsManager.useCommand(userId, {
         const tool = round.toolBuilder.build("eraser");
 
@@ -199,11 +198,14 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
         callback({ success: result.isOk() });
 
         if (result.isOk()) {
-          this.messagingCenter.notifyNewDrawing(
+          const drawing = result.value;
+
+          this.messagingCenter.notifyNewDrawing(room.id, drawing);
+          this.ctx.persistanceService.notifyNewDrawing(
             room.id,
             game.id,
             round.id,
-            result.value,
+            drawing,
           );
         }
       });
@@ -214,7 +216,7 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
     socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
   ) {
     return (callback: (payload: { success: boolean }) => void) => {
-      runWithContextUpToRound(socket, (userId, room, _game, round) => {
+      this.runWithContextUpToRound(socket, (userId, room, _game, round) => {
         console.log(`User ${userId} about to deselect tool`);
 
         const result = this.deselectTool(round, userId);
@@ -233,7 +235,7 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
     socket: GuardedSocket<ExtractSocketType<ControlsNamespaceType>>,
   ) {
     return () => {
-      runWithContextUpToRound(socket, (userId, room, _game, round) => {
+      this.runWithContextUpToRound(socket, (userId, room, _game, round) => {
         const result = this.deselectTool(round, userId);
 
         if (result.isOk()) {
