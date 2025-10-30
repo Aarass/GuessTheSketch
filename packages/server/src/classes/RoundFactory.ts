@@ -15,7 +15,7 @@ export class RoundFactory {
     this.statesBuilder = new ToolStatesBuilder(this.config);
   }
 
-  createRound(roomId: RoomId, messagingCenter: MessagingCenter): Round {
+  public createRound(roomId: RoomId, messagingCenter: MessagingCenter): Round {
     const states = this.statesBuilder.build();
     states.setupNotifications(roomId, messagingCenter);
 

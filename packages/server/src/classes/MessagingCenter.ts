@@ -3,17 +3,12 @@ import type {
   Leaderboard,
   ProcessedGameConfig,
   RoomId,
-  RoundReport,
   RoundReportWithWord,
   Team,
   TeamId,
   ToolType,
 } from "@guessthesketch/common";
-import type {
-  GameId,
-  PlayerId,
-  RoundId,
-} from "@guessthesketch/common/types/ids";
+import type { PlayerId } from "@guessthesketch/common/types/ids";
 import { Server as SocketIOServer } from "socket.io";
 import type { AppContext } from "./AppContext";
 import { ChatNamespace } from "./namespaces/ChatNamespace";

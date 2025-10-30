@@ -19,9 +19,9 @@ import { Round } from "./Round";
 import { RoundFactory } from "./RoundFactory";
 
 export class Game {
-  public id: GameId = uuid() as GameId;
+  public readonly id: GameId = uuid() as GameId;
 
-  public active: boolean = false;
+  private active: boolean = false;
 
   private teams: Team[];
   private currentTeamIndex: number = -1;
@@ -275,5 +275,9 @@ export class Game {
         };
       }),
     } satisfies ProcessedGameConfig;
+  }
+
+  public isActive() {
+    return this.active;
   }
 }

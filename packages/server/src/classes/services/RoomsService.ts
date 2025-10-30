@@ -16,19 +16,19 @@ export class RoomsService {
     return this.instance;
   }
 
-  addRoom(roomState: Room) {
+  public addRoom(roomState: Room) {
     this.rooms.set(roomState.id, roomState);
   }
 
-  removeRoom(roomId: RoomId) {
+  public removeRoom(roomId: RoomId) {
     this.rooms.delete(roomId);
   }
 
-  getRoomById(roomId: RoomId): Room | null {
+  public getRoomById(roomId: RoomId): Room | null {
     return this.rooms.get(roomId) ?? null;
   }
 
-  getAllRooms() {
+  public getAllRooms() {
     return this.rooms.values();
   }
 }

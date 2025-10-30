@@ -6,11 +6,11 @@ import { ToolBuilder } from "./tools/ToolBuilder";
 import { ToolsManager } from "./ToolsManager";
 
 export class Round {
-  public id: RoundId = uuid() as RoundId;
+  public readonly id: RoundId = uuid() as RoundId;
 
-  public guessingManager;
-  public toolsManager;
-  public toolBuilder;
+  public readonly guessingManager;
+  public readonly toolsManager;
+  public readonly toolBuilder;
 
   constructor(ctx: AppContext, toolBuilder: ToolBuilder) {
     this.guessingManager = new GuessingManager(ctx);

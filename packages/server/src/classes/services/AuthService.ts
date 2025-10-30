@@ -6,7 +6,7 @@ import { err, ok, type Result } from "neverthrow";
 export class AuthService {
   constructor(private userRepository: UserRepository) {}
 
-  async login(dto: LoginDto): Promise<Result<User, string>> {
+  public async login(dto: LoginDto): Promise<Result<User, string>> {
     const { username } = dto;
 
     try {

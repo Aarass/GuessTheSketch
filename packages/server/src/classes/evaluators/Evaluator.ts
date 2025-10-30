@@ -10,7 +10,7 @@ export abstract class Evaluator {
     this.teamOnMove = id;
   }
 
-  evaluate(
+  public evaluate(
     start: Timestamp,
     hitTimestamps: Map<TeamId, Timestamp>,
   ): RoundReport {
@@ -24,7 +24,7 @@ export abstract class Evaluator {
     return res;
   }
 
-  abstract _evaluate(
+  protected abstract _evaluate(
     teamOnMove: TeamId,
     start: Timestamp,
     hitTimestamps: Map<TeamId, Timestamp>,

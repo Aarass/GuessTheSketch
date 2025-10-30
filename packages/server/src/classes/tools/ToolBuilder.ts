@@ -14,7 +14,7 @@ export class ToolBuilder {
     private states: ToolStates,
   ) {}
 
-  build(type: ToolType): Tool {
+  public build(type: ToolType): Tool {
     let tool = ToolBuilder.getBaseTool(type, this.states.states[type]);
 
     const config = this.toolConfigs[type];

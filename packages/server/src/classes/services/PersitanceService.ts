@@ -19,7 +19,7 @@ export class PersistanceService {
     void this.init();
   }
 
-  async init() {
+  public async init() {
     const result = await getChannel();
 
     if (result.isOk()) {

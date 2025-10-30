@@ -117,13 +117,13 @@ function checkUpToRoom(
 function checkUpToGame(
   context: SocketContext,
 ): context is readonly [PlayerId, Room, Game, Round | null | undefined] {
-  return !!context[1] && !!context[2] && context[2].active;
+  return !!context[1] && !!context[2] && context[2].isActive();
 }
 
 function checkUpToRound(
   context: SocketContext,
 ): context is readonly [PlayerId, Room, Game, Round] {
-  return !!context[1] && !!context[2] && context[2].active && !!context[3];
+  return !!context[1] && !!context[2] && context[2].isActive() && !!context[3];
 }
 
 function logContextNotOkay(context: SocketContext) {

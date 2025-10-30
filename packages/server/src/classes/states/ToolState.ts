@@ -18,12 +18,12 @@ export class ToolState {
     return obj;
   }
 
-  init() {
+  public init() {
     const cb = () => this.onChange();
     this.components.forEach((c) => c.setOnChangeCB(cb));
   }
 
-  findComponent<T>(constructor: new (...args: any[]) => T): T | null {
+  public findComponent<T>(constructor: new (...args: any[]) => T): T | null {
     const component = this.components.find((x) => x instanceof constructor);
     if (component) {
       return component as T;
@@ -32,15 +32,15 @@ export class ToolState {
     }
   }
 
-  getState(): object {
+  public getState(): object {
     return Object.assign({}, ...this.components.map((c) => c.getState()));
   }
 
-  registerListener(observer: ToolStateChangeObserver) {
+  public registerListener(observer: ToolStateChangeObserver) {
     this.observers.push(observer);
   }
 
-  onChange() {
+  public onChange() {
     const state = this.getState();
     this.observers.forEach((o) => o.onChange(state));
   }

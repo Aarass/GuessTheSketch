@@ -11,7 +11,7 @@ import type { AppContext } from "./AppContext";
 import { err, ok, type Result } from "neverthrow";
 
 export class Room {
-  public id: RoomId = uuid() as RoomId;
+  public readonly id: RoomId = uuid() as RoomId;
 
   private _currentGame: Game | null = null;
   public get currentGame() {
@@ -29,7 +29,7 @@ export class Room {
     config: GameConfig,
     messagingCenter: MessagingCenter,
   ): Result<void, string> {
-    if (this._currentGame?.active) {
+    if (this._currentGame?.isActive()) {
       return err(`Game already started`);
     }
 
