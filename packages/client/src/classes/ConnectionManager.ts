@@ -1,5 +1,5 @@
 import {
-  Leaderboard,
+  LeaderboardRecord,
   Player,
   PlayerId,
   ProcessedGameConfig,
@@ -111,6 +111,6 @@ function onRoundEnded() {
   store.dispatch(setTeamOnMove(null))
 }
 
-function onLeaderboard(leaderboard: Leaderboard) {
+function onLeaderboard(leaderboard: LeaderboardRecord) {
   store.dispatch(setLeaderboard(leaderboard))
 }

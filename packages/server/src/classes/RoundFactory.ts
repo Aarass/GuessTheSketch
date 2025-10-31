@@ -15,11 +15,15 @@ export class RoundFactory {
     this.statesBuilder = new ToolStatesBuilder(this.config);
   }
 
-  public createRound(roomId: RoomId, messagingCenter: MessagingCenter): Round {
+  public async createRound(
+    roomId: RoomId,
+    messagingCenter: MessagingCenter,
+  ): Promise<Round> {
     const states = this.statesBuilder.build();
+
     states.setupNotifications(roomId, messagingCenter);
 
     const toolBuilder = new ToolBuilder(this.config, states);
-    return new Round(this.ctx, toolBuilder);
+    return await Round.create(this.ctx, toolBuilder);
   }
 }

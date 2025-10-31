@@ -70,7 +70,7 @@ export class ControlsNamespace extends NamespaceClass<ControlsNamespaceType> {
   ) {
     socket.use((_event, next) => {
       this.runWithContextUpToRound(socket, (userId, _room, game) => {
-        if (game.isPlayerOnMove(userId)) {
+        if (game.teamsManager.isPlayerOnMove(userId)) {
           next();
         }
       });

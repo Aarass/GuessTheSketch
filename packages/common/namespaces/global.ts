@@ -1,7 +1,7 @@
 import { Namespace, Socket } from "socket.io";
 import type {
   GameConfig,
-  Leaderboard,
+  LeaderboardRecord,
   Player,
   PlayerId,
   ProcessedGameConfig,
@@ -27,7 +27,7 @@ interface ServerToClientEvents {
   "round started": (teamOnMove: TeamId) => void;
   "rounds count": (startedRounds: number, maxRounds: number) => void;
   "round ended": (report: RoundReportWithWord) => void;
-  leaderboard: (leaderboard: Leaderboard) => void;
+  leaderboard: (leaderboard: LeaderboardRecord) => void;
 }
 
 export type GlobalSocket = Socket<ClientToServerEvents, ServerToClientEvents>;

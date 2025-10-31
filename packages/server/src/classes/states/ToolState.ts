@@ -1,5 +1,3 @@
-import type { ToolType } from "@guessthesketch/common";
-import type { MessagingCenter } from "../MessagingCenter";
 import { ToolStateComponent } from "./tools/ToolStateComponent";
 
 export interface ToolStateChangeObserver {

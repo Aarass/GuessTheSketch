@@ -1,11 +1,8 @@
 import type {
   GameConfig,
-  Leaderboard,
+  Player,
   PlayerId,
   ProcessedGameConfig,
-  RoundReport,
-  Team,
-  TeamId,
 } from "@guessthesketch/common";
 import type { GameId } from "@guessthesketch/common/types/ids";
 import { err, ok, type Result } from "neverthrow";
@@ -13,33 +10,33 @@ import { v4 as uuid } from "uuid";
 import type { AppContext } from "./AppContext";
 import { Evaluator } from "./evaluators/Evaluator";
 import { SimpleEvaluator } from "./evaluators/SimpleEvaluator";
+import { Leaderboard } from "./Leaderboard";
 import type { MessagingCenter } from "./MessagingCenter";
 import type { Room } from "./Room";
 import { Round } from "./Round";
 import { RoundFactory } from "./RoundFactory";
+import { TeamsManager } from "./TeamsManager";
 
 export class Game {
   public readonly id: GameId = uuid() as GameId;
 
   private active: boolean = false;
 
-  private teams: Team[];
-  private currentTeamIndex: number = -1;
-
-  private roundFactory;
-
-  private roundDuration;
   private maxRounds;
+  private roundDuration;
 
   private _currentRound: Round | null = null;
   public get currentRound() {
     return this._currentRound;
   }
+
   private startedRounds = 0;
   private startedRoundTimestamp: number | null = null;
   private endRoundTimer: Timer | null = null;
 
+  private roundFactory: RoundFactory;
   private leaderboard: Leaderboard;
+  public readonly teamsManager: TeamsManager;
 
   constructor(
     ctx: AppContext,
@@ -50,22 +47,13 @@ export class Game {
   ) {
     this.roundFactory = new RoundFactory(config.tools, ctx);
 
-    this.teams = config.teams.map((teamConfig) => {
-      return {
-        id: uuid() as TeamId,
-        name: teamConfig.name,
-        players: new Set(teamConfig.players),
-      };
-    });
+    this.teamsManager = new TeamsManager(config.teams);
+    const teams = this.teamsManager.getTeams();
 
-    this.maxRounds = this.teams.length * config.rounds.cycles;
+    this.leaderboard = new Leaderboard(teams);
+
+    this.maxRounds = teams.length * config.rounds.cycles;
     this.roundDuration = config.rounds.duration;
-
-    this.leaderboard = Object.fromEntries(
-      this.teams.map((team) => {
-        return [team.id, 0];
-      }),
-    );
   }
 
   public start() {
@@ -74,8 +62,6 @@ export class Game {
 
     this.active = true;
 
-    console.log("Game started");
-
     this.messagingCenter.notifyGameStarted(
       this.room.id,
       this.getProcessedConfig(),
@@ -83,7 +69,7 @@ export class Game {
 
     this.messagingCenter.notifyLeaderboardUpdated(
       this.room.id,
-      this.leaderboard,
+      this.leaderboard.getRecord(),
     );
 
     setTimeout(() => {
@@ -91,63 +77,13 @@ export class Game {
     }, 2000);
   }
 
-  public isPlayerOnMove(player: PlayerId): boolean {
-    const currentTeam = this.teams[this.currentTeamIndex];
-    const team = this.findPlayersTeam(player);
-
-    return team === currentTeam;
-  }
-
-  public getTeamOnMove() {
-    if (!this.active || !this._currentRound) return null;
-
-    return this.teams[this.currentTeamIndex];
-  }
-
-  public isTeamOnMove(team: TeamId): boolean {
-    return team === this.teams[this.currentTeamIndex].id;
-  }
-
-  public guess(guess: string, playerId: PlayerId): Result<boolean, string> {
-    if (!this.active) {
-      return err(`Trying to guess when game is not active`);
-    }
-
-    if (this._currentRound === null) {
-      return err(`Trying to guess word while round is null`);
-    }
-
-    const guessingManager = this._currentRound.guessingManager;
-
-    const isCorrectGuess = guessingManager.isCorrectGuess(guess);
-
-    if (isCorrectGuess) {
-      const team = this.findPlayersTeam(playerId);
-      if (team === null) return err(`Can't find players team`);
-
-      guessingManager.recordHit(team.id);
-
-      const maxHits = this.teams.length - 1;
-      if (guessingManager.hitsCount() === maxHits) {
-        if (this.endRoundTimer === null)
-          throw new Error(`endRoundTimer has never been set`);
-
-        clearInterval(this.endRoundTimer);
-        this.roundEnded();
-      }
-    }
-
-    return ok(isCorrectGuess);
-  }
-
   private async startNewRound() {
-    this.currentTeamIndex = (this.currentTeamIndex + 1) % this.teams.length;
+    this.teamsManager.cycleToNextTeam();
 
-    this._currentRound = this.roundFactory.createRound(
+    const newRound = await this.roundFactory.createRound(
       this.room.id,
       this.messagingCenter,
     );
-    await this._currentRound.start();
 
     this.startedRoundTimestamp = Date.now();
 
@@ -156,10 +92,9 @@ export class Game {
     }, this.roundDuration);
 
     this.startedRounds++;
-    console.log("Round started");
 
-    const teamOnMove = this.teams[this.currentTeamIndex];
-    const guessingManager = this._currentRound.guessingManager;
+    const teamOnMove = this.teamsManager.getTeamOnMove();
+    const guessingManager = newRound.guessingManager;
 
     this.messagingCenter.notifyRoundStarted(this.room.id, teamOnMove, {
       unmasked: guessingManager.getWord(false)!,
@@ -170,6 +105,8 @@ export class Game {
       this.startedRounds,
       this.maxRounds,
     );
+
+    this._currentRound = newRound;
   }
 
   private roundEnded() {
@@ -177,13 +114,17 @@ export class Game {
     if (this._currentRound === null)
       throw new Error(`Internal Error. Round is null in roundEnded handler`);
 
-    const teamOnMove = this.teams[this.currentTeamIndex];
+    const teamOnMove = this.teamsManager.getTeamOnMove();
 
     this.evaluator.setTeamOnMove(teamOnMove.id);
     const report = this._currentRound.guessingManager.getReport(this.evaluator);
     const word = this._currentRound.guessingManager.getWord(false);
 
-    this.updateLeaderboard(report);
+    this.leaderboard.update(report);
+    this.messagingCenter.notifyLeaderboardUpdated(
+      this.room.id,
+      this.leaderboard.getRecord(),
+    );
 
     this.messagingCenter.notifyRoundEnded(this.room.id, {
       word: word ?? "error",
@@ -200,19 +141,36 @@ export class Game {
     }
   }
 
-  private updateLeaderboard(report: RoundReport) {
-    for (const [teamId, deltaScore] of report) {
-      if (this.leaderboard[teamId] !== undefined) {
-        this.leaderboard[teamId] += deltaScore;
-      } else {
-        console.log("report sadrzi teamid kojeg nema u leaderboard");
+  public guess(guess: string, playerId: PlayerId): Result<boolean, string> {
+    if (!this.active) {
+      return err(`Trying to guess when game is not active`);
+    }
+
+    if (this._currentRound === null) {
+      return err(`Trying to guess word while round is null`);
+    }
+
+    const guessingManager = this._currentRound.guessingManager;
+
+    const isCorrectGuess = guessingManager.isCorrectGuess(guess);
+
+    if (isCorrectGuess) {
+      const team = this.teamsManager.findPlayersTeam(playerId);
+      if (!team) return err(`Can't find players team`);
+
+      guessingManager.recordHit(team.id);
+
+      const maxHits = this.teamsManager.getTeamsCount() - 1;
+      if (guessingManager.hitsCount() === maxHits) {
+        if (this.endRoundTimer === null)
+          throw new Error(`endRoundTimer has never been set`);
+
+        clearInterval(this.endRoundTimer);
+        this.roundEnded();
       }
     }
 
-    this.messagingCenter.notifyLeaderboardUpdated(
-      this.room.id,
-      this.leaderboard,
-    );
+    return ok(isCorrectGuess);
   }
 
   private gameEnded() {
@@ -221,24 +179,16 @@ export class Game {
     this.active = false;
 
     setTimeout(() => {
+      const teams = this.teamsManager.getTeams();
       this.messagingCenter.notifyGameEnded(
         this.room.id,
-        this.teams.map((t) => t.id),
+        teams.map((t) => t.id),
       );
     }, 5000);
   }
 
-  public findPlayersTeam(playerId: PlayerId): Team | null {
-    for (const team of this.teams) {
-      if (team.players.has(playerId)) {
-        return team;
-      }
-    }
-    return null;
-  }
-
-  public getLeaderboard() {
-    return this.leaderboard;
+  public getLeaderboardRecord() {
+    return this.leaderboard.getRecord();
   }
 
   public getTimeLeft() {
@@ -265,9 +215,10 @@ export class Game {
 
   // TODO
   public getProcessedConfig() {
+    const teams = this.teamsManager.getTeams();
     return {
       ...this.config,
-      teams: this.teams.map((team) => {
+      teams: teams.map((team) => {
         return {
           id: team.id,
           name: team.name,
@@ -279,5 +230,39 @@ export class Game {
 
   public isActive() {
     return this.active;
+  }
+
+  static isValidGameConfig(
+    config: GameConfig,
+    players: Map<PlayerId, Player>,
+  ): Result<void, string> {
+    if (config.teams.length < 2) {
+      return err("There must be at least 2 teams");
+    }
+
+    const processed = new Set<PlayerId>();
+
+    for (const team of config.teams) {
+      if (team.players.length == 0) {
+        return err("There must be at least one player in a team");
+      }
+
+      for (const player of team.players) {
+        if (!players.get(player)) {
+          return err("Passed player with invalid id");
+        }
+
+        if (processed.has(player)) {
+          return err("Same player assigned multiple times");
+        }
+        processed.add(player);
+      }
+    }
+
+    if (players.size !== processed.size) {
+      return err("Some players are not assigned");
+    }
+
+    return ok();
   }
 }

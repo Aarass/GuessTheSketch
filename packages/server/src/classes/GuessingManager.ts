@@ -4,18 +4,18 @@ import type { Evaluator } from "./evaluators/Evaluator";
 import { err, ok, type Result } from "neverthrow";
 
 export class GuessingManager {
-  private word: string | null = null;
   private startTimestamp: Timestamp | null = null;
   private hitTimestamps: Map<TeamId, Timestamp> = new Map();
 
-  constructor(private ctx: AppContext) {}
-
-  async init() {
-    if (this.startTimestamp !== null || this.word !== null)
-      throw new Error(`Trying to call init multiple times`);
-
+  private constructor(private word: string) {
     this.startTimestamp = Date.now();
-    this.word = await this.getRandomWordToGuess();
+  }
+
+  static async create(ctx: AppContext) {
+    const res = await ctx.wordService.getRandomWord();
+    if (!res) throw new Error("Couldn't fetch a word");
+
+    return new GuessingManager(res.word);
   }
 
   public hitsCount() {
@@ -59,16 +59,6 @@ export class GuessingManager {
       return "?".repeat(this.word.length);
     } else {
       return this.word;
-    }
-  }
-
-  private async getRandomWordToGuess() {
-    const res = await this.ctx.wordService.getRandomWord();
-
-    if (res) {
-      return res.word;
-    } else {
-      throw new Error("Couldn't fetch a word");
     }
   }
 }

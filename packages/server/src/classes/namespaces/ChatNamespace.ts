@@ -26,7 +26,7 @@ export class ChatNamespace extends NamespaceClass<ChatNamespaceType> {
     this.addPlayerToPlayerRoom(socket);
 
     this.runWithContextUpToGame(socket, (userId, room, game) => {
-      const team = game.findPlayersTeam(userId);
+      const team = game.teamsManager.findPlayersTeam(userId);
 
       if (team) {
         this.addPlayerToTeamRoom(room.id, userId, team.id);
@@ -95,10 +95,10 @@ export class ChatNamespace extends NamespaceClass<ChatNamespaceType> {
           message: message,
         };
 
-        const playersTeam = game.findPlayersTeam(userId);
+        const playersTeam = game.teamsManager.findPlayersTeam(userId);
         if (!playersTeam) return;
 
-        const isOnMove = game.isTeamOnMove(playersTeam.id);
+        const isOnMove = game.teamsManager.isTeamOnMove(playersTeam.id);
         const alreadyGuessed = round.guessingManager.hasTeamGuessedWord(
           playersTeam.id,
         );

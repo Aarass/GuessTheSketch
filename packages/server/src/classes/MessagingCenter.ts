@@ -1,6 +1,6 @@
 import type {
   Drawing,
-  Leaderboard,
+  LeaderboardRecord,
   ProcessedGameConfig,
   RoomId,
   RoundReportWithWord,
@@ -35,7 +35,10 @@ export class MessagingCenter {
     this.namespaces.chat.notifyCorrectGuess(room, playerId, guess);
   }
 
-  public notifyLeaderboardUpdated(room: RoomId, leaderboard: Leaderboard) {
+  public notifyLeaderboardUpdated(
+    room: RoomId,
+    leaderboard: LeaderboardRecord,
+  ) {
     this.namespaces.global.notifyLeaderboardUpdated(room, leaderboard);
   }
 

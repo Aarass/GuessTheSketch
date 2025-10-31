@@ -2,7 +2,7 @@ import {
   GameConfigSchema,
   type GameConfig,
   type GlobalNamespace as GlobalNamespaceType,
-  type Leaderboard,
+  type LeaderboardRecord,
   type Player,
   type PlayerId,
   type ProcessedGameConfig,
@@ -42,7 +42,10 @@ export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
     this.namespace.to(room).emit("round ended", report);
   }
 
-  public notifyLeaderboardUpdated(room: RoomId, leaderboard: Leaderboard) {
+  public notifyLeaderboardUpdated(
+    room: RoomId,
+    leaderboard: LeaderboardRecord,
+  ) {
     this.namespace.to(room).emit("leaderboard", leaderboard);
   }
 
@@ -111,7 +114,7 @@ export class GlobalNamespace extends NamespaceClass<GlobalNamespaceType> {
 
         if (parseResult.success) {
           const config = parseResult.data;
-          const res = room.startGame(config, this.messagingCenter);
+          const res = room.startGame(config, this.ctx, this.messagingCenter);
 
           if (res.isErr()) {
             socket.emit("game not started", res.error);

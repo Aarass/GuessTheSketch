@@ -17,7 +17,7 @@ export class RoomsController extends Controller {
 
   private createRoomHandler: RequestHandler = (req, res) => {
     const ownerId = req.session.userId;
-    const room = new Room(this.ctx, ownerId);
+    const room = new Room(ownerId);
 
     this.ctx.roomsService.addRoom(room);
 

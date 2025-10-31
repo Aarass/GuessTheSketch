@@ -1,8 +1,8 @@
 import type { RequestHandler } from "express";
 import createHttpError from "http-errors";
 import { authenticate } from "../../middlewares/express/authenticate";
-import { Controller } from "./Controller";
 import type { AppContext } from "../AppContext";
+import { Controller } from "./Controller";
 
 export class RestoreController extends Controller {
   constructor(ctx: AppContext) {
@@ -74,7 +74,7 @@ export class RestoreController extends Controller {
       return;
     }
 
-    res.send(game.getLeaderboard());
+    res.send(game.getLeaderboardRecord());
   };
 
   private getTeamOnMoveHandler: RequestHandler = async (req, res, next) => {
@@ -86,7 +86,6 @@ export class RestoreController extends Controller {
     }
 
     const room = this.ctx.roomsService.getRoomById(roomId);
-
     if (!room) {
       next(createHttpError(400, "No room found with id in your session data"));
       return;
@@ -98,8 +97,17 @@ export class RestoreController extends Controller {
       return;
     }
 
-    const teamOnMove = game.getTeamOnMove();
+    if (!game.isActive()) {
+      next(createHttpError(400, "Game is not active"));
+      return;
+    }
 
+    if (!game.currentRound) {
+      next(createHttpError(400, "There is no running round"));
+      return;
+    }
+
+    const teamOnMove = game.teamsManager.getTeamOnMove();
     res.send({ teamId: teamOnMove?.id ?? null });
   };
 
@@ -162,6 +170,11 @@ export class RestoreController extends Controller {
       return;
     }
 
+    if (!game.isActive()) {
+      next(createHttpError(400, "Game is not active"));
+      return;
+    }
+
     const round = game.currentRound;
 
     if (!round) {
@@ -169,13 +182,13 @@ export class RestoreController extends Controller {
       return;
     }
 
-    const myTeam = game.findPlayersTeam(userId);
+    const myTeam = game.teamsManager.findPlayersTeam(userId);
     if (!myTeam) {
       res.sendStatus(400);
       return;
     }
 
-    const myTeamIsOnMove = game.isTeamOnMove(myTeam.id);
+    const myTeamIsOnMove = game.teamsManager.isTeamOnMove(myTeam.id);
 
     const word = round.guessingManager.getWord(myTeamIsOnMove ? false : true);
 

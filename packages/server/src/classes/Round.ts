@@ -8,17 +8,16 @@ import { ToolsManager } from "./ToolsManager";
 export class Round {
   public readonly id: RoundId = uuid() as RoundId;
 
-  public readonly guessingManager;
-  public readonly toolsManager;
-  public readonly toolBuilder;
+  public readonly toolsManager = new ToolsManager();
 
-  constructor(ctx: AppContext, toolBuilder: ToolBuilder) {
-    this.guessingManager = new GuessingManager(ctx);
-    this.toolsManager = new ToolsManager();
-    this.toolBuilder = toolBuilder;
-  }
+  private constructor(
+    public readonly guessingManager: GuessingManager,
+    public readonly toolBuilder: ToolBuilder,
+  ) {}
 
-  public async start() {
-    await this.guessingManager.init();
+  public static async create(ctx: AppContext, toolBuilder: ToolBuilder) {
+    const guessingManager = await GuessingManager.create(ctx);
+
+    return new Round(guessingManager, toolBuilder);
   }
 }

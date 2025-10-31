@@ -1,5 +1,5 @@
 import type {
-  Leaderboard,
+  LeaderboardRecord,
   ProcessedGameConfig,
   TeamId,
 } from "@guessthesketch/common"
@@ -14,7 +14,7 @@ import {
 
 export interface GameScreenState {
   config: ProcessedGameConfig | undefined
-  leaderboard: Leaderboard | undefined
+  leaderboard: LeaderboardRecord | undefined
   teamOnMove: TeamId | undefined | null
   // TODO ovo pomeriti odavde
   // -------------------------------
@@ -52,7 +52,7 @@ export const gameScreenSlice = createAppSlice({
       state.size = action.payload
     }),
     setLeaderboard: create.reducer(
-      (state, action: PayloadAction<Leaderboard>) => {
+      (state, action: PayloadAction<LeaderboardRecord>) => {
         state.leaderboard = action.payload
       },
     ),
@@ -73,7 +73,7 @@ export const gameScreenSlice = createAppSlice({
     tryRestoreLeaderboard: create.asyncThunk(
       async () => {
         const res = await getLeaderboardRequest()
-        const leaderboard = (await res.json()) as Leaderboard
+        const leaderboard = (await res.json()) as LeaderboardRecord
 
         return leaderboard
       },
