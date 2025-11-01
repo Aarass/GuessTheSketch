@@ -1,8 +1,13 @@
 # GuessTheSketch
+
+## Important
+
+koristi bun install --linker=hoisted
+
 Kako startovati partiju: https://youtu.be/UeR6uw_E4c8
 
 U glavnom package.json fajlu u root folderu postoje skripte za pokretanje fronta i beka.
-Za pokretanje baze, postoji docker compose fajl u folderu /packages/server/database/ 
+Za pokretanje baze, postoji docker compose fajl u folderu /packages/server/database/
 
 Najlaksi nacin da pokrenes i front i back jeste uz pomoc `bun run all`
 
@@ -11,6 +16,7 @@ Ako pokusas da otvoris aplikaciju u dva taba, pomocu istog url-a (npr. localhost
 Za auth koristimo http cookie. I problem sa njim je sto ga browseri cuvaju na nivou domena.
 Tako da ce ga svi tabovi deliti. I tehnicki ces u svim tabovima biti prijavljen kao isti korisnik.
 Srecom, skripta koja pokrece front daje 4 adrese ka frontu. Kod mene to izgleda ovako:
+
 ```
   VITE v5.4.14  ready in 535 ms
 
@@ -20,6 +26,7 @@ Srecom, skripta koja pokrece front daje 4 adrese ka frontu. Kod mene to izgleda 
   ➜  Network: http://172.25.128.1:5173/
   ➜  press h + enter to show help
 ```
+
 Resenje:
 jedan tab otvoris na adresi http://localhost:5173/
 drugi tab otvoris na adresi http://100.118.176.65:5173/
